@@ -13,6 +13,7 @@
   "dependencies": {
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@supabase/supabase-js": "^2.38.4",
+    "framer-motion": "^10.12.16",
     "html5-qrcode": "^2.3.8",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.275.0",
@@ -21,8 +22,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.9.6",
-    "recharts": "^3.4.1",
-    "framer-motion": "^10.12.16"
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.1.1",

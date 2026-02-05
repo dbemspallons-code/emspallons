@@ -17,6 +17,7 @@ firebase-debug.*.log*
 
 # Supabase (local)
 .supabase/
+supabase/.temp/
 
 # Dependencies
 node_modules/
