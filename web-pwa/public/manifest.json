@@ -1,0 +1,51 @@
+{
+  "name": "EMSP Allons! - Car Management",
+  "short_name": "EMSP Allons!",
+  "description": "Ecole Multinationale Supérieure des Postes d'Abidjan - Gestion de transport scolaire",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "transport"],
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Scanner QR",
+      "short_name": "Scanner",
+      "description": "Scanner un QR code d'étudiant",
+      "url": "/?mode=driver",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Gestion",
+      "short_name": "Gestion",
+      "description": "Gérer les abonnés",
+      "url": "/?mode=educator",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded"
+  },
+  "offline_enabled": true,
+  "prefer_related_applications": false
+}

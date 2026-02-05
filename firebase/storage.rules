@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Règles pour les photos de l'école
+    match /school-photos/{allPaths=**} {
+      // Lecture: tous les utilisateurs authentifiés
+      allow read: if request.auth != null;
+      // Écriture: utilisateurs authentifiés uniquement
+      allow write: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+        && request.resource.contentType.matches('image/.*');
+    }
+    
+    // Règles par défaut: refuser tout accès non spécifié
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

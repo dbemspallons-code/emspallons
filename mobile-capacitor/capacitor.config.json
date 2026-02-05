@@ -1,0 +1,7 @@
+{
+  "appId": "com.example.busmanagement",
+  "appName": "BusManagement",
+  "bundledWebRuntime": false,
+  "webDir": "../web-pwa/dist",
+  "npmClient": "npm"
+}

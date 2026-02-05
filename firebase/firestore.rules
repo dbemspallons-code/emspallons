@@ -1,0 +1,138 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Collection: educators (éducatrices authentifiées)
+    match /educators/{educatorId} {
+      // Lecture: 
+      // - L'éducatrice elle-même peut lire son propre profil
+      // - Lecture publique autorisée pour vérifier l'existence d'un compte (limitation à un seul compte)
+      allow read: if request.auth != null && request.auth.uid == educatorId || true;
+      // Écriture: création et mise à jour par l'utilisateur authentifié
+      allow create: if request.auth != null && request.auth.uid == educatorId;
+      allow update: if request.auth != null && request.auth.uid == educatorId;
+      allow delete: if false; // Suppression interdite
+    }
+    
+    // Collection: students (abonnés)
+    match /students/{studentId} {
+      // Lecture: éducatrices authentifiées OU mode chauffeur (pour vérification QR)
+      // Permettre la lecture sans authentification pour le scanner chauffeur
+      allow read: if request.auth != null || true;
+      // Écriture: éducatrices authentifiées uniquement
+      allow write: if request.auth != null;
+    }
+    
+    // Collection: passes (QR codes sécurisés)
+    match /passes/{passId} {
+      // Lecture: éducatrices authentifiées OU mode chauffeur (pour vérification QR)
+      // Permettre la lecture sans authentification pour le scanner chauffeur
+      allow read: if request.auth != null || true;
+      // Écriture: éducatrices uniquement
+      allow write: if request.auth != null;
+    }
+    
+    // Collection: scanLogs (historique des scans)
+    match /scanLogs/{logId} {
+      // Lecture: éducatrices authentifiées uniquement
+      allow read: if request.auth != null;
+      // Écriture: autorisée pour tous (chauffeurs via app, système via fonctions serverless)
+      // Les fonctions serverless Netlify peuvent écrire sans authentification
+      allow write: if true;
+    }
+    
+    // Collection: lines (lignes de bus)
+    match /lines/{lineId} {
+      // Lecture: tous les utilisateurs authentifiés OU lecture publique pour scanner
+      allow read: if request.auth != null || true;
+      // Écriture: éducatrices uniquement
+      allow write: if request.auth != null;
+    }
+    
+    // Collection: schoolPhotos (photos de l'école)
+    match /schoolPhotos/{photoId} {
+      // Lecture: tous les utilisateurs authentifiés
+      allow read: if request.auth != null;
+      // Écriture: utilisateurs authentifiés uniquement
+      allow write: if request.auth != null;
+    }
+    
+    // Collection: controllers (contrôleurs pour scanner au portail)
+    match /controllers/{controllerId} {
+      // Lecture: éducatrices authentifiées OU contrôleurs (pour vérification)
+      // Permettre la lecture sans authentification pour le scanner
+      allow read: if request.auth != null || true;
+      // Écriture: éducatrices authentifiées uniquement
+      allow write: if request.auth != null;
+    }
+
+    // Collection: monthlyReports (bilans archivés)
+    match /monthlyReports/{reportId} {
+      // Lecture: éducatrices authentifiées uniquement
+      allow read: if request.auth != null;
+      // Écriture: éducatrices authentifiées uniquement
+      allow write: if request.auth != null;
+    }
+
+    // Collection: settings/global (paramètres de la plateforme)
+    match /settings/{settingId} {
+      // Lecture: éducatrices authentifiées (affichage paramètres) + lecture publique pour pause via Netlify
+      allow read: if request.auth != null || true;
+      // Écriture: éducatrices authentifiées uniquement
+      allow write: if request.auth != null;
+    }
+
+    // Collection: classes (classes d'étudiants)
+    match /classes/{classId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Collection: promos (promotions d'étudiants)
+    match /promos/{promoId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Collection: subscriptionHistory (historique des réabonnements)
+    match /subscriptionHistory/{historyId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Collection: remindersConfig (configuration des rappels)
+    match /remindersConfig/{configId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Collection: remindersLog (logs d'envoi des rappels)
+    match /remindersLog/{logId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Collection: systemHistory (historique système)
+    match /systemHistory/{historyId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Collection: educatorActivities (activités éducateur)
+    match /educatorActivities/{activityId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Collection: payments (paiements)
+    match /payments/{paymentId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Mode développement: accès complet si pas d'authentification configurée
+    // À retirer en production
+    match /{document=**} {
+      allow read, write: if request.auth == null && false; // Désactivé par défaut
+    }
+  }
+}

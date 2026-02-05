@@ -1,0 +1,53 @@
+name: CI & Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install
+        run: |
+          cd web-pwa
+          npm ci
+      - name: Run npm audit (non-blocking)
+        run: |
+          cd web-pwa
+          npm audit --audit-level=moderate || true
+      - name: Run Playwright tests
+        uses: microsoft/playwright-github-action@v1
+        with:
+          run: 'cd web-pwa && npx playwright test'
+
+      - name: Smoke test send-whatsapp-twilio (TEST_MODE)
+        run: |
+          node ./scripts/test-send-whatsapp-twilio.js --test
+
+  apply-migrations-and-deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install supabase CLI
+        run: npm i -g supabase
+      - name: Apply migrations (staging)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: ./scripts/apply-supabase-init.sh
+      - name: Build frontend
+        run: |
+          cd web-pwa
+          npm ci
+          npm run build
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          npx netlify deploy --prod --dir=web-pwa/dist --site=$NETLIFY_SITE_ID

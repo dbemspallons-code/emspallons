@@ -1,0 +1,8 @@
+{
+  "name": "bus-management-functions",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4"
+  }
+}
