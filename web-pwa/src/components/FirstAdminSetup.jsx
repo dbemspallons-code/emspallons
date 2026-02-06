@@ -57,14 +57,14 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-green-50 p-4">
+    <div className="min-h-screen app-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="ui-card ui-card--auth p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-green-500 rounded-full mb-4">
+            <div className="brand-emblem inline-flex items-center justify-center w-16 h-16 mb-4">
               <UserPlus className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Configuration initiale</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2 brand-title">Configuration initiale</h1>
             <p className="text-gray-600">Créez le compte administrateur principal</p>
           </div>
 
@@ -159,7 +159,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-yellow-400 to-green-500 text-white font-semibold py-3 rounded-lg hover:from-yellow-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="ui-btn ui-btn--primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Création en cours...' : 'Créer le compte administrateur'}
             </button>

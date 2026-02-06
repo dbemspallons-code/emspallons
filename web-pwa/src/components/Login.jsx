@@ -66,7 +66,7 @@ export default function Login({ onLoginSuccess }) {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-green-50">
+      <div className="min-h-screen app-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement...</p>
@@ -80,14 +80,14 @@ export default function Login({ onLoginSuccess }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-green-50 p-4">
+    <div className="min-h-screen app-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="ui-card ui-card--auth p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-green-500 rounded-full mb-4">
+            <div className="brand-emblem inline-flex items-center justify-center w-16 h-16 mb-4">
               <LogIn className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">EMSP Allons</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1 brand-title">EMSP Allons</h1>
             <p className="text-xs font-semibold text-emerald-600 uppercase tracking-[0.35em]">Plateforme officielle</p>
             <p className="text-gray-600 mt-2">Gestion des abonnements transport scolaire</p>
           </div>
@@ -110,10 +110,8 @@ export default function Login({ onLoginSuccess }) {
                       key={profile.email}
                       type="button"
                       onClick={() => handleSelectProfile(profile)}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition ${
-                        isSelected
-                          ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
-                          : 'border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/60'
+                      className={`ui-select w-full flex items-center justify-between px-4 py-3 ${
+                        isSelected ? 'ui-select--active' : ''
                       }`}
                     >
                       <div className="text-left">
@@ -169,7 +167,7 @@ export default function Login({ onLoginSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-yellow-400 to-green-500 text-white font-semibold py-3 rounded-lg hover:from-yellow-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="ui-btn ui-btn--primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Connexion...' : 'Se connecter'}
             </button>
@@ -181,7 +179,7 @@ export default function Login({ onLoginSuccess }) {
               onClick={() => {
                 window.location.href = '/chauffeur';
               }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition border border-indigo-200"
+              className="ui-btn ui-btn--ghost w-full flex items-center justify-center gap-2 px-4 py-3 font-semibold"
             >
               <ShieldCheck className="w-5 h-5" />
               Accès Contrôleur / Chauffeur
@@ -195,4 +193,3 @@ export default function Login({ onLoginSuccess }) {
     </div>
   );
 }
-

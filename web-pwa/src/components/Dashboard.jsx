@@ -417,7 +417,7 @@ export default function Dashboard({ user, onLogout }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-green-50">
+      <div className="min-h-screen app-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement...</p>
@@ -427,13 +427,13 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-green-50">
+    <div className="min-h-screen app-bg">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="glass-panel top-nav">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-green-500 bg-clip-text text-transparent">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-green-500 bg-clip-text text-transparent brand-title">
                 EMSP Allons — Back-office
               </h1>
             </div>
@@ -444,7 +444,7 @@ export default function Dashboard({ user, onLogout }) {
               </div>
               <button
                 onClick={() => setShowControllerManagement(true)}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                className="nav-action text-sm font-medium"
                 title="Gérer les contrôleurs"
               >
                 <ShieldCheck className="w-4 h-4 inline mr-2" />
@@ -452,7 +452,7 @@ export default function Dashboard({ user, onLogout }) {
               </button>
               <button
                 onClick={() => setShowNotice(true)}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                className="nav-action text-sm font-medium"
                 title="Notice d'utilisation"
               >
                 <HelpCircle className="w-4 h-4 inline mr-2" />
@@ -462,7 +462,7 @@ export default function Dashboard({ user, onLogout }) {
                 <>
                   <button
                     onClick={() => setShowSettings(true)}
-                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                    className="nav-action text-sm font-medium"
                     title="Paramètres"
                   >
                     <Settings className="w-4 h-4 inline mr-2" />
@@ -471,14 +471,14 @@ export default function Dashboard({ user, onLogout }) {
                   <div className="relative">
                     <button
                       onClick={handleExportAll}
-                      className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                      className="nav-action text-sm font-medium"
                       title="Exporter toutes les données"
                     >
                       <Download className="w-4 h-4 inline mr-2" />
                       Export
                     </button>
                   </div>
-                  <label className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition cursor-pointer">
+                  <label className="nav-action text-sm font-medium cursor-pointer">
                     <Upload className="w-4 h-4 inline mr-2" />
                     Import
                     <input
@@ -498,10 +498,10 @@ export default function Dashboard({ user, onLogout }) {
                   </label>
                   <button
                     onClick={handleReset}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition ${
+                    className={`nav-action text-sm font-medium ${
                       showResetConfirm
-                        ? 'bg-red-600 text-white hover:bg-red-700'
-                        : 'text-red-600 bg-red-50 hover:bg-red-100'
+                        ? 'nav-action--danger-strong'
+                        : 'nav-action--danger'
                     }`}
                     title="Réinitialiser toutes les données"
                   >
@@ -510,7 +510,7 @@ export default function Dashboard({ user, onLogout }) {
                   </button>
                   <button
                     onClick={() => setShowUserManagement(true)}
-                    className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                    className="nav-action text-sm font-medium"
                   >
                     <Users className="w-4 h-4 inline mr-2" />
                     Utilisateurs
@@ -525,7 +525,7 @@ export default function Dashboard({ user, onLogout }) {
                     setShowQueuedToast(true);
                     setTimeout(() => setShowQueuedToast(false), 3000);
                   }}
-                  className="inline-flex items-center gap-2 bg-yellow-500 text-white px-3 py-2 rounded-full shadow hover:bg-yellow-600"
+                  className="nav-pill inline-flex items-center gap-2"
                   title="Opérations en file (cliquer pour synchroniser)"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -537,14 +537,14 @@ export default function Dashboard({ user, onLogout }) {
               )}
 
               {showQueuedToast && (
-                <div className="fixed top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+                <div className="ui-toast fixed top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg z-50">
                   🔁 Synchronisation demandée
                 </div>
               )}
 
               <button
                 onClick={onLogout}
-                className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition"
+                className="nav-action nav-action--danger text-sm font-medium"
               >
                 <LogOut className="w-4 h-4 inline mr-2" />
                 Déconnexion
@@ -555,38 +555,26 @@ export default function Dashboard({ user, onLogout }) {
       </header>
 
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-200">
+      <nav className="nav-bar glass-panel">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
+          <div className="nav-tabs">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'dashboard'
-                  ? 'border-yellow-500 text-yellow-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${activeTab === 'dashboard' ? 'nav-tab--active' : ''}`}
             >
               <BarChart3 className="w-4 h-4 inline mr-2" />
               Aperçu
             </button>
             <button
               onClick={() => setActiveTab('students')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'students'
-                  ? 'border-yellow-500 text-yellow-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${activeTab === 'students' ? 'nav-tab--active' : ''}`}
             >
               <Users className="w-4 h-4 inline mr-2" />
               Étudiants
             </button>
             <button
               onClick={() => setActiveTab('monthly')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'monthly'
-                  ? 'border-yellow-500 text-yellow-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`nav-tab ${activeTab === 'monthly' ? 'nav-tab--active' : ''}`}
             >
               <Calendar className="w-4 h-4 inline mr-2" />
               Bilan mensuel
@@ -594,11 +582,7 @@ export default function Dashboard({ user, onLogout }) {
             {isAdminUser && (
               <button
                 onClick={() => setActiveTab('history')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'history'
-                    ? 'border-yellow-500 text-yellow-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`nav-tab ${activeTab === 'history' ? 'nav-tab--active' : ''}`}
               >
                 <History className="w-4 h-4 inline mr-2" />
                 Archives
@@ -786,12 +770,12 @@ function DashboardView({ stats, students, payments, onAddStudent, onAddPayment }
       </div>
 
       {/* Actions rapides */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="ui-card p-6">
         <h2 className="text-lg font-semibold mb-4">Actions rapides</h2>
         <div className="flex gap-4">
           <button
             onClick={onAddStudent}
-            className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-green-500 text-white rounded-lg hover:from-yellow-500 hover:to-green-600 transition"
+            className="ui-btn ui-btn--primary px-4 py-2"
           >
             <UserPlus className="w-4 h-4 inline mr-2" />
             Ajouter un étudiant
@@ -815,7 +799,7 @@ function KPICard({ title, value, icon: Icon, color }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="ui-card kpi-card p-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
@@ -850,7 +834,7 @@ function AlertsView({ students, payments, onAddPayment }) {
 
   if (alerts.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="ui-card p-6">
         <h2 className="text-lg font-semibold mb-4">Alertes</h2>
         <p className="text-gray-500">Aucune alerte pour le moment</p>
       </div>
@@ -858,7 +842,7 @@ function AlertsView({ students, payments, onAddPayment }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="ui-card p-6">
       <h2 className="text-lg font-semibold mb-4">Alertes</h2>
       <div className="space-y-3">
         {alerts.map(({ student, status }) => (
@@ -879,7 +863,7 @@ function AlertsView({ students, payments, onAddPayment }) {
               </div>
               <button
                 onClick={() => onAddPayment(student)}
-                className="px-3 py-1 text-sm bg-yellow-400 text-white rounded hover:bg-yellow-500 transition"
+                className="ui-btn ui-btn--soft px-3 py-1 text-sm"
               >
                 Payer
               </button>
@@ -913,7 +897,7 @@ function StudentsView({
   return (
     <div className="space-y-6">
       {/* Filtres */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="ui-card p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -941,7 +925,7 @@ function StudentsView({
           </select>
           <button
             onClick={onAddStudent}
-            className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-green-500 text-white rounded-lg hover:from-yellow-500 hover:to-green-600 transition"
+            className="ui-btn ui-btn--primary px-4 py-2"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Ajouter
@@ -970,7 +954,7 @@ function StudentsView({
       </div>
 
       {/* Liste des étudiants */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="ui-card table-card overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

@@ -77,7 +77,7 @@ export default function AppNew() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-green-50">
+      <div className="min-h-screen app-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement...</p>
@@ -91,7 +91,7 @@ export default function AppNew() {
     <div className="fixed top-4 right-4 z-50">
       {queuedCount > 0 && (
         <button
-          className="inline-flex items-center gap-2 bg-yellow-500 text-white px-3 py-2 rounded-full shadow-lg hover:bg-yellow-600"
+          className="ui-pill inline-flex items-center gap-2 bg-yellow-500 text-white px-3 py-2 rounded-full shadow-lg hover:bg-yellow-600"
           onClick={() => {
             triggerSync();
             setShowQueuedToast(true);
@@ -107,7 +107,7 @@ export default function AppNew() {
       )}
 
       {showQueuedToast && (
-        <div className="mt-2 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg">🔁 Synchronisation demandée</div>
+        <div className="ui-toast mt-2 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg">🔁 Synchronisation demandée</div>
       )}
     </div>
   );
