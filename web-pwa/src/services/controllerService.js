@@ -62,7 +62,15 @@ export async function getAllControllers() {
   try {
     const { data, error } = await supabase.from('controllers').select('*');
     if (error) throw error;
-    return (data || []).map(d => ({ id: d.id, name: d.name, code: d.code, active: d.active, assignedLineId: d.assigned_line_id })).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr'));
+    return (data || []).map(d => ({
+      id: d.id,
+      nom: d.name,
+      name: d.name,
+      code: d.code,
+      actif: d.active,
+      active: d.active,
+      assignedLineId: d.assigned_line_id,
+    })).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fr'));
   } catch (error) {
     console.error('Erreur getAllControllers (Supabase):', error);
     return [];
@@ -85,6 +93,9 @@ export async function fetchControllers() {
 export async function createController({ nom, code, actif = true, assignedLineId = null, password = null }) {
   if (!nom || !nom.trim()) {
     throw new Error('Le nom du contrôleur est requis');
+  }
+  if (!assignedLineId) {
+    throw new Error('La ligne assignée est obligatoire');
   }
 
   const trimmedName = nom.trim();
@@ -113,7 +124,7 @@ export async function createController({ nom, code, actif = true, assignedLineId
     const { data, error } = await supabase.from('controllers').insert([row]).select().maybeSingle();
     if (error) throw error;
     await historyService.log({ type: 'CONTROLLER_CREATED', entityId: data.id, entityType: 'CONTROLLER', action: 'CONTROLLER_CREATED', details: { name: trimmedName } });
-    return { id: data.id, name: data.name, code: data.code, active: data.active };
+    return { id: data.id, nom: data.name, name: data.name, code: data.code, actif: data.active, active: data.active, assignedLineId: data.assigned_line_id };
   } catch (error) {
     console.error('Erreur createController (Supabase):', error);
     throw error;
@@ -149,6 +160,9 @@ export async function updateController(controllerId, updates) {
   }
 
   if (updates.assignedLineId !== undefined) {
+    if (!updates.assignedLineId) {
+      throw new Error('La ligne assignée est obligatoire');
+    }
     updateData.assigned_line_id = updates.assignedLineId || null;
   }
 
@@ -274,8 +288,10 @@ export async function getControllerById(controllerId) {
     if (!data) return null;
     return {
       id: data.id,
+      nom: data.name,
       name: data.name,
       code: data.code,
+      actif: data.active,
       active: data.active,
       assignedLineId: data.assigned_line_id || null,
       connexions: Array.isArray(data.connexions) ? data.connexions : [],

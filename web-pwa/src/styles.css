@@ -1673,6 +1673,49 @@ h3,
   z-index: 40;
 }
 
+.top-nav__layout {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.75rem 0;
+}
+
+.top-nav__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.top-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.top-nav__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.top-nav__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.top-nav__actions::-webkit-scrollbar {
+  height: 6px;
+}
+
+.top-nav__actions::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+}
+
 .nav-bar {
   position: relative;
   z-index: 35;
@@ -1732,6 +1775,8 @@ h3,
   color: #0f172a;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  min-height: 38px;
+  white-space: nowrap;
 }
 
 .nav-action:hover {

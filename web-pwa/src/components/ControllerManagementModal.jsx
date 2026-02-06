@@ -21,10 +21,12 @@ import {
   regenerateControllerCode,
   maskControllerCode,
 } from '../services/controllerService';
+import { fetchLines } from '../services/firestoreService';
 
 export default function ControllerManagementModal({ onClose }) {
   const [controllers, setControllers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lines, setLines] = useState([]);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -34,6 +36,7 @@ export default function ControllerManagementModal({ onClose }) {
 
   useEffect(() => {
     loadControllers();
+    loadLines();
   }, []);
 
   useEffect(() => {
@@ -53,6 +56,16 @@ export default function ControllerManagementModal({ onClose }) {
       setError(err.message || 'Impossible de charger les contrôleurs');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadLines() {
+    try {
+      const list = await fetchLines();
+      setLines(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.warn('Erreur chargement lignes:', err);
+      setLines([]);
     }
   }
 
@@ -213,6 +226,7 @@ export default function ControllerManagementModal({ onClose }) {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ligne</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dernière connexion</th>
@@ -223,6 +237,7 @@ export default function ControllerManagementModal({ onClose }) {
                   {sortedControllers.map((controller) => {
                     const isVisible = visibleCodes.includes(controller.id);
                     const maskedCode = maskControllerCode(controller.code || '');
+                    const assignedLine = lines.find((line) => line.id === controller.assignedLineId);
                     const lastConnection = controller.derniereConnexion
                       ? new Date(controller.derniereConnexion).toLocaleString('fr-FR', {
                           day: '2-digit',
@@ -241,6 +256,9 @@ export default function ControllerManagementModal({ onClose }) {
                               {controller.connexions.length} connexion{controller.connexions.length > 1 ? 's' : ''} enregistrée{controller.connexions.length > 1 ? 's' : ''}
                             </div>
                           ) : null}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {assignedLine?.name || controller.assignedLineId || 'Non assignée'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -334,6 +352,7 @@ export default function ControllerManagementModal({ onClose }) {
       {showForm && (
         <ControllerFormModal
           controller={editingController}
+          lines={lines}
           loading={creating}
           onClose={() => {
             setShowForm(false);
@@ -352,10 +371,11 @@ export default function ControllerManagementModal({ onClose }) {
   );
 }
 
-function ControllerFormModal({ controller, onClose, onSave, loading }) {
+function ControllerFormModal({ controller, onClose, onSave, loading, lines = [] }) {
   const [nom, setNom] = useState('');
   const [code, setCode] = useState('');
   const [actif, setActif] = useState(true);
+  const [assignedLineId, setAssignedLineId] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -363,13 +383,15 @@ function ControllerFormModal({ controller, onClose, onSave, loading }) {
       setNom(controller.nom || '');
       setCode(controller.code || '');
       setActif(controller.actif !== false);
+      setAssignedLineId(controller.assignedLineId || '');
     } else {
       setNom('');
       setCode('');
       setActif(true);
+      setAssignedLineId(lines[0]?.id || '');
     }
     setError('');
-  }, [controller]);
+  }, [controller, lines]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -379,11 +401,16 @@ function ControllerFormModal({ controller, onClose, onSave, loading }) {
       setError('Le nom du contrôleur est requis');
       return;
     }
+    if (!assignedLineId) {
+      setError('La ligne assignée est obligatoire');
+      return;
+    }
 
     try {
       await onSave({
         nom: nom.trim(),
         actif,
+        assignedLineId,
         ...(code.trim() ? { code: code.trim().toUpperCase() } : {}),
       });
     } catch (err) {
@@ -437,6 +464,28 @@ function ControllerFormModal({ controller, onClose, onSave, loading }) {
             />
             <p className="text-xs text-gray-500 mt-1">
               Astuce: laissez vide pour un code sécurisé généré automatiquement.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ligne assignée <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={assignedLineId}
+              onChange={(event) => setAssignedLineId(event.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+            >
+              <option value="">Sélectionner une ligne</option>
+              {lines.map((line) => (
+                <option key={line.id} value={line.id}>
+                  {line.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Le contrôleur ne pourra scanner que les étudiants de cette ligne.
             </p>
           </div>
 

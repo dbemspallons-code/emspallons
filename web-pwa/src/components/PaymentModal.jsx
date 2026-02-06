@@ -1,8 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { CalendarDays, CreditCard, X, CheckCircle, AlertTriangle, Eye, Send, HelpCircle } from 'lucide-react';
-import { SUBSCRIPTION_PLANS, computeExpirationDate } from '../models/entities';
-import { exportPaymentReceiptPDF, generateReceiptImage } from '../services/exportPDF';
-import { openWhatsAppWithMessage, openWhatsAppWithImage } from '../services/whatsappService';
+import { X, CheckCircle, AlertTriangle, HelpCircle } from 'lucide-react';
+import { SUBSCRIPTION_PLANS } from '../models/entities';
 
 const backdropStyle = {
   position: 'fixed',
@@ -28,12 +26,6 @@ const modalStyle = {
 
 // PRIX FIXE DE L'ABONNEMENT : 12 500 FCFA par mois
 const PRIX_MENSUEL_FIXE = 12500;
-const SCHOOL_INFO = {
-  name: "Ecole Multinationale Supérieure des Postes d'Abidjan",
-  address: "Abidjan, Côte d'Ivoire",
-  logoUrl: "/images/logos/emsp-logo.png",
-};
-
 // Composant d'aide contextuelle
 function HelpTooltip({ text }) {
   const [show, setShow] = useState(false);
@@ -119,7 +111,6 @@ export default function PaymentModal({ open, student, onClose, onSubmit, plans =
   
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const [lastPayment, setLastPayment] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
@@ -183,27 +174,9 @@ export default function PaymentModal({ open, student, onClose, onSubmit, plans =
       
       await onSubmit(payload);
       
-      // Créer le reçu avec la nouvelle structure
-      const reference = `${student.id}-${Date.now()}`;
-      const receipt = {
-        ...payload,
-        dateFin: calculs.dateFin,
-        montantMensuel: calculs.montantMensuel,
-        reference,
-        monthsCount: nombreMois,
-        amountPerMonth: calculs.montantMensuel,
-        paidAt: dateDebut,
-        ledger: [], // Pas utilisé dans la nouvelle structure
-      };
-      setLastPayment(receipt);
-      // Afficher le reçu dans une nouvelle fenêtre (sans auto-impression)
-      const recordedBy = currentUser ? {
-        name: currentUser.name || currentUser.email?.split('@')[0] || 'Utilisateur',
-        email: currentUser.email,
-      } : null;
-      exportPaymentReceiptPDF({ student, payment: { ...receipt, recordedAt: new Date().toISOString() }, recordedBy }, SCHOOL_INFO, { showPrintDialog: false });
-      setSuccessMessage('Reçu généré. Utilisez les boutons ci-dessous pour l'envoyer ou le télécharger.');
-      // Réinitialiser les champs après paiement réussi
+      
+      setSuccessMessage('Paiement enregistr? avec succ?s.');
+
       const now = new Date();
       setNombreMois(1);
       setMontantTotal(PRIX_MENSUEL_FIXE);
@@ -344,88 +317,10 @@ export default function PaymentModal({ open, student, onClose, onSubmit, plans =
             <button type="submit" className="button" disabled={processing}>
               <CheckCircle size={16} /> {processing ? 'Enregistrement...' : 'Valider le paiement'}
             </button>
-            {lastPayment && (
-              <>
-                <button
-                  type="button"
-                  className="button button--subtle"
-                  onClick={() => {
-                    const recordedBy = currentUser ? {
-                      name: currentUser.name || currentUser.email?.split('@')[0] || 'Utilisateur',
-                      email: currentUser.email,
-                    } : null;
-                    exportPaymentReceiptPDF({ student, payment: { ...lastPayment, recordedAt: lastPayment.recordedAt || new Date().toISOString() }, recordedBy }, SCHOOL_INFO, { showPrintDialog: false });
-                  }}
-                >
-                  <Eye size={16} /> Voir le reçu
-                </button>
-                <button
-                  type="button"
-                  className="button button--subtle"
-                  onClick={() => {
-                    const recordedBy = currentUser ? {
-                      name: currentUser.name || currentUser.email?.split('@')[0] || 'Utilisateur',
-                      email: currentUser.email,
-                    } : null;
-                    exportPaymentReceiptPDF({ student, payment: { ...lastPayment, recordedAt: lastPayment.recordedAt || new Date().toISOString() }, recordedBy }, SCHOOL_INFO);
-                  }}
-                >
-                  <CreditCard size={16} /> Télécharger PDF
-                </button>
-                <button
-                  type="button"
-                  className="button"
-                  onClick={async () => {
-                    try {
-                      const recipient = student.contact || '';
-                      if (!recipient) {
-                        alert('Contact manquant. Impossible d\'envoyer le reçu.');
-                        return;
-                      }
-                      setProcessing(true);
-                      setError(null);
-                      
-                      // Générer l'image du reçu
-                      const receiptImage = await generateReceiptImage({ student, payment: lastPayment }, SCHOOL_INFO);
-                      
-                      // Construire le message
-                      const monthsText = (lastPayment.ledger || []).join(', ') || `${lastPayment.monthsCount} mois`;
-                      const total = (Number(lastPayment.amountPerMonth || 0) * lastPayment.monthsCount).toLocaleString('fr-FR');
-                      const perMonth = Number(lastPayment.amountPerMonth || 0).toLocaleString('fr-FR');
-                      const msg = `🎓 *Reçu de Paiement - Abonnement transport*\n\n👤 Étudiant: ${student.name}\n📱 Contact: ${student.contact || 'N/A'}\n📅 Paiement du: ${new Date(lastPayment.paidAt).toLocaleDateString('fr-FR')}\n🗓️ Mois couverts: ${monthsText}\n💵 Montant mensuel: ${perMonth} FCFA\n🧮 Total: ${total} FCFA\n🔖 Référence: ${lastPayment.reference}\n\nMerci pour votre confiance.`;
-                      
-                      // Envoyer via WhatsApp avec l'image
-                      openWhatsAppWithImage(recipient, msg, receiptImage);
-                      setSuccessMessage('Reçu envoyé via WhatsApp. L\'image a été téléchargée automatiquement.');
-                    } catch (err) {
-                      console.error('Erreur envoi reçu WhatsApp:', err);
-                      setError('Erreur lors de l\'envoi du reçu. Veuillez réessayer.');
-                    } finally {
-                      setProcessing(false);
-                    }
-                  }}
-                  disabled={processing}
-                >
-                  <Send size={16} /> Envoyer via WhatsApp
-                </button>
-              </>
-            )}
           </div>
         </form>
       </div>
     </div>
   );
-}
-
-function buildLedger(paidAtIso, monthsCount) {
-  const start = new Date(paidAtIso);
-  const y = start.getFullYear();
-  const m = start.getMonth();
-  const ledger = [];
-  for (let i = 0; i < monthsCount; i++) {
-    const d = new Date(y, m + i, 1);
-    ledger.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-  }
-  return ledger;
 }
 

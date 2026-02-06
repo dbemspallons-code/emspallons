@@ -27,14 +27,7 @@ import { useStudents } from '../hooks/useStudents';
 import { createController, updateController, deleteController, subscribeControllers, resetTodayScanLogs, fetchGlobalSettings, setPausePlatform, saveGlobalSettings, logEducatorActivity, fetchEducatorActivity, fetchUsers, subscribeUsers, createUser, updateUser, deleteUser, recordPaymentV2, fetchPaymentsByMonth, fetchActivePaymentsForMonth } from '../services/firestoreService';
 import { changeOwnPassword, resetUserPassword } from '../services/authService';
 import { BUS_LINES, PAYMENT_STATUS, SUBSCRIPTION_PLANS, isSubscriptionActive, computePaymentStatus } from '../models/entities';
-import { getSessionIdFromDate, getMonthNameFromSessionId } from '../models/sessionCalendar';
-import { exportPausedMonthsAdjustmentPDF } from '../services/exportPDF';
 import { useAuth } from '../context/AuthContext';
-const SCHOOL_INFO = {
-  name: "Ecole Multinationale Supérieure des Postes d'Abidjan",
-  address: "Abidjan, Côte d'Ivoire",
-  logoUrl: "/images/logos/emsp-logo.png",
-};
 
 export default function BusManagementCore() {
   const { user: currentUser } = useAuth();
@@ -202,18 +195,8 @@ export default function BusManagementCore() {
       icon: '💳',
       steps: [
         'Choisissez un étudiant dans la liste et cliquez sur "Enregistrer un paiement".',
-        'Confirmez la période à régler puis validez : le reçu s\'affiche automatiquement.',
-        'Utilisez "Voir le reçu" pour l\'afficher, "Télécharger PDF" pour l\'archiver, ou "Envoyer via WhatsApp" pour partager.',
-      ],
-    },
-    {
-      id: 'receipt',
-      title: 'Envoyer un reçu',
-      icon: '📄',
-      steps: [
-        'Après un paiement, le reçu est automatiquement généré.',
-        'Cliquez sur "Voir le reçu" pour l\'afficher dans une nouvelle fenêtre.',
-        'Utilisez "Envoyer via WhatsApp" pour envoyer le reçu avec l\'image directement.',
+        'Confirmez la p?riode ? r?gler puis validez : le paiement est enregistr?.',
+        'Le statut est mis ? jour et l\'historique est enregistr?.',
       ],
     },
     {
@@ -267,136 +250,6 @@ export default function BusManagementCore() {
       ],
     },
   ]), []);
-
-  const issueReceiptsForPausedMonthsChange = async (previousPaused = [], nextPaused = [], baseMonthlyFee = defaultMonthlyFee) => {
-    const prevSet = new Set(Array.isArray(previousPaused) ? previousPaused : []);
-    const nextArray = Array.isArray(nextPaused) ? nextPaused : [];
-    const nextSet = new Set(nextArray);
-    const added = nextArray.filter(month => !prevSet.has(month));
-    const removed = Array.from(prevSet).filter(month => !nextSet.has(month));
-    if (added.length === 0 && removed.length === 0) {
-      return;
-    }
-
-    try {
-      const currentSessionId = await getSessionIdFromDate(new Date());
-      const addedSet = new Set(added);
-      const removedSet = new Set(removed);
-      const changedSet = new Set([...addedSet, ...removedSet]);
-
-      const impactedStudents = Array.isArray(students)
-        ? students.filter(student => {
-            if (!student) return false;
-            const ledger = Array.isArray(student.monthsLedger) ? student.monthsLedger : [];
-            return ledger.some(sessionId => changedSet.has(sessionId) && (sessionId >= currentSessionId));
-          })
-        : [];
-
-      if (impactedStudents.length === 0) {
-        setMessageStatus('Paramètres enregistrés. Aucun reçu supplémentaire requis.');
-        return;
-      }
-
-      const formatSessionNames = sessionIds => {
-        const unique = Array.from(new Set(sessionIds || [])).sort();
-        const labels = [];
-        for (const sessionId of unique) {
-          try {
-            // getMonthNameFromSessionId is synchronous, no await needed
-            const label = getMonthNameFromSessionId(sessionId);
-            labels.push(label);
-          } catch {
-            labels.push(sessionId);
-          }
-        }
-        return labels;
-      };
-
-      const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-      let processed = 0;
-      let missingContacts = 0;
-      for (const student of impactedStudents) {
-        if (!student?.contact) {
-          missingContacts += 1;
-          continue;
-        }
-        const ledger = Array.isArray(student.monthsLedger) ? student.monthsLedger : [];
-        const impactedSessions = ledger.filter(sessionId => changedSet.has(sessionId) && (sessionId >= currentSessionId));
-        if (!impactedSessions.length) continue;
-
-        const addedSessions = impactedSessions.filter(sessionId => addedSet.has(sessionId));
-        const removedSessions = impactedSessions.filter(sessionId => removedSet.has(sessionId));
-        const addedLabels = addedSessions.length ? formatSessionNames(addedSessions) : [];
-        const removedLabels = removedSessions.length ? formatSessionNames(removedSessions) : [];
-
-        const futureCoverageLabels = formatSessionNames(ledger.filter(sessionId => sessionId >= currentSessionId));
-        const monthlyAmountValue = Number(student.monthlyFee || baseMonthlyFee || 0);
-        const monthlyAmount = monthlyAmountValue.toLocaleString('fr-FR');
-        const messageLines = [
-          '🎓 *Reçu ajusté - Transport scolaire*',
-          '',
-          `👤 Étudiant : ${student.name}`,
-          `📱 Contact : ${student.contact}`,
-        ];
-
-        if (addedLabels.length) {
-          messageLines.push(`✅ Mois marqués “service en pause” : ${addedLabels.join(', ')}`);
-        }
-        if (removedLabels.length) {
-          messageLines.push(`ℹ️ Mois redevenus actifs : ${removedLabels.join(', ')}`);
-        }
-
-        messageLines.push('');
-        messageLines.push('Ce reçu met à jour votre abonnement suite à la modification des mois en pause.');
-        if (futureCoverageLabels.length) {
-          messageLines.push(`🗓️ Couverture à venir : ${futureCoverageLabels.join(', ')}`);
-        }
-        messageLines.push(`💵 Montant mensuel : ${monthlyAmount} FCFA`);
-        messageLines.push('');
-        messageLines.push('Les mois en pause restent crédités et seront reportés automatiquement lorsque le service reprendra. Merci pour votre compréhension.');
-
-        try {
-          exportPausedMonthsAdjustmentPDF(
-            {
-              student,
-              addedSessions: addedLabels,
-              removedSessions: removedLabels,
-              futureCoverage: futureCoverageLabels,
-              monthlyAmount: monthlyAmountValue,
-            },
-            SCHOOL_INFO,
-          );
-          openWhatsAppWithMessage(student.contact, messageLines.join('\n'));
-          processed += 1;
-          await delay(1200);
-        } catch (err) {
-          console.warn('Envoi reçu mis à jour échoué:', err);
-        }
-      }
-
-      const summaryParts = [];
-      summaryParts.push(`Reçus ajustés pour ${processed}/${impactedStudents.length} étudiant(s).`);
-      if (missingContacts > 0) {
-        summaryParts.push(`${missingContacts} étudiant(s) sans contact WhatsApp.`);
-      }
-      setMessageStatus(summaryParts.join(' '));
-      await educatorLog({
-        action: 'settings:update-paused-months',
-        subjectType: 'settings',
-        description: 'Mise à jour des mois en pause',
-        metadata: {
-          added,
-          removed,
-          impactedStudents: processed,
-          missingContacts,
-        },
-      });
-    } catch (err) {
-      console.warn('Erreur lors de la génération des reçus ajustés:', err);
-      setMessageStatus('Paramètres enregistrés, mais génération des reçus ajustés impossible.');
-    }
-  };
 
   const filteredStudents = useMemo(() => {
     if (!Array.isArray(students)) return [];
@@ -462,6 +315,10 @@ export default function BusManagementCore() {
     const cleanAlert = typeof nextAlertThreshold === 'number' ? nextAlertThreshold : alertThreshold;
     const cleanVacation = typeof nextVacationMessage === 'string' ? nextVacationMessage : vacationMessage;
     const cleanPaused = Array.isArray(nextPausedMonths) ? Array.from(new Set(nextPausedMonths)) : [];
+    const prevPausedSet = new Set(previousPaused);
+    const nextPausedSet = new Set(cleanPaused);
+    const addedPaused = cleanPaused.filter(month => !prevPausedSet.has(month));
+    const removedPaused = previousPaused.filter(month => !nextPausedSet.has(month));
 
     try {
       await saveGlobalSettings({
@@ -474,9 +331,21 @@ export default function BusManagementCore() {
       setAlertThreshold(cleanAlert);
       setVacationMessage(cleanVacation);
       setPausedMonths(cleanPaused);
-      await issueReceiptsForPausedMonthsChange(previousPaused, cleanPaused, cleanDefaultFee);
+      setMessageStatus(addedPaused.length || removedPaused.length
+        ? 'Param?tres enregistr?s. Mois en pause mis ? jour.'
+        : 'Param?tres enregistr?s.'
+      );
+      await educatorLog({
+        action: 'settings:update',
+        subjectType: 'settings',
+        description: 'Mise ? jour des param?tres',
+        metadata: {
+          addedPausedMonths: addedPaused,
+          removedPausedMonths: removedPaused,
+        },
+      });
     } catch (err) {
-      setMessageStatus(`Erreur lors de l'enregistrement des paramètres : ${err.message}`);
+      setMessageStatus(`Erreur lors de l'enregistrement des param?tres : ${err.message}`);
       throw err;
     }
   };
@@ -678,7 +547,7 @@ export default function BusManagementCore() {
       const qrImage = await generateHighResQR(qrToken, 1024);
       
       // Créer un message avec instructions et informations de sécurité (personnalisé avec le nom de l'étudiant)
-      const message = `Bonjour ${student.name},\n\n📱 *Votre code QR de transport*\n\n👤 Étudiant : ${student.name}\n🚌 Ligne : ${line}\n📅 Expiration : ${expiresAt}\n💰 Statut : ${statusLabel(student.paymentStatus)}\n\n*Instructions :*\n1. Le QR code a été téléchargé automatiquement sur votre appareil\n2. Ajoutez-le à ce message WhatsApp depuis vos téléchargements\n3. Présentez ce QR code au chauffeur lors de la montée dans le bus\n\n*Important - Sécurité :*\n• Ce QR code reste valide même si votre statut change\n• Un scan = une fois toutes les 20 minutes\n• Ne partagez pas votre QR code avec d'autres étudiants\n• Si vous scannez trop tôt, vous verrez "Déjà scanné récemment"\n\n*EMSP - Ecole Multinationale Supérieure des Postes d'Abidjan*`;
+      const message = `Bonjour ${student.name},\n\n📱 *Votre code QR de transport*\n\n👤 Étudiant : ${student.name}\n🚌 Ligne : ${line}\n📅 Expiration : ${expiresAt}\n💰 Statut : ${statusLabel(student.paymentStatus)}\n\n*Instructions :*\n1. Le QR code a été téléchargé automatiquement sur votre appareil\n2. Ajoutez-le à ce message WhatsApp depuis vos téléchargements\n3. Présentez ce QR code au chauffeur lors de la montée dans le bus\n\n*Important - Sécurité :*\n• Ce QR code reste valide même si votre statut change\n• Un scan recent declenche une alerte (validation manuelle possible)\n• Ne partagez pas votre QR code avec d'autres étudiants\n• Si vous scannez trop tôt, vous verrez "Déjà scanné récemment"\n\n*EMSP - Ecole Multinationale Supérieure des Postes d'Abidjan*`;
       
       // Envoyer via WhatsApp avec l'image
       openWhatsAppWithImage(recipient, message, qrImage);
@@ -1459,33 +1328,6 @@ export default function BusManagementCore() {
           onSendWhatsApp={handleSendWhatsApp}
           onReSubscribe={handleReSubscribe}
           onEdit={(student) => setEditingStudent(student)}
-          onSendReceiptWhatsApp={async (student) => {
-            try {
-              const payments = Array.isArray(student.monthsPaid) ? student.monthsPaid : [];
-              const lastPayment = payments[payments.length - 1];
-              if (!lastPayment) {
-                setMessageStatus('Aucun paiement trouvé pour envoyer un reçu.');
-                return;
-              }
-              const paidAtIso = lastPayment.paidAt || new Date().toISOString();
-              // Regrouper tous les paiements du même batch (même paidAt) pour lister les mois couverts
-              const sameBatch = payments.filter(p => p.paidAt === paidAtIso);
-              const monthsCount = sameBatch.length || Number(lastPayment.monthCount) || 1;
-              const fee = Number(student.monthlyFee || 0);
-              const perMonth = fee.toLocaleString('fr-FR');
-              const total = (fee * monthsCount).toLocaleString('fr-FR');
-              // Construire les mois couverts à partir des sessionId du batch
-              const ledger = sameBatch.map(p => p.sessionId).filter(Boolean);
-              const monthsText = (ledger.length ? ledger : [/* fallback */]).join(', ') || `${monthsCount} mois`;
-              const recipient = student.contact || '+225000000000';
-          const msg = `🎓 Reçu de Paiement - Abonnement transport\n\n👤 Étudiant: ${student.name}\n📱 Contact: ${student.contact || 'N/A'}\n📅 Paiement du: ${new Date(paidAtIso).toLocaleDateString('fr-FR')}\n🗓️ Mois couverts: ${monthsText}\n💵 Montant mensuel: ${perMonth} FCFA\n🧮 Total: ${total} FCFA\n\nMerci pour votre confiance.`;
-              openWhatsAppWithMessage(recipient, msg);
-              setMessageStatus('Reçu WhatsApp préparé.');
-            } catch (err) {
-              console.warn('Envoi reçu WhatsApp échoué:', err);
-              setMessageStatus('Impossible de préparer le reçu WhatsApp.');
-            }
-          }}
           onExportPass={handleExportPass}
           onDelete={handleDelete}
           onTogglePayment={handleTogglePayment}

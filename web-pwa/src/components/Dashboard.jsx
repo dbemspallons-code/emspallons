@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   LogOut, Users, UserPlus, DollarSign, Calendar, AlertCircle, 
   Search, Filter, Download, Upload, Settings, HelpCircle, 
-  Lock, Unlock, Plus, Edit2, Trash2, FileText, Send, MessageCircle,
-  BarChart3, TrendingUp, Clock, CheckCircle2, XCircle, History, QrCode, ShieldCheck
+  Lock, Unlock, Plus, Edit2, Trash2, MessageCircle,
+  BarChart3, TrendingUp, Clock, CheckCircle2, XCircle, History, QrCode, ShieldCheck,
+  Bus, GraduationCap
 } from 'lucide-react';
 import { logout, isAdmin } from '../services/authService';
 import { getOutboxLength, triggerSync } from '../services/offlineService';
@@ -13,7 +14,6 @@ import {
   calculateStudentStatus, getRevenusEncaisses, getRevenusComptabilises,
   replaceAllData
 } from '../services/studentService';
-import { generateReceiptPDF, generateReceiptHTML, generateReceiptWhatsAppMessage } from '../services/receiptService';
 import { openWhatsAppWithMessage, openWhatsAppWithImage } from '../services/whatsappService';
 import { logReminderSend } from '../services/reminderService';
 import { fetchLatestSubscriptions } from '../services/subscriptionService';
@@ -22,7 +22,6 @@ import { clearStudentsAndPayments } from '../services/studentService';
 import { qrCodeService } from '../services/qrCodeService';
 import StudentFormModal from './StudentFormModal';
 import PaymentFormModal from './PaymentFormModal';
-import ReceiptModal from './ReceiptModal';
 import UserManagementModal from './UserManagementModal';
 import MonthlyReport from './MonthlyReport';
 import HelpTooltip from './HelpTooltip';
@@ -31,6 +30,9 @@ import SettingsModal from './SettingsModal';
 import NoticeModal from './NoticeModal';
 import ControllerManagementModal from './ControllerManagementModal';
 import WhatsAppReminderModal from './WhatsAppReminderModal';
+import LineManager from './LineManager';
+import ClassPromoManager from './ClassPromoManager';
+import { fetchLines, saveLine, deleteLine } from '../services/firestoreService';
 
 export default function Dashboard({ user, onLogout }) {
   const [students, setStudents] = useState([]);
@@ -43,13 +45,13 @@ export default function Dashboard({ user, onLogout }) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [showReceipt, setShowReceipt] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showNotice, setShowNotice] = useState(false);
   const [showControllerManagement, setShowControllerManagement] = useState(false);
+  const [showLineManager, setShowLineManager] = useState(false);
+  const [showClassPromoManager, setShowClassPromoManager] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [selectedPayment, setSelectedPayment] = useState(null);
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [message, setMessage] = useState('');
@@ -57,9 +59,11 @@ export default function Dashboard({ user, onLogout }) {
   const [showQueuedToast, setShowQueuedToast] = useState(false);
   const [latestSubscriptions, setLatestSubscriptions] = useState([]);
   const [showWhatsAppReminders, setShowWhatsAppReminders] = useState(false);
+  const [lines, setLines] = useState([]);
 
   useEffect(() => {
     loadData();
+    loadLines();
     checkAdminStatus();
 
     (async () => {
@@ -104,6 +108,26 @@ export default function Dashboard({ user, onLogout }) {
   async function checkAdminStatus() {
     const admin = await isAdmin();
     setIsAdminUser(admin);
+  }
+
+  async function loadLines() {
+    try {
+      const list = await fetchLines();
+      setLines(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.warn('Impossible de charger les lignes:', error);
+      setLines([]);
+    }
+  }
+
+  async function handleSaveLine(lineData) {
+    await saveLine(lineData);
+    await loadLines();
+  }
+
+  async function handleDeleteLine(lineId) {
+    await deleteLine(lineId);
+    await loadLines();
   }
 
   const normalizeWhatsAppPhone = (value) => {
@@ -227,6 +251,8 @@ export default function Dashboard({ user, onLogout }) {
         s.nom.toLowerCase().includes(term) ||
         s.prenom.toLowerCase().includes(term) ||
         s.classe.toLowerCase().includes(term) ||
+        (s.promo || '').toLowerCase().includes(term) ||
+        (s.busLine || '').toLowerCase().includes(term) ||
         s.contact.toLowerCase().includes(term)
       );
     }
@@ -263,19 +289,13 @@ export default function Dashboard({ user, onLogout }) {
 
   async function handleCreatePayment(paymentData) {
     try {
-      const newPayment = await createPayment(paymentData);
+      const newPayment = await createPayment({
+        ...paymentData,
+        busLine: selectedStudent?.busLine || null,
+      });
       await loadData();
       setShowPaymentForm(false);
       setSelectedStudent(null);
-      
-      // Générer et afficher le reçu
-      const student = students.find(s => s.id === paymentData.studentId);
-      if (student) {
-        setSelectedPayment(newPayment);
-        setSelectedStudent(student);
-        setShowReceipt(true);
-      }
-      
       return newPayment;
     } catch (error) {
       console.error('Erreur création paiement:', error);
@@ -293,32 +313,6 @@ export default function Dashboard({ user, onLogout }) {
     } catch (error) {
       console.error('Erreur suppression étudiant:', error);
       alert('Erreur lors de la suppression');
-    }
-  }
-
-  function handleViewReceipt(payment) {
-    const student = students.find(s => s.id === payment.studentId);
-    if (student) {
-      setSelectedPayment(payment);
-      setSelectedStudent(student);
-      setShowReceipt(true);
-    }
-  }
-
-  function handleSendReceiptWhatsApp(payment) {
-    const student = students.find(s => s.id === payment.studentId);
-    if (student && student.contact) {
-      const message = generateReceiptWhatsAppMessage({ student, payment });
-      openWhatsAppWithMessage(student.contact, message);
-    } else {
-      alert('Contact manquant pour cet étudiant');
-    }
-  }
-
-  function handleDownloadReceiptPDF(payment) {
-    const student = students.find(s => s.id === payment.studentId);
-    if (student) {
-      generateReceiptPDF({ student, payment });
     }
   }
 
@@ -588,17 +582,32 @@ export default function Dashboard({ user, onLogout }) {
       {/* Header */}
       <header className="glass-panel top-nav">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-green-500 bg-clip-text text-transparent brand-title">
-                EMSP Allons — Back-office
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.nom}</p>
-                <p className="text-xs text-gray-500">{user.role === 'admin' ? 'Administrateur' : 'Éducateur'}</p>
+          <div className="top-nav__layout">
+            <div className="top-nav__row">
+              <div className="top-nav__brand">
+                <div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-green-500 bg-clip-text text-transparent brand-title">
+                    EMSP Allons
+                  </h1>
+                  <p className="text-xs uppercase tracking-[0.28em] text-gray-500">Back-office</p>
+                </div>
               </div>
+              <div className="top-nav__user">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{user.nom}</p>
+                  <p className="text-xs text-gray-500">{user.role === 'admin' ? 'Administrateur' : 'Éducateur'}</p>
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="nav-action nav-action--danger text-sm font-medium"
+                >
+                  <LogOut className="w-4 h-4 inline mr-2" />
+                  Déconnexion
+                </button>
+              </div>
+            </div>
+
+            <div className="top-nav__actions">
               <button
                 onClick={() => setShowControllerManagement(true)}
                 className="nav-action text-sm font-medium"
@@ -606,6 +615,22 @@ export default function Dashboard({ user, onLogout }) {
               >
                 <ShieldCheck className="w-4 h-4 inline mr-2" />
                 Contrôleurs
+              </button>
+              <button
+                onClick={() => setShowLineManager(true)}
+                className="nav-action text-sm font-medium"
+                title="Gérer les lignes"
+              >
+                <Bus className="w-4 h-4 inline mr-2" />
+                Lignes
+              </button>
+              <button
+                onClick={() => setShowClassPromoManager(true)}
+                className="nav-action text-sm font-medium"
+                title="Gérer classes et promos"
+              >
+                <GraduationCap className="w-4 h-4 inline mr-2" />
+                Classes & Promos
               </button>
               <button
                 onClick={() => setShowNotice(true)}
@@ -706,14 +731,6 @@ export default function Dashboard({ user, onLogout }) {
                   🔁 Synchronisation demandée
                 </div>
               )}
-
-              <button
-                onClick={onLogout}
-                className="nav-action nav-action--danger text-sm font-medium"
-              >
-                <LogOut className="w-4 h-4 inline mr-2" />
-                Déconnexion
-              </button>
             </div>
           </div>
         </div>
@@ -791,6 +808,7 @@ export default function Dashboard({ user, onLogout }) {
           <StudentsView
             students={filteredStudents}
             payments={payments}
+            lines={lines}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             statusFilter={statusFilter}
@@ -805,9 +823,6 @@ export default function Dashboard({ user, onLogout }) {
               setSelectedStudent(student);
               setShowPaymentForm(true);
             }}
-            onViewReceipt={handleViewReceipt}
-            onSendReceipt={handleSendReceiptWhatsApp}
-            onDownloadReceipt={handleDownloadReceiptPDF}
             onExportStudents={isAdminUser ? handleExportStudents : undefined}
             onExportPayments={isAdminUser ? handleExportPayments : undefined}
             onDownloadQR={handleDownloadQRCard}
@@ -853,20 +868,6 @@ export default function Dashboard({ user, onLogout }) {
         />
       )}
 
-      {showReceipt && selectedStudent && selectedPayment && (
-        <ReceiptModal
-          student={selectedStudent}
-          payment={selectedPayment}
-          onClose={() => {
-            setShowReceipt(false);
-            setSelectedPayment(null);
-            setSelectedStudent(null);
-          }}
-          onSendWhatsApp={() => handleSendReceiptWhatsApp(selectedPayment)}
-          onDownloadPDF={() => handleDownloadReceiptPDF(selectedPayment)}
-        />
-      )}
-
       {showUserManagement && isAdminUser && (
         <UserManagementModal
           onClose={() => setShowUserManagement(false)}
@@ -891,6 +892,21 @@ export default function Dashboard({ user, onLogout }) {
       {showControllerManagement && (
         <ControllerManagementModal
           onClose={() => setShowControllerManagement(false)}
+        />
+      )}
+
+      {showLineManager && (
+        <LineManager
+          lines={lines}
+          onSave={handleSaveLine}
+          onDelete={handleDeleteLine}
+          onClose={() => setShowLineManager(false)}
+        />
+      )}
+
+      {showClassPromoManager && (
+        <ClassPromoManager
+          onClose={() => setShowClassPromoManager(false)}
         />
       )}
 
@@ -1055,6 +1071,7 @@ function AlertsView({ students, payments, onAddPayment }) {
 function StudentsView({
   students,
   payments,
+  lines = [],
   searchTerm,
   onSearchChange,
   statusFilter,
@@ -1063,14 +1080,15 @@ function StudentsView({
   onEditStudent,
   onDeleteStudent,
   onAddPayment,
-  onViewReceipt,
-  onSendReceipt,
-  onDownloadReceipt,
   onExportStudents,
   onExportPayments,
   onDownloadQR,
   onSendQrWhatsApp,
 }) {
+  const lineLookup = useMemo(() => {
+    return Object.fromEntries((lines || []).map(line => [line.id, line]));
+  }, [lines]);
+
   return (
     <div className="space-y-6">
       {/* Filtres */}
@@ -1142,6 +1160,9 @@ function StudentsView({
                 Classe
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ligne
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Statut
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1159,15 +1180,12 @@ function StudentsView({
                   key={student.id}
                   student={student}
                   status={status}
-                  payments={studentPayments}
                   onEdit={onEditStudent}
                   onDelete={onDeleteStudent}
                   onAddPayment={onAddPayment}
-                  onViewReceipt={onViewReceipt}
-                  onSendReceipt={onSendReceipt}
-                  onDownloadReceipt={onDownloadReceipt}
                   onDownloadQR={onDownloadQR}
                   onSendQrWhatsApp={onSendQrWhatsApp}
+                  lineName={lineLookup[student.busLine]?.name || student.busLine}
                 />
               );
             })}
@@ -1181,15 +1199,12 @@ function StudentsView({
 function StudentRow({
   student,
   status,
-  payments,
   onEdit,
   onDelete,
   onAddPayment,
-  onViewReceipt,
-  onSendReceipt,
-  onDownloadReceipt,
   onDownloadQR,
   onSendQrWhatsApp,
+  lineName,
 }) {
   const statusColors = {
     ACTIF: 'bg-green-100 text-green-800',
@@ -1220,7 +1235,11 @@ function StudentRow({
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {student.classe || 'N/A'}
+        <div>{student.classe || 'N/A'}</div>
+        {student.promo && <div className="text-xs text-gray-400">{student.promo}</div>}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {lineName || 'N/A'}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status.statut]}`}>
@@ -1259,24 +1278,6 @@ function StudentRow({
             >
               <MessageCircle className="w-4 h-4" />
             </button>
-          )}
-          {payments.length > 0 && (
-            <>
-              <button
-                onClick={() => onViewReceipt(payments[0])}
-                className="text-blue-600 hover:text-blue-900"
-                title="Voir le reçu"
-              >
-                <FileText className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onSendReceipt(payments[0])}
-                className="text-green-600 hover:text-green-900"
-                title="Envoyer par WhatsApp"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </>
           )}
           <button
             onClick={() => onEdit(student)}

@@ -164,6 +164,11 @@
    - ✅ Historique système (systemHistory)
    - ✅ Paramètres globaux (settings)
 
+
+3. **Mode hors-ligne (contrôleur)**
+   - ✅ Cache local (LocalStorage/IndexedDB) de la liste des étudiants de la ligne assignée
+   - ✅ Lecture locale si le réseau est indisponible
+
 ## 🔒 Sécurité
 
 ### ✅ Règles Implémentées
@@ -190,7 +195,20 @@
 2. **Logs de scan**
    - ✅ Enregistrement de tous les scans
    - ✅ Informations : étudiant, contrôleur, date/heure, statut
-   - ✅ Protection contre les scans multiples (1 heure)
+   - ✅ Alerte si scan < 1 heure (validation manuelle possible par le contrôleur)
+   - ✅ Validation manuelle journalisée (raison: doublon)
+
+
+## 🧮 Optimisations Supabase (SQL)
+
+### ✅ Règles Implémentées
+
+1. **Vue `v_student_status`**
+   - ✅ Calcul du statut côté Postgres (up_to_date / late / expired / out_of_service)
+   - ✅ Même vérité pour éducatrice et contrôleur
+
+2. **Triggers SQL sur `payments`**
+   - ✅ Journalisation automatique dans `system_history` (insert/update/delete)
 
 ## 🎯 Règles Spécifiques par Rôle
 

@@ -15,6 +15,86 @@ import { recordResubscription } from './subscriptionService';
 const STUDENTS_KEY = 'students';
 const PAYMENTS_KEY = 'payments';
 
+function splitFullName(fullName) {
+  if (!fullName) return { nom: '', prenom: '' };
+  const parts = String(fullName).trim().split(/\s+/);
+  if (parts.length <= 1) return { nom: parts[0] || '', prenom: '' };
+  return { nom: parts[0], prenom: parts.slice(1).join(' ') };
+}
+
+function normalizePhone(value) {
+  if (!value) return null;
+  const cleaned = String(value).replace(/[^0-9+]/g, '');
+  if (!cleaned) return null;
+  return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+}
+
+function normalizeStudentRow(row) {
+  if (!row) return null;
+  const hasNames = row.last_name || row.first_name;
+  const fallback = splitFullName(row.name || '');
+  return {
+    id: row.id,
+    nom: row.last_name || (hasNames ? '' : fallback.nom) || row.name || '',
+    prenom: row.first_name || (hasNames ? '' : fallback.prenom) || '',
+    promo: row.promo || row.niveau || '',
+    classe: row.class || row.class_group || '',
+    busLine: row.bus_line || row.busLine || '',
+    pickupPoint: row.pickup_point || row.pickupPoint || '',
+    guardian: row.guardian || row.tuteur || '',
+    contact: row.phone || row.email || '',
+    email: row.email || '',
+    dateCreation: row.created_at,
+    status: row.status || 'active',
+    notes: row.notes || '',
+    raw: row,
+  };
+}
+
+function computeGraceEnd(endIso) {
+  if (!endIso) return null;
+  const date = new Date(endIso);
+  if (Number.isNaN(date.getTime())) return null;
+  const grace = new Date(date);
+  grace.setDate(grace.getDate() + PAYMENT_CONFIG.GRACE_PERIOD_DAYS);
+  grace.setHours(23, 59, 59, 999);
+  return grace.toISOString();
+}
+
+function computePeriodEnd(startIso, numberOfMonths) {
+  if (!startIso) return null;
+  const start = new Date(startIso);
+  if (Number.isNaN(start.getTime())) return null;
+  const months = Math.max(1, Number(numberOfMonths) || 1);
+  const end = new Date(start.getFullYear(), start.getMonth() + months, 0, 23, 59, 59, 999);
+  return end.toISOString();
+}
+
+function normalizePaymentRow(row) {
+  if (!row) return null;
+  const numberOfMonths = row.number_of_months || row.nombre_mois || row.nombreMois || 1;
+  const totalAmount = row.total_amount || row.montant_total || row.amount || 0;
+  const monthlyFee = row.monthly_fee || row.montant_mensuel || (numberOfMonths ? totalAmount / Number(numberOfMonths) : 0);
+  const periodStart = row.period_start || row.mois_debut || (row.period_date ? new Date(row.period_date).toISOString() : null);
+  const periodEnd = row.period_end || row.mois_fin || computePeriodEnd(periodStart, numberOfMonths);
+  const graceEnd = row.grace_end || row.date_grace_fin || row.dateGraceFin || computeGraceEnd(periodEnd);
+
+  return {
+    id: row.id,
+    studentId: row.subscriber_id || row.student_id || row.studentId,
+    montantTotal: Number(totalAmount) || 0,
+    montantMensuel: Number(monthlyFee) || 0,
+    nombreMois: Number(numberOfMonths) || 1,
+    moisDebut: periodStart,
+    moisFin: periodEnd,
+    dateGraceFin: graceEnd,
+    dateEnregistrement: row.created_at || row.date_enregistrement || row.dateEnregistrement,
+    method: row.method || row.payment_method || row.paymentMethod || null,
+    description: row.description || null,
+    raw: row,
+  };
+}
+
 /**
  * Structure étudiant:
  * {
@@ -81,16 +161,7 @@ export async function getAllStudents() {
   try {
     const { data, error } = await supabase.from('subscribers').select('*').order('created_at', { ascending: false });
     if (error) throw error;
-    return (data || []).map(d => ({
-      id: d.id,
-      nom: d.name,
-      prenom: '',
-      classe: d.class || '',
-      contact: d.phone || d.email || '',
-      dateCreation: d.created_at,
-      status: d.status || 'active',
-      raw: d,
-    }));
+    return (data || []).map(normalizeStudentRow).filter(Boolean);
   } catch (error) {
     console.error('Erreur getAllStudents (Supabase):', error);
     return [];
@@ -105,16 +176,7 @@ export async function getStudentById(id) {
     const { data, error } = await supabase.from('subscribers').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    return {
-      id: data.id,
-      nom: data.name,
-      prenom: '',
-      classe: data.class || '',
-      contact: data.phone || data.email || '',
-      dateCreation: data.created_at,
-      status: data.status || 'active',
-      raw: data,
-    };
+    return normalizeStudentRow(data);
   } catch (error) {
     console.error('Erreur getStudentById (Supabase):', error);
     return null;
@@ -130,10 +192,20 @@ export async function createStudent(studentData) {
     throw new Error('Vous devez être connecté');
   }
 
+  const lastName = (studentData.nom || '').trim();
+  const firstName = (studentData.prenom || '').trim();
+  const fullName = [lastName, firstName].filter(Boolean).join(' ').trim();
+
   const newStudent = {
-    name: studentData.nom.trim(),
-    class: studentData.classe?.trim() || '',
-    phone: studentData.contact?.trim() || null,
+    name: fullName || lastName || firstName || 'Étudiant',
+    first_name: firstName || null,
+    last_name: lastName || null,
+    promo: studentData.promo?.trim() || studentData.niveau?.trim() || null,
+    class: studentData.classe?.trim() || studentData.classGroup?.trim() || '',
+    bus_line: studentData.busLine || null,
+    pickup_point: studentData.pickupPoint?.trim() || null,
+    guardian: studentData.guardian?.trim() || null,
+    phone: normalizePhone(studentData.contact) || studentData.contact?.trim() || null,
     email: studentData.email?.trim() || null,
     notes: studentData.notes?.trim() || null,
     status: 'active',
@@ -162,20 +234,17 @@ export async function createStudent(studentData) {
       details: {
         studentName: `${newStudent.name}`,
         classe: newStudent.class,
+        promo: newStudent.promo,
+        busLine: newStudent.bus_line,
       },
     });
 
-    return {
-      id: created.id,
-      nom: created.name,
-      prenom: '',
-      classe: created.class,
-      contact: created.phone || created.email || '',
-      dateCreation: created.created_at,
-      raw: created,
-    };
+    return normalizeStudentRow(created);
   } catch (error) {
     console.error('Erreur createStudent (Supabase):', error);
+    if (String(error?.message || '').includes('column')) {
+      throw new Error('Schéma Supabase incomplet: ajoutez les colonnes pour busLine, promo, classe, etc. (voir instructions de mise à jour).');
+    }
     throw error;
   }
 }
@@ -190,10 +259,19 @@ export async function updateStudent(studentId, updates) {
   }
 
   const updateData = {};
-  if (updates.nom !== undefined) updateData.name = updates.nom.trim();
-  if (updates.prenom !== undefined) updateData.name = (updateData.name ? `${updateData.name} ${updates.prenom.trim()}` : updates.prenom.trim());
-  if (updates.classe !== undefined) updateData.class = updates.classe.trim();
-  if (updates.contact !== undefined) updateData.phone = updates.contact.trim();
+  if (updates.nom !== undefined) updateData.last_name = updates.nom.trim();
+  if (updates.prenom !== undefined) updateData.first_name = updates.prenom.trim();
+  if (updates.nom !== undefined || updates.prenom !== undefined) {
+    const name = `${updates.nom || ''} ${updates.prenom || ''}`.trim();
+    if (name) updateData.name = name;
+  }
+  if (updates.promo !== undefined || updates.niveau !== undefined) updateData.promo = (updates.promo || updates.niveau || '').trim();
+  if (updates.classe !== undefined || updates.classGroup !== undefined) updateData.class = (updates.classe || updates.classGroup || '').trim();
+  if (updates.busLine !== undefined) updateData.bus_line = updates.busLine || null;
+  if (updates.pickupPoint !== undefined) updateData.pickup_point = updates.pickupPoint?.trim() || null;
+  if (updates.guardian !== undefined) updateData.guardian = updates.guardian?.trim() || null;
+  if (updates.contact !== undefined) updateData.phone = normalizePhone(updates.contact) || updates.contact.trim();
+  if (updates.email !== undefined) updateData.email = updates.email.trim();
   if (updates.notes !== undefined) updateData.notes = updates.notes.trim();
 
   try {
@@ -215,6 +293,9 @@ export async function updateStudent(studentId, updates) {
     return data;
   } catch (error) {
     console.error('Erreur updateStudent (Supabase):', error);
+    if (String(error?.message || '').includes('column')) {
+      throw new Error('Schéma Supabase incomplet: ajoutez les colonnes pour busLine, promo, classe, etc. (voir instructions de mise à jour).');
+    }
     throw error;
   }
 }
@@ -242,7 +323,7 @@ export async function getAllPayments() {
   try {
     const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(normalizePaymentRow).filter(Boolean);
   } catch (error) {
     console.error('Erreur getAllPayments (Supabase):', error);
     return [];
@@ -256,7 +337,7 @@ export async function getPaymentsByStudentId(studentId) {
   try {
     const { data, error } = await supabase.from('payments').select('*').eq('subscriber_id', studentId).order('created_at', { ascending: false });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(normalizePaymentRow).filter(Boolean);
   } catch (error) {
     console.error('Erreur getPaymentsByStudentId (Supabase):', error);
     return [];
@@ -276,14 +357,32 @@ export async function createPayment(paymentData) {
   const student = await getStudentById(paymentData.studentId);
   if (!student) throw new Error('Étudiant introuvable');
 
-  const { moisDebut, moisFin, dateGraceFin } = calculateSubscriptionDates(paymentData.dateEnregistrement || new Date().toISOString(), paymentData.nombreMois);
+  const plan = paymentData.plan || null;
+  const nombreMois = Number(paymentData.nombreMois || plan?.numberOfMonths || 1);
+  const montantMensuel = Number(paymentData.montantMensuel || plan?.monthlyFee || PAYMENT_CONFIG.DEFAULT_MONTHLY_FEE);
+  const montantTotal = Number(paymentData.montantTotal || plan?.totalAmount || (montantMensuel * nombreMois));
+  const dateEnregistrement = paymentData.dateEnregistrement || new Date().toISOString();
+  const { moisDebut, moisFin, dateGraceFin } = calculateSubscriptionDates(dateEnregistrement, nombreMois);
+  const periodStart = plan?.periodStart ? new Date(plan.periodStart).toISOString() : moisDebut;
+  const periodEnd = plan?.periodEnd ? new Date(plan.periodEnd).toISOString() : moisFin;
+  const graceEnd = plan?.graceEnd ? new Date(plan.graceEnd).toISOString() : dateGraceFin;
+
+  const resolvedBusLine = paymentData.busLine || student.busLine || student?.raw?.bus_line || null;
 
   const paymentRow = {
     subscriber_id: paymentData.studentId,
-    amount: paymentData.montantTotal || paymentData.amount || 0,
-    period_date: (paymentData.periodDate || moisDebut).slice(0, 10),
+    amount: montantTotal,
+    total_amount: montantTotal,
+    number_of_months: nombreMois,
+    monthly_fee: montantMensuel,
+    period_date: periodStart.slice(0, 10),
+    period_start: periodStart,
+    period_end: periodEnd,
+    grace_end: graceEnd,
     method: paymentData.method || paymentData.paymentMethod || null,
+    description: paymentData.description || null,
     created_by: currentUser.id,
+    bus_line: resolvedBusLine,
   };
 
   try {
@@ -294,11 +393,11 @@ export async function createPayment(paymentData) {
     try {
       await recordResubscription({
         studentId: paymentData.studentId,
-        startDate: paymentData.dateEnregistrement || new Date().toISOString(),
-        durationMonths: paymentData.nombreMois,
-        amountPaid: paymentData.montantTotal || paymentData.amount || 0,
+        startDate: dateEnregistrement,
+        durationMonths: nombreMois,
+        amountPaid: montantTotal,
         paymentMethod: paymentData.method || paymentData.paymentMethod,
-        busLine: paymentData.busLine || null,
+        busLine: resolvedBusLine,
         previousSubscriptionId: paymentData.previousSubscriptionId || null,
       }, { userId: currentUser.id, userName: currentUser.name || currentUser.nom, userEmail: currentUser.email });
     } catch (err) {
@@ -319,9 +418,12 @@ export async function createPayment(paymentData) {
     // Clear last scan cache for this student
     try { await clearLastScan(paymentData.studentId); } catch (err) { /* ignore */ }
 
-    return data;
+    return normalizePaymentRow(data);
   } catch (error) {
     console.error('Erreur createPayment (Supabase):', error);
+    if (String(error?.message || '').includes('column')) {
+      throw new Error('Schéma Supabase incomplet: ajoutez les colonnes pour les paiements (voir instructions de mise à jour).');
+    }
     throw error;
   }
 }

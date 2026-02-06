@@ -38,7 +38,6 @@ function getAdvanceMonths(student) {
 export default function StudentList({
   students,
   onSendWhatsApp,
-  onSendReceiptWhatsApp,
   onExportPass,
   onReSubscribe,
   onDelete,
@@ -229,9 +228,6 @@ export default function StudentList({
                 <button className="button" type="button" onClick={() => onSendWhatsApp?.(student)}>
                   <PhoneCall size={16} /> WhatsApp
                 </button>
-                <button className="button button--subtle" type="button" onClick={() => onSendReceiptWhatsApp?.(student)}>
-                  <PhoneCall size={16} /> Envoyer reçu
-                </button>
                 <button className="button button--subtle" type="button" onClick={() => onExportPass?.(student)}>
                   <DownloadCloud size={16} /> Pass
                 </button>
@@ -403,4 +399,3 @@ function encodeQRCodePayload(student) {
     return 'N/A';
   }
 }
-

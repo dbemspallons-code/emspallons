@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { ShieldCheck, ShieldAlert, RefreshCw } from 'lucide-react';
 import { qrCodeService } from '../services/qrCodeService';
-import { getStudentByIdFromFirestore } from '../services/firestoreSyncService';
+import { fetchStudentById, fetchStudents } from '../services/firestoreService';
 import { computePaymentStatus, PAYMENT_STATUS } from '../models/entities';
 import { fetchGlobalSettings } from '../services/firestoreService';
 import { getLastScan, setLastScan, logScan as logScanEntry } from '../services/scanService';
@@ -12,6 +12,60 @@ import { authenticateController, getControllerSession, clearControllerSession, s
 
 const SCAN_RESET_TIMEOUT = 6000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
+
+const STUDENT_CACHE_KEY = 'controller_students_cache';
+const STUDENT_CACHE_MAX = 2000;
+
+function readStudentCache() {
+  try {
+    return JSON.parse(localStorage.getItem(STUDENT_CACHE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function writeStudentCache(cache) {
+  try {
+    localStorage.setItem(STUDENT_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // ignore cache write failures
+  }
+}
+
+function cacheStudent(student) {
+  if (!student?.id) return;
+  const cache = readStudentCache();
+  cache[student.id] = { ...student, cachedAt: new Date().toISOString() };
+  const keys = Object.keys(cache);
+  if (keys.length > STUDENT_CACHE_MAX) {
+    keys.sort((a, b) => new Date(cache[a]?.cachedAt || 0) - new Date(cache[b]?.cachedAt || 0));
+    const overflow = keys.length - STUDENT_CACHE_MAX;
+    for (let i = 0; i < overflow; i += 1) {
+      delete cache[keys[i]];
+    }
+  }
+  writeStudentCache(cache);
+}
+
+function getCachedStudent(studentId) {
+  if (!studentId) return null;
+  const cache = readStudentCache();
+  return cache[studentId] || null;
+}
+
+function cacheStudentsByLine(students = [], lineId) {
+  if (!lineId || !Array.isArray(students)) return;
+  const cache = readStudentCache();
+  const nowIso = new Date().toISOString();
+  students.forEach(student => {
+    if (!student?.id) return;
+    const studentLine = student.busLine || student.bus_line || student.line || null;
+    if (studentLine && studentLine === lineId) {
+      cache[student.id] = { ...student, cachedAt: nowIso };
+    }
+  });
+  writeStudentCache(cache);
+}
 
 export default function ControllerScan() {
   const [authorized, setAuthorized] = useState(false);
@@ -24,6 +78,7 @@ export default function ControllerScan() {
   const [controllerInfo, setControllerInfo] = useState(null);
   const [queuedCount, setQueuedCount] = useState(0);
   const [showQueuedToast, setShowQueuedToast] = useState(false);
+  const [pendingDuplicate, setPendingDuplicate] = useState(null);
 
   useEffect(() => {
     loadSettings();
@@ -44,6 +99,19 @@ export default function ControllerScan() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!authorized || !controllerInfo?.assignedLineId) return;
+    (async () => {
+      try {
+        const students = await fetchStudents();
+        cacheStudentsByLine(students, controllerInfo.assignedLineId);
+      } catch (err) {
+        // ignore cache warmup errors
+      }
+    })();
+  }, [authorized, controllerInfo]);
+
 
   // Écouter les messages du service worker pour mettre à jour le badge de file d'attente
   useEffect(() => {
@@ -205,7 +273,18 @@ export default function ControllerScan() {
     }
 
     // PRIORITÉ 2 : Récupération étudiant
-    const student = await getStudentByIdFromFirestore(qrData.id);
+    let student = null;
+    try {
+      student = await fetchStudentById(qrData.id);
+    } catch (err) {
+      // ignore fetch error, fallback to cache
+    }
+    if (!student) {
+      student = getCachedStudent(qrData.id);
+    }
+    if (student) {
+      cacheStudent(student);
+    }
     if (!student) {
       // Enregistrer le scan étudiant introuvable
       const resNotFound = await logScanEntry(qrData.id, {
@@ -228,28 +307,32 @@ export default function ControllerScan() {
       });
       return;
     }
-
-    // PRIORITÉ 3 : Vérification DOUBLONS (AVANT ligne)
+    // PRIORITE 3 : Verification DOUBLONS (AVANT ligne)
     const lastScan = await getLastScan(student.id);
     if (lastScan && now - lastScan.timestamp < ONE_HOUR_MS) {
       const minutesAgo = Math.floor((now - lastScan.timestamp) / 60000);
       const minutesLeft = Math.ceil((ONE_HOUR_MS - (now - lastScan.timestamp)) / 60000);
-      
-      // ✅ OPTION A : NE PAS ENREGISTRER les doublons (juste afficher l'erreur)
-      // Ne pas appeler logScanEntry() pour les doublons
-      
+
+      setPendingDuplicate({ student, minutesAgo, minutesLeft, lastScan });
       showResult({
         success: false,
         status: 'DUPLICATE',
         student,
-        message: `🚫 Déjà scanné il y a ${minutesAgo} min`,
+        message: `Alerte: deja scanne il y a ${minutesAgo} min`,
         nextScanIn: minutesLeft,
         color: '#F97316',
+        allowOverride: true,
+        autoReset: false,
       });
       return;
     }
+    await finalizeScan(student, { scanTimestamp: now });
+  }
 
-    // PRIORITÉ 4 : Vérification LIGNE
+  async function finalizeScan(student, { override = false, scanTimestamp = Date.now(), duplicateInfo = null } = {}) {
+    const now = scanTimestamp;
+
+    // PRIORITE 4 : Verification LIGNE
     if (controllerInfo?.assignedLineId) {
       const { fetchLines } = await import('../services/firestoreService');
       const lines = await fetchLines();
@@ -260,36 +343,34 @@ export default function ControllerScan() {
         const studentLineName = lines.find(l => l.id === studentLine)?.name || studentLine;
         const controllerLineName = controllerLine?.name || controllerInfo.assignedLineId;
 
-        // ✅ Enregistrer avec statut WRONG_LINE (pas ERROR)
         const resWrongLine = await logScanEntry(student.id, {
-      status: 'WRONG_LINE',
-      paymentStatus: student.paymentStatus || 'ERROR',
-      controllerId: controllerInfo?.id || null,
-      controllerName: controllerInfo?.nom || null,
-      reason: `Tentative de scan d'un étudiant d'une autre ligne (${studentLineName} vs ${controllerLineName})`,
-    });
-    if (resWrongLine && resWrongLine.offline) {
-      setQueuedCount(c => c + 1);
-      setShowQueuedToast(true);
-      setTimeout(() => setShowQueuedToast(false), 3500);
-    }
+          status: 'WRONG_LINE',
+          paymentStatus: student.paymentStatus || 'ERROR',
+          controllerId: controllerInfo?.id || null,
+          controllerName: controllerInfo?.nom || null,
+          reason: `Tentative de scan d'un etudiant d'une autre ligne (${studentLineName} vs ${controllerLineName})`,
+        });
+        if (resWrongLine && resWrongLine.offline) {
+          setQueuedCount(c => c + 1);
+          setShowQueuedToast(true);
+          setTimeout(() => setShowQueuedToast(false), 3500);
+        }
 
         showResult({
           success: false,
           status: 'WRONG_LINE',
           student,
-          message: `❌ Cet abonné appartient à la ligne "${studentLineName}". Vous êtes assigné à la ligne "${controllerLineName}".`,
+          message: `Acces refuse : ligne \"${studentLineName}\". Vous etes assigne a \"${controllerLineName}\".`,
           color: '#EF4444',
         });
         return;
       }
     }
 
-    // Calculer le statut de paiement directement depuis Firestore
     const paymentStatusValue = await computePaymentStatus(student);
     let paymentStatus;
     let displayResult;
-    
+
     if (paymentStatusValue === PAYMENT_STATUS.UP_TO_DATE) {
       paymentStatus = 'PAID';
       const expiresAt = student.subscription?.expiresAt ? new Date(student.subscription.expiresAt) : null;
@@ -297,7 +378,7 @@ export default function ControllerScan() {
         success: true,
         status: 'PAID',
         student,
-        message: '✅ Accès autorisé',
+        message: 'Acces autorise',
         color: '#10B981',
         validUntil: expiresAt?.toISOString() || null,
       };
@@ -313,7 +394,7 @@ export default function ControllerScan() {
         success: true,
         status: 'GRACE',
         student,
-        message: `⚠️ Paiement en retard (${daysLeft} jour(s) restants)`,
+        message: `Paiement en retard (${daysLeft} jour(s) restants)`,
         color: '#F59E0B',
         validUntil: graceEnd.toISOString(),
         warning: true,
@@ -326,10 +407,14 @@ export default function ControllerScan() {
         success: false,
         status: 'EXPIRED',
         student,
-        message: '❌ Paiement expiré - Accès refusé',
+        message: 'Paiement expire - acces refuse',
         color: '#EF4444',
         expiredSince: expiresAt?.toISOString() || null,
       };
+    }
+
+    if (override) {
+      displayResult.message = `${displayResult.message} (validation manuelle)`;
     }
 
     const resSuccess = await logScanEntry(student.id, {
@@ -337,6 +422,7 @@ export default function ControllerScan() {
       paymentStatus,
       controllerId: controllerInfo?.id || null,
       controllerName: controllerInfo?.nom || null,
+      reason: override ? `Validation manuelle apres doublon (${duplicateInfo?.minutesAgo ?? '?'} min)` : null,
     });
     if (resSuccess && resSuccess.offline) {
       setQueuedCount(c => c + 1);
@@ -345,6 +431,23 @@ export default function ControllerScan() {
     }
 
     showResult(displayResult);
+  }
+
+  async function handleOverrideDuplicate() {
+    if (!pendingDuplicate?.student) return;
+    const snapshot = pendingDuplicate;
+    setPendingDuplicate(null);
+    await finalizeScan(snapshot.student, {
+      override: true,
+      scanTimestamp: Date.now(),
+      duplicateInfo: snapshot,
+    });
+  }
+
+  function handleCancelDuplicate() {
+    setPendingDuplicate(null);
+    setResult(null);
+    startScanner();
   }
 
   function handleScanError() {
@@ -359,6 +462,9 @@ export default function ControllerScan() {
       } else {
         navigator.vibrate([100, 50, 100]);
       }
+    }
+    if (data.autoReset === false) {
+      return;
     }
     setTimeout(() => {
       setResult(null);
@@ -411,7 +517,7 @@ export default function ControllerScan() {
     }
 
     if (result) {
-      return <ScanResult result={result} />;
+      return <ScanResult result={result} onOverrideDuplicate={handleOverrideDuplicate} onCancelDuplicate={handleCancelDuplicate} />;
     }
 
     return (
@@ -482,7 +588,7 @@ export default function ControllerScan() {
   return content;
 }
 
-function ScanResult({ result }) {
+function ScanResult({ result, onOverrideDuplicate, onCancelDuplicate }) {
   return (
     <motion.div
       initial={{ scale: 0.98, opacity: 0 }}
@@ -495,22 +601,35 @@ function ScanResult({ result }) {
         {result.status === 'PAID' && '✅'}
         {result.status === 'GRACE' && '⚠️'}
         {result.status === 'EXPIRED' && '❌'}
-        {result.status === 'DUPLICATE' && '🚫'}
-        {result.status === 'INVALID' && '❌'}
-        {result.status === 'NOT_FOUND' && '❌'}
-        {result.status === 'WRONG_LINE' && '🚫'}
       </div>
-
-      {result.student && (
-        <>
-          <h2 className="text-4xl font-bold mt-6">{result.student.nom} {result.student.prenom}</h2>
-          <p className="text-2xl mt-2">🎓 {result.student.classe || 'Classe inconnue'}</p>
-        </>
-      )}
 
       <div className="mt-6 bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4 text-center">
         <p className="text-2xl font-semibold">{result.message}</p>
       </div>
+
+      {result.status === 'DUPLICATE' && (
+        <div className="mt-6 bg-white/90 text-orange-600 rounded-xl px-6 py-4 text-center max-w-md">
+          <p>Prochain scan possible dans {result.nextScanIn} minute(s).</p>
+          {result.allowOverride ? (
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={onOverrideDuplicate}
+                className="px-4 py-2 rounded-lg bg-orange-500 text-white font-semibold shadow hover:bg-orange-600"
+              >
+                Valider quand meme
+              </button>
+              <button
+                type="button"
+                onClick={onCancelDuplicate}
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+              >
+                Reprendre le scan
+              </button>
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {result.status === 'GRACE' && (
         <div className="mt-6 bg-yellow-100/90 text-yellow-900 rounded-xl px-6 py-4 text-center max-w-md">
@@ -518,11 +637,6 @@ function ScanResult({ result }) {
         </div>
       )}
 
-      {result.status === 'DUPLICATE' && (
-        <div className="mt-6 bg-white/90 text-orange-600 rounded-xl px-6 py-4 text-center max-w-md">
-          Prochain scan possible dans {result.nextScanIn} minute(s).
-        </div>
-      )}
     </motion.div>
   );
 }
