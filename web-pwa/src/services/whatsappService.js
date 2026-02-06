@@ -73,6 +73,16 @@ export function openWhatsAppWithImage(phone, text, imageDataUrl) {
   
   // Ouvrir WhatsApp avec le message
   const whatsappUrl = `whatsapp://send?phone=${formattedPhone}&text=${encodedMessage}`;
+  const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodedMessage}`;
+
+  // Desktop: ouvrir WhatsApp Web en fallback
+  const isDesktop = typeof navigator !== 'undefined' && !/Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+  if (isDesktop) {
+    try {
+      window.open(webUrl, '_blank');
+    } catch {}
+  }
+
   window.location.href = whatsappUrl;
   
   // Afficher une instruction pour l'utilisateur après un court délai
@@ -91,8 +101,9 @@ export function openWhatsAppWithImage(phone, text, imageDataUrl) {
   
   // Fallback WhatsApp Web si WhatsApp mobile n'est pas installé
   setTimeout(() => {
-    const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodedMessage}`;
-    // Ne pas afficher de confirmation automatique, laisser l'utilisateur décider
+    try {
+      window.open(webUrl, '_blank');
+    } catch {}
   }, 2000);
 }
 

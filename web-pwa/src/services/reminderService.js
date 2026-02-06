@@ -234,4 +234,42 @@ export async function fetchRemindersLog(filters = {}) {
   }
 }
 
+/**
+ * Journaliser un rappel WhatsApp (Supabase)
+ * Utilise ce helper pour tracer les envois "0€" (ouverture WhatsApp).
+ */
+export async function logReminderSend({
+  studentId,
+  studentName,
+  studentContact,
+  reminderType,
+  message,
+  status = 'sent',
+  sendResult = 'whatsapp_opened',
+  error = null,
+  channel = REMINDER_CHANNELS.WHATSAPP,
+  createdBy = null,
+} = {}) {
+  try {
+    const row = {
+      student_id: studentId || null,
+      student_name: studentName || '',
+      student_contact: studentContact || '',
+      reminder_type: reminderType || 'manual',
+      channel,
+      message: message || '',
+      status,
+      send_result: sendResult,
+      error,
+      created_by: createdBy,
+      sent_at: new Date().toISOString(),
+    };
+    const { error: insertErr } = await supabase.from('reminders_log').insert([row]);
+    if (insertErr) throw insertErr;
+    return { success: true };
+  } catch (err) {
+    console.warn('logReminderSend failed', err);
+    return { success: false, error: err.message };
+  }
+}
 

@@ -80,4 +80,35 @@ export async function recordResubscription(resubscriptionData, options = {}) {
   }
 }
 
+/**
+ * Récupère la dernière souscription par étudiant (Supabase)
+ * Retourne un tableau normalisé { studentId, startDate, expiresAt, durationMonths, amountPaid, busLine }
+ */
+export async function fetchLatestSubscriptions() {
+  try {
+    const { data, error } = await supabase
+      .from('subscription_history')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    const map = new Map();
+    (data || []).forEach((row) => {
+      if (!map.has(row.student_id)) {
+        map.set(row.student_id, {
+          studentId: row.student_id,
+          startDate: row.start_date,
+          expiresAt: row.expires_at,
+          durationMonths: row.duration_months,
+          amountPaid: row.amount_paid,
+          busLine: row.bus_line,
+          createdAt: row.created_at,
+        });
+      }
+    });
+    return Array.from(map.values());
+  } catch (error) {
+    console.error('Erreur fetchLatestSubscriptions (Supabase):', error);
+    return [];
+  }
+}
 

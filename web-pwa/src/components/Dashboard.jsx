@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   LogOut, Users, UserPlus, DollarSign, Calendar, AlertCircle, 
   Search, Filter, Download, Upload, Settings, HelpCircle, 
-  Lock, Unlock, Plus, Edit2, Trash2, FileText, Send, 
+  Lock, Unlock, Plus, Edit2, Trash2, FileText, Send, MessageCircle,
   BarChart3, TrendingUp, Clock, CheckCircle2, XCircle, History, QrCode, ShieldCheck
 } from 'lucide-react';
 import { logout, isAdmin } from '../services/authService';
@@ -14,7 +14,9 @@ import {
   replaceAllData
 } from '../services/studentService';
 import { generateReceiptPDF, generateReceiptHTML, generateReceiptWhatsAppMessage } from '../services/receiptService';
-import { openWhatsAppWithMessage } from '../services/whatsappService';
+import { openWhatsAppWithMessage, openWhatsAppWithImage } from '../services/whatsappService';
+import { logReminderSend } from '../services/reminderService';
+import { fetchLatestSubscriptions } from '../services/subscriptionService';
 import { exportStudentsCSV, exportPaymentsCSV, exportAllJSON, importJSON, importStudentsCSV } from '../services/exportService';
 import { clearStudentsAndPayments } from '../services/studentService';
 import { qrCodeService } from '../services/qrCodeService';
@@ -28,6 +30,7 @@ import HistoryViewer from './HistoryViewer';
 import SettingsModal from './SettingsModal';
 import NoticeModal from './NoticeModal';
 import ControllerManagementModal from './ControllerManagementModal';
+import WhatsAppReminderModal from './WhatsAppReminderModal';
 
 export default function Dashboard({ user, onLogout }) {
   const [students, setStudents] = useState([]);
@@ -52,6 +55,8 @@ export default function Dashboard({ user, onLogout }) {
   const [message, setMessage] = useState('');
   const [queuedCount, setQueuedCount] = useState(0);
   const [showQueuedToast, setShowQueuedToast] = useState(false);
+  const [latestSubscriptions, setLatestSubscriptions] = useState([]);
+  const [showWhatsAppReminders, setShowWhatsAppReminders] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -81,12 +86,14 @@ export default function Dashboard({ user, onLogout }) {
   async function loadData() {
     setLoading(true);
     try {
-      const [studentsData, paymentsData] = await Promise.all([
+      const [studentsData, paymentsData, subscriptionsData] = await Promise.all([
         getAllStudents(),
         getAllPayments(),
+        fetchLatestSubscriptions(),
       ]);
       setStudents(studentsData);
       setPayments(paymentsData);
+      setLatestSubscriptions(subscriptionsData);
     } catch (error) {
       console.error('Erreur chargement données:', error);
     } finally {
@@ -98,6 +105,93 @@ export default function Dashboard({ user, onLogout }) {
     const admin = await isAdmin();
     setIsAdminUser(admin);
   }
+
+  const normalizeWhatsAppPhone = (value) => {
+    if (!value) return null;
+    const str = String(value).trim();
+    if (!str || str.includes('@')) return null;
+    const cleaned = str.replace(/[^0-9+]/g, '');
+    if (cleaned.length < 8) return null;
+    return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+  };
+
+  function buildReminderMessage({ studentName, expiresAtLabel, daysRemaining, type }) {
+    if (type === 'expiring_today') {
+      return `Bonjour ${studentName},\n\nVotre abonnement expire aujourd'hui (${expiresAtLabel}).\n\nMerci de renouveler pour continuer à bénéficier du service.\n\nEMSP - Transport scolaire`;
+    }
+    if (type === 'expiring_soon') {
+      return `Bonjour ${studentName},\n\nVotre abonnement expire dans ${daysRemaining} jour(s) (${expiresAtLabel}).\n\nMerci de renouveler pour éviter toute interruption.\n\nEMSP - Transport scolaire`;
+    }
+    return `Bonjour ${studentName},\n\nVotre abonnement a expiré le ${expiresAtLabel}.\n\nVeuillez régulariser votre situation pour réactiver l'accès.\n\nEMSP - Transport scolaire`;
+  }
+
+  const latestSubscriptionByStudent = useMemo(() => {
+    const map = {};
+    latestSubscriptions.forEach((entry) => {
+      if (entry?.studentId) {
+        map[entry.studentId] = entry;
+      }
+    });
+    return map;
+  }, [latestSubscriptions]);
+
+  const remindersQueue = useMemo(() => {
+    const now = new Date();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    return students
+      .map((student) => {
+        const subscription = latestSubscriptionByStudent[student.id];
+        if (!subscription?.expiresAt) return null;
+
+        const phone = normalizeWhatsAppPhone(student.contact);
+        if (!phone) return null;
+
+        const expiresAt = new Date(subscription.expiresAt);
+        if (Number.isNaN(expiresAt.getTime())) return null;
+
+        const daysRemaining = Math.ceil((expiresAt.getTime() - now.getTime()) / dayMs);
+        let type = null;
+        if (daysRemaining < 0) type = 'subscription_ended';
+        else if (daysRemaining === 0) type = 'expiring_today';
+        else if (daysRemaining <= 7) type = 'expiring_soon';
+        else return null;
+
+        const studentName = `${student.nom || ''} ${student.prenom || ''}`.trim() || student.nom || 'Étudiant';
+        const expiresAtLabel = expiresAt.toLocaleDateString('fr-FR');
+
+        const statusLabel = type === 'expiring_today'
+          ? 'Expire aujourd\'hui'
+          : type === 'expiring_soon'
+          ? `Expire dans ${daysRemaining} jour(s)`
+          : `Expiré depuis ${Math.abs(daysRemaining)} jour(s)`;
+
+        const message = buildReminderMessage({
+          student,
+          studentName,
+          expiresAtLabel,
+          daysRemaining,
+          type,
+        });
+
+        const messagePreview = message.replace(/\n/g, ' ').slice(0, 180) + (message.length > 180 ? '…' : '');
+
+        return {
+          id: `${student.id}-${type}`,
+          student,
+          studentName,
+          phone,
+          expiresAt,
+          expiresAtLabel,
+          daysRemaining,
+          type,
+          statusLabel,
+          message,
+          messagePreview,
+        };
+      })
+      .filter(Boolean);
+  }, [students, latestSubscriptionByStudent]);
 
   // Calculer les statistiques
   const stats = useMemo(() => {
@@ -270,6 +364,69 @@ export default function Dashboard({ user, onLogout }) {
       setMessage(`Erreur téléchargement carte QR: ${error.message || 'Action impossible'}`);
       setTimeout(() => setMessage(''), 5000);
     }
+  }
+
+  async function handleSendQrWhatsApp(student) {
+    const phone = normalizeWhatsAppPhone(student.contact);
+    if (!phone) {
+      setMessage('Numéro WhatsApp manquant ou invalide.');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
+
+    try {
+      const studentName = `${student.nom || ''} ${student.prenom || ''}`.trim() || student.nom || 'Étudiant';
+      const temp = { id: student.id, nom: student.nom, prenom: student.prenom, classe: student.classe, contact: student.contact };
+      const { qrImage } = await qrCodeService.generateStudentQR(temp);
+      const qrCard = await qrCodeService.generatePrintableCard(temp, qrImage);
+
+      const message = `Bonjour ${studentName},\n\nVoici votre QR code d'accès au transport scolaire.\n\nMerci de le conserver et de le présenter lors du scan.\n\nEMSP - Transport scolaire`;
+      openWhatsAppWithImage(phone, message, qrCard || qrImage);
+
+      await logReminderSend({
+        studentId: student.id,
+        studentName,
+        studentContact: phone,
+        reminderType: 'qr_send',
+        message,
+        status: 'sent',
+        sendResult: 'whatsapp_opened',
+        createdBy: user?.id || null,
+      });
+    } catch (error) {
+      console.error('Erreur envoi QR WhatsApp:', error);
+      setMessage(`Erreur envoi QR WhatsApp: ${error.message || 'Action impossible'}`);
+      setTimeout(() => setMessage(''), 5000);
+    }
+  }
+
+  async function handleSendReminderWhatsApp(reminder) {
+    try {
+      openWhatsAppWithMessage(reminder.phone, reminder.message);
+      await logReminderSend({
+        studentId: reminder.student.id,
+        studentName: reminder.studentName,
+        studentContact: reminder.phone,
+        reminderType: reminder.type,
+        message: reminder.message,
+        status: 'sent',
+        sendResult: 'whatsapp_opened',
+        createdBy: user?.id || null,
+      });
+    } catch (error) {
+      console.warn('Erreur envoi rappel WhatsApp:', error);
+    }
+  }
+
+  async function handleSendAllReminders() {
+    if (remindersQueue.length === 0) return;
+    if (!window.confirm(`Ouvrir WhatsApp pour ${remindersQueue.length} rappel(s) ?`)) return;
+    setMessage('Ouverture des conversations WhatsApp...');
+    for (const reminder of remindersQueue) {
+      await handleSendReminderWhatsApp(reminder);
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    }
+    setTimeout(() => setMessage(''), 3000);
   }
 
   async function handleExportStudents() {
@@ -457,6 +614,14 @@ export default function Dashboard({ user, onLogout }) {
               >
                 <HelpCircle className="w-4 h-4 inline mr-2" />
                 Notice
+              </button>
+              <button
+                onClick={() => setShowWhatsAppReminders(true)}
+                className="nav-action text-sm font-medium"
+                title="Rappels WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4 inline mr-2" />
+                Rappels
               </button>
               {isAdminUser && (
                 <>
@@ -646,6 +811,7 @@ export default function Dashboard({ user, onLogout }) {
             onExportStudents={isAdminUser ? handleExportStudents : undefined}
             onExportPayments={isAdminUser ? handleExportPayments : undefined}
             onDownloadQR={handleDownloadQRCard}
+            onSendQrWhatsApp={handleSendQrWhatsApp}
           />
         )}
 
@@ -725,6 +891,16 @@ export default function Dashboard({ user, onLogout }) {
       {showControllerManagement && (
         <ControllerManagementModal
           onClose={() => setShowControllerManagement(false)}
+        />
+      )}
+
+      {showWhatsAppReminders && (
+        <WhatsAppReminderModal
+          open={showWhatsAppReminders}
+          reminders={remindersQueue}
+          onClose={() => setShowWhatsAppReminders(false)}
+          onSendOne={handleSendReminderWhatsApp}
+          onSendAll={handleSendAllReminders}
         />
       )}
     </div>
@@ -893,6 +1069,7 @@ function StudentsView({
   onExportStudents,
   onExportPayments,
   onDownloadQR,
+  onSendQrWhatsApp,
 }) {
   return (
     <div className="space-y-6">
@@ -990,6 +1167,7 @@ function StudentsView({
                   onSendReceipt={onSendReceipt}
                   onDownloadReceipt={onDownloadReceipt}
                   onDownloadQR={onDownloadQR}
+                  onSendQrWhatsApp={onSendQrWhatsApp}
                 />
               );
             })}
@@ -1011,6 +1189,7 @@ function StudentRow({
   onSendReceipt,
   onDownloadReceipt,
   onDownloadQR,
+  onSendQrWhatsApp,
 }) {
   const statusColors = {
     ACTIF: 'bg-green-100 text-green-800',
@@ -1070,6 +1249,15 @@ function StudentRow({
               title="Télécharger la carte QR"
             >
               <QrCode className="w-4 h-4" />
+            </button>
+          )}
+          {onSendQrWhatsApp && (
+            <button
+              onClick={() => onSendQrWhatsApp(student)}
+              className="text-emerald-600 hover:text-emerald-900"
+              title="Envoyer QR par WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
             </button>
           )}
           {payments.length > 0 && (
