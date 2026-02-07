@@ -1,8 +1,8 @@
-/**
- * Exporte des étudiants en CSV avec colonnes personnalisables
- * @param {Array} subscribers - Liste des étudiants
+﻿/**
+ * Exporte des Ã©tudiants en CSV avec colonnes personnalisables
+ * @param {Array} subscribers - Liste des Ã©tudiants
  * @param {string} filename - Nom du fichier
- * @param {Array} selectedColumns - Colonnes à exporter (optionnel, toutes par défaut)
+ * @param {Array} selectedColumns - Colonnes Ã  exporter (optionnel, toutes par dÃ©faut)
  */
 export function exportSubscribersCSV(subscribers, filename = 'students.csv', selectedColumns = null) {
   if (!Array.isArray(subscribers)) subscribers = [];
@@ -24,7 +24,7 @@ export function exportSubscribersCSV(subscribers, filename = 'students.csv', sel
     'updatedAt',
   ];
   
-  // Utiliser les colonnes sélectionnées ou toutes par défaut
+  // Utiliser les colonnes sÃ©lectionnÃ©es ou toutes par dÃ©faut
   const headers = selectedColumns && Array.isArray(selectedColumns) && selectedColumns.length > 0
     ? allHeaders.filter(h => selectedColumns.includes(h))
     : allHeaders;
@@ -47,10 +47,10 @@ export function exportSubscribersCSV(subscribers, filename = 'students.csv', sel
         }
         return JSON.stringify(subscriber[header] ?? '');
       })
-      .join(','),
+      .join(';'),
   );
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const csv = [headers.join(';'), ...rows].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -60,26 +60,31 @@ export function exportSubscribersCSV(subscribers, filename = 'students.csv', sel
 }
 
 export function exportMonthlyReportCSV({ rows, summary }, filename = 'bilan-mensuel.csv') {
-  const headers = ['studentId', 'name', 'busLine', 'status', 'paidAt', 'amount'];
-  const head = headers.join(',');
+  const headers = ['studentId', 'name', 'promo', 'classGroup', 'busLine', 'status', 'paidAt', 'amount'];
+  const head = headers.join(';');
   const body = (rows || []).map(r =>
     headers
-      .map(h => JSON.stringify(r[h] ?? ''))
-      .join(','),
+      .map(h => {
+        if (h === 'busLine') {
+          return JSON.stringify(r.busLineLabel ?? r.busLine ?? '');
+        }
+        return JSON.stringify(r[h] ?? '');
+      })
+      .join(';'),
   );
   const meta = [
     '',
     `# Session: ${summary?.sessionId || ''}`,
-    `# Total étudiants: ${summary?.totalStudents ?? 0}`,
-    `# Payés dans délai: ${summary?.paidOnTime ?? 0}`,
-    `# Payés en grâce: ${summary?.paidInGrace ?? 0}`,
-    `# Impayés fin mois (grâce active): ${summary?.unpaid ?? 0}`,
-    `# Défaillants: ${summary?.defaulters ?? 0}`,
-    `# Payés hors délai: ${summary?.paidOutOfGrace ?? 0}`,
-    `# Total perçu pour ce mois (FCFA): ${Number(summary?.totalAmountForSession || 0)}`,
+    `# Total Ã©tudiants: ${summary?.totalStudents ?? 0}`,
+    `# PayÃ©s dans dÃ©lai: ${summary?.paidOnTime ?? 0}`,
+    `# PayÃ©s en grÃ¢ce: ${summary?.paidInGrace ?? 0}`,
+    `# ImpayÃ©s fin mois (grÃ¢ce active): ${summary?.unpaid ?? 0}`,
+    `# DÃ©faillants: ${summary?.defaulters ?? 0}`,
+    `# PayÃ©s hors dÃ©lai: ${summary?.paidOutOfGrace ?? 0}`,
+    `# Total perÃ§u pour ce mois (FCFA): ${Number(summary?.totalAmountForSession || 0)}`,
   ];
   const csv = [head, ...body, ...meta].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -87,3 +92,4 @@ export function exportMonthlyReportCSV({ rows, summary }, filename = 'bilan-mens
   a.click();
   URL.revokeObjectURL(url);
 }
+

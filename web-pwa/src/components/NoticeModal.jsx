@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, BookOpen, DollarSign, Calendar, Users, FileText, HelpCircle } from 'lucide-react';
+import { X, BookOpen, DollarSign, Calendar, Users, FileText, HelpCircle, Download, Upload, Filter } from 'lucide-react';
 
 export default function NoticeModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -93,6 +93,49 @@ export default function NoticeModal({ isOpen, onClose }) {
                 <li><strong>Revenus encaissés</strong> : Montants réellement reçus dans le mois (date de paiement)</li>
                 <li><strong>Revenus comptabilisés</strong> : Répartition mensuelle des abonnements (montant mensuel × nombre de mois actifs)</li>
                 <li>Un paiement de 5 mois sera réparti sur 5 mois dans les revenus comptabilisés</li>
+              </ul>
+            </div>
+          </section>
+
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Filter className="w-5 h-5 text-emerald-500" />
+              Filtres rapides (ligne, promo, classe)
+            </h3>
+            <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded">
+              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <li>Utilisez les filtres pour afficher uniquement une <strong>ligne</strong>, une <strong>promo</strong> ou une <strong>classe</strong>.</li>
+                <li>La recherche accepte aussi le <strong>nom de ligne</strong> et la <strong>promo</strong>.</li>
+                <li>Le bouton <strong>R?initialiser filtres</strong> remet tout ? z?ro.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Download className="w-5 h-5 text-blue-500" />
+              Export Excel
+            </h3>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <li>L'export CSV est <strong>compatible Excel</strong>.</li>
+                <li>Si un filtre est actif, l'export ne contient que cette liste filtr?e.</li>
+                <li>Colonnes incluses : nom, pr?nom, promo, classe, ligne, statut, contact.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Upload className="w-5 h-5 text-orange-500" />
+              Import Excel
+            </h3>
+            <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
+              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <li>Vous pouvez importer un CSV cr?? dans Excel (s?parateur <strong>;</strong> ou <strong>,</strong>).</li>
+                <li>Champs reconnus : nom, pr?nom, promo, classe, ligne, contact, notes.</li>
+                <li>Astuce : exportez d'abord un CSV puis r?importez-le apr?s modification.</li>
               </ul>
             </div>
           </section>

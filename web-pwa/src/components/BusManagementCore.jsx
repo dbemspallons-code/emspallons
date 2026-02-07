@@ -23,6 +23,8 @@ import { sendPaymentConfirmation, checkAndSendAutomaticNotifications } from '../
 import { exportSubscribersCSV } from '../services/exportCSV';
 import { createBackup, getBackupHistory, exportBackupToCSV, initAutomaticBackup } from '../services/backupService';
 import { importStudentsFromCSV } from '../services/importCSV';
+import { exportAllJSON } from '../services/exportService';
+import { clearStudentsAndPayments } from '../services/studentService';
 import { useStudents } from '../hooks/useStudents';
 import { createController, updateController, deleteController, subscribeControllers, resetTodayScanLogs, fetchGlobalSettings, setPausePlatform, saveGlobalSettings, logEducatorActivity, fetchEducatorActivity, fetchUsers, subscribeUsers, createUser, updateUser, deleteUser, recordPaymentV2, fetchPaymentsByMonth, fetchActivePaymentsForMonth } from '../services/firestoreService';
 import { changeOwnPassword, resetUserPassword } from '../services/authService';
@@ -49,7 +51,13 @@ export default function BusManagementCore() {
     deleteLine = () => Promise.resolve(),
   } = hookResult || {};
 
-  const [filters, setFilters] = useState({ search: '', status: 'all', line: 'all' });
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'all',
+    line: 'all',
+    promo: 'all',
+    classGroup: 'all',
+  });
   const [messageStatus, setMessageStatus] = useState('');
   const [processingPassId, setProcessingPassId] = useState(null);
   const [paymentTarget, setPaymentTarget] = useState(null);
@@ -170,6 +178,22 @@ export default function BusManagementCore() {
   }, [loadRecentActivity]);
 
   const lineOptions = lines?.length ? lines : BUS_LINES;
+  const promoOptions = useMemo(() => {
+    const values = new Set();
+    (students || []).forEach(student => {
+      const value = (student?.niveau || student?.promo || '').trim();
+      if (value) values.add(value);
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [students]);
+  const classOptions = useMemo(() => {
+    const values = new Set();
+    (students || []).forEach(student => {
+      const value = (student?.classGroup || student?.classe || '').trim();
+      if (value) values.add(value);
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [students]);
 
   const educatorLog = useCallback(async (entry = {}) => {
     try {
@@ -262,10 +286,13 @@ export default function BusManagementCore() {
         || (student.contact || '').toLowerCase().includes(searchValue)
         || (student.guardian || '').toLowerCase().includes(searchValue)
         || (student.classGroup || '').toLowerCase().includes(searchValue)
+        || (student.niveau || student.promo || '').toLowerCase().includes(searchValue)
         || (student.busLine || '').toLowerCase().includes(searchValue);
       const matchStatus = filters.status === 'all' || student.paymentStatus === filters.status;
       const matchLine = filters.line === 'all' || student.busLine === filters.line;
-      return matchSearch && matchStatus && matchLine;
+      const matchPromo = filters.promo === 'all' || (student.niveau || student.promo || '').toLowerCase() === filters.promo.toLowerCase();
+      const matchClass = filters.classGroup === 'all' || (student.classGroup || student.classe || '').toLowerCase() === filters.classGroup.toLowerCase();
+      return matchSearch && matchStatus && matchLine && matchPromo && matchClass;
     });
     
     // Tri personnalisable
@@ -574,20 +601,60 @@ export default function BusManagementCore() {
   };
 
   const handleExportAll = () => {
-    if (!students.length) {
-      setMessageStatus('Aucun étudiant à exporter.');
+    const hasFilters = Boolean(filters.search) || filters.status !== 'all' || filters.line !== 'all' || filters.promo !== 'all' || filters.classGroup !== 'all';
+    const exportList = hasFilters ? filteredStudents : students;
+    if (!exportList.length) {
+      setMessageStatus(hasFilters ? 'Aucun etudiant dans ce filtre.' : 'Aucun etudiant a exporter.');
       return;
     }
-    exportSubscribersCSV(students, 'bus-students.csv');
-    setMessageStatus('Export CSV généré.');
+    const filename = hasFilters ? 'bus-students-filtre.csv' : 'bus-students.csv';
+    exportSubscribersCSV(exportList, filename);
+    setMessageStatus(hasFilters ? `Export CSV genere (${exportList.length} etudiants filtres).` : 'Export CSV genere.');
     educatorLog({
       action: 'student:export',
       subjectType: 'bulk',
-      description: `Export de ${students.length} étudiants`,
+      description: `Export de ${exportList.length} etudiants${hasFilters ? ' (filtres)' : ''}`,
       metadata: {
-        total: students.length,
+        total: exportList.length,
+        filtered: hasFilters,
       },
     });
+  };
+
+  const handleAnnualArchive = async () => {
+    if (!isAdmin) {
+      setMessageStatus('Action reservee aux administrateurs.');
+      return;
+    }
+
+    if (!students.length) {
+      setMessageStatus('Aucun etudiant a archiver.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Archivage annuel : un backup complet sera exporte puis les etudiants et paiements seront supprimes pour demarrer une nouvelle annee.\n\nSouhaitez-vous continuer ?'
+    );
+    if (!confirmed) return;
+
+    const confirmText = 'ARCHIVER';
+    const userInput = window.prompt('Tapez ' + confirmText + ' pour confirmer l\'archivage annuel :');
+    if (userInput !== confirmText) {
+      setMessageStatus('Archivage annuel annule.');
+      return;
+    }
+
+    try {
+      setMessageStatus('Export du backup annuel...');
+      await exportAllJSON();
+      const backup = await createBackup();
+      await exportBackupToCSV(backup);
+      setMessageStatus('Backup exporte. Suppression des donnees en cours...');
+      await clearStudentsAndPayments();
+      setMessageStatus('Archivage annuel termine. Base remise a zero.');
+    } catch (err) {
+      setMessageStatus('Erreur archivage annuel : ' + (err.message || err));
+    }
   };
 
   const handleImportCSV = async (event) => {
@@ -1110,6 +1177,14 @@ export default function BusManagementCore() {
             <button
               className="button button--subtle"
               type="button"
+              onClick={handleAnnualArchive}
+              style={{ padding: '0.5rem 0.75rem' }}
+            >
+              <Calendar size={16} /> Archiver annee
+            </button>
+            <button
+              className="button button--subtle"
+              type="button"
               onClick={async () => {
                 try {
                   setMessageStatus('Envoi des notifications automatiques...');
@@ -1264,7 +1339,7 @@ export default function BusManagementCore() {
               <input
                 className="input-field"
                 type="search"
-                placeholder="Rechercher par nom, contact, parent, classe, ligne..."
+                placeholder="Rechercher par nom, contact, parent, classe, promo, ligne..."
                 value={filters.search}
                 onChange={event => setFilters(prev => ({ ...prev, search: event.target.value }))}
               />
@@ -1281,6 +1356,28 @@ export default function BusManagementCore() {
                 <option value={PAYMENT_STATUS.UP_TO_DATE}>À jour</option>
                 <option value={PAYMENT_STATUS.LATE}>En retard</option>
                 <option value={PAYMENT_STATUS.OUT_OF_SERVICE}>Suspendu</option>
+              </select>
+              <select
+                className="input-field"
+                style={{ width: '180px' }}
+                value={filters.promo}
+                onChange={event => setFilters(prev => ({ ...prev, promo: event.target.value }))}
+              >
+                <option value="all">Toutes les promos</option>
+                {promoOptions.map(promo => (
+                  <option key={promo} value={promo}>{promo}</option>
+                ))}
+              </select>
+              <select
+                className="input-field"
+                style={{ width: '180px' }}
+                value={filters.classGroup}
+                onChange={event => setFilters(prev => ({ ...prev, classGroup: event.target.value }))}
+              >
+                <option value="all">Toutes les classes</option>
+                {classOptions.map(classe => (
+                  <option key={classe} value={classe}>{classe}</option>
+                ))}
               </select>
               <select
                 className="input-field"
@@ -1475,7 +1572,7 @@ export default function BusManagementCore() {
           className="button button--subtle"
           type="button"
           onClick={() => {
-            setFilters({ search: '', status: 'all', line: 'all' });
+            setFilters({ search: '', status: 'all', line: 'all', promo: 'all', classGroup: 'all' });
             setSortBy('name');
             setSortOrder('asc');
             setMessageStatus('Filtres et tri réinitialisés.');
@@ -1535,6 +1632,7 @@ export default function BusManagementCore() {
           open={showMonthlyReports}
           onClose={() => setShowMonthlyReports(false)}
           students={students}
+          lines={lineOptions}
           onReSubscribe={(studentId) => {
             const s = students.find(st => st.id === studentId);
             if (s) handleReSubscribe(s);
@@ -1592,14 +1690,6 @@ export default function BusManagementCore() {
             }
           }}
           onClose={() => setShowControllerManager(false)}
-        />
-      )}
-
-      {showMonthlyReports && (
-        <MonthlyReports
-          open={showMonthlyReports}
-          students={students}
-          onClose={() => setShowMonthlyReports(false)}
         />
       )}
 

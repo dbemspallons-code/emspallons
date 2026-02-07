@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { X, Save, User, GraduationCap, Phone, Bus, MapPin, Users } from 'lucide-react';
 import { fetchPromos, fetchClasses } from '../services/classService';
 import { fetchLines } from '../services/firestoreService';
@@ -11,13 +11,20 @@ function normalizePhone(value) {
   if (!cleaned) return '';
   return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 }
+function ensureCivPrefix(value) {
+  const cleaned = String(value || '').replace(/[^0-9+]/g, '');
+  if (!cleaned) return '+225';
+  if (cleaned.startsWith('+')) return cleaned;
+  if (cleaned.startsWith('225')) return `+${cleaned}`;
+  return `+225${cleaned}`;
+}
 
 export default function StudentFormModal({ student, onClose, onSave }) {
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const [promo, setPromo] = useState('');
   const [classe, setClasse] = useState('');
-  const [contact, setContact] = useState('');
+  const [contact, setContact] = useState('+225');
   const [busLine, setBusLine] = useState('');
   const [pickupPoint, setPickupPoint] = useState('');
   const [guardian, setGuardian] = useState('');
@@ -30,6 +37,10 @@ export default function StudentFormModal({ student, onClose, onSave }) {
   const [lines, setLines] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
+  const handleContactBlur = () => {
+    setContact(prev => normalizePhone(ensureCivPrefix(prev)));
+  };
+
   useEffect(() => {
     loadOptions();
   }, []);
@@ -40,7 +51,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       setPrenom(student.prenom || '');
       setPromo(student.promo || student.niveau || '');
       setClasse(student.classe || student.classGroup || '');
-      setContact(student.contact || '');
+      setContact(student.contact || '+225');
       setBusLine(student.busLine || '');
       setPickupPoint(student.pickupPoint || '');
       setGuardian(student.guardian || '');
@@ -49,15 +60,15 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       setNom('');
       setPrenom('');
       setPromo('');
-      setClasse('');
-      setContact('');
+      setClasse(classes[0]?.name || '');
+      setContact('+225');
       setBusLine(lines[0]?.id || '');
       setPickupPoint('');
       setGuardian('');
       setNotes('');
     }
     setErrors({});
-  }, [student, lines]);
+  }, [student, lines, classes]);
 
   async function loadOptions() {
     try {
@@ -89,12 +100,16 @@ export default function StudentFormModal({ student, onClose, onSave }) {
     const nextErrors = {};
     if (!nom.trim()) nextErrors.nom = 'Nom obligatoire';
     if (!contact.trim()) nextErrors.contact = 'Contact obligatoire';
-    const normalizedContact = normalizePhone(contact);
+    const normalizedContact = normalizePhone(ensureCivPrefix(contact));
     if (contact && !PHONE_REGEX.test(contact.trim())) {
-      nextErrors.contact = 'Format de numéro invalide';
+      nextErrors.contact = 'Format de numÃ©ro invalide';
     }
     if (!promo.trim()) nextErrors.promo = 'Promotion obligatoire';
-    if (!classe.trim()) nextErrors.classe = 'Classe obligatoire';
+    if (!classes.length) {
+      nextErrors.classe = 'Aucune classe disponible. Ajoutez une classe dans ParamÃ¨tres.';
+    } else if (!classe.trim()) {
+      nextErrors.classe = 'Classe obligatoire';
+    }
     if (!busLine) nextErrors.busLine = 'Ligne obligatoire';
     if (!isEditing && !pickupPoint.trim()) nextErrors.pickupPoint = 'Point de ramassage obligatoire';
 
@@ -127,7 +142,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[92vh] overflow-y-auto modal-enter">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
-            {isEditing ? 'Modifier l’étudiant' : 'Nouvel étudiant'}
+            {isEditing ? 'Modifier lâ€™Ã©tudiant' : 'Nouvel Ã©tudiant'}
           </h2>
           <button
             onClick={onClose}
@@ -157,7 +172,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   onChange={(e) => setNom(e.target.value)}
                   required
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  placeholder="Dupont"
+                  placeholder="Kouassi"
                 />
               </div>
               {errors.nom && <p className="text-xs text-red-600 mt-1">{errors.nom}</p>}
@@ -165,14 +180,14 @@ export default function StudentFormModal({ student, onClose, onSave }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prénom
+                PrÃ©nom
               </label>
               <input
                 type="text"
                 value={prenom}
                 onChange={(e) => setPrenom(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                placeholder="Jean"
+                placeholder="Awa"
               />
             </div>
 
@@ -189,7 +204,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   disabled={loadingOptions}
                   required
                 >
-                  <option value="">{loadingOptions ? 'Chargement...' : 'Sélectionner une promo'}</option>
+                  <option value="">{loadingOptions ? 'Chargement...' : 'SÃ©lectionner une promo'}</option>
                   {promos.map((item) => (
                     <option key={item.id} value={item.name}>
                       {item.name}
@@ -206,33 +221,29 @@ export default function StudentFormModal({ student, onClose, onSave }) {
               </label>
               <div className="relative">
                 <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                {classes.length > 0 ? (
-                  <select
-                    value={classe}
-                    onChange={(e) => setClasse(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                    disabled={loadingOptions}
-                    required
-                  >
-                    <option value="">Sélectionner une classe</option>
-                    {classes.map((item) => (
-                      <option key={item.id} value={item.name}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={classe}
-                    onChange={(e) => setClasse(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                    placeholder="Ex: Groupe A"
-                    required
-                  />
-                )}
+                <select
+                  value={classe}
+                  onChange={(e) => setClasse(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  disabled={loadingOptions || classes.length === 0}
+                  required
+                >
+                  <option value="">
+                    {loadingOptions ? 'Chargement...' : classes.length ? 'SÃ©lectionner une classe' : 'Aucune classe disponible'}
+                  </option>
+                  {classes.map((item) => (
+                    <option key={item.id} value={item.name}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               {errors.classe && <p className="text-xs text-red-600 mt-1">{errors.classe}</p>}
+              {!loadingOptions && classes.length === 0 && (
+                <p className="text-xs text-red-600 mt-1">
+                  Ajoutez d'abord une classe dans ParamÃ¨tres &gt; Classes/Promos.
+                </p>
+              )}
             </div>
 
             <div>
@@ -247,7 +258,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Sélectionner une ligne</option>
+                  <option value="">SÃ©lectionner une ligne</option>
                   {lines.map((line) => (
                     <option key={line.id} value={line.id}>
                       {line.name}
@@ -268,13 +279,13 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   type="tel"
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
-                  onBlur={() => setContact((prev) => normalizePhone(prev))}
+                  onBlur={handleContactBlur}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                   placeholder="+2250700000000"
                   required
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Format conseillé: +2250700000000</p>
+              <p className="text-xs text-gray-500 mt-1">Format conseillÃ©: +2250700000000</p>
               {errors.contact && <p className="text-xs text-red-600 mt-1">{errors.contact}</p>}
             </div>
 
@@ -345,4 +356,5 @@ export default function StudentFormModal({ student, onClose, onSave }) {
     </div>
   );
 }
+
 

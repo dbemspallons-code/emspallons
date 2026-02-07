@@ -1,12 +1,63 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { getRevenusEncaisses, getRevenusComptabilises, calculateStudentStatus } from '../services/studentService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChange, onYearChange, students, payments }) {
+export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChange, onYearChange, students, payments, lines = [] }) {
   const [revenusEncaisses, setRevenusEncaisses] = useState({ total: 0, paiements: [] });
   const [revenusComptabilises, setRevenusComptabilises] = useState({ total: 0, paiements: [] });
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ line: 'all', promo: 'all', classGroup: 'all' });
+
+  const lineOptions = useMemo(() => {
+    if (Array.isArray(lines) && lines.length) return lines;
+    const values = new Set((students || []).map(s => s.busLine).filter(Boolean));
+    return Array.from(values).map(value => ({ id: value, name: value }));
+  }, [lines, students]);
+  const promoOptions = useMemo(() => {
+    const values = new Set();
+    (students || []).forEach(student => {
+      const value = (student?.promo || student?.niveau || '').trim();
+      if (value) values.add(value);
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [students]);
+  const classOptions = useMemo(() => {
+    const values = new Set();
+    (students || []).forEach(student => {
+      const value = (student?.classe || student?.classGroup || '').trim();
+      if (value) values.add(value);
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [students]);
+
+  const filteredStudents = useMemo(() => {
+    return (students || []).filter(student => {
+      const matchLine = filters.line === 'all' || student?.busLine === filters.line;
+      const matchPromo = filters.promo === 'all' || (student?.promo || student?.niveau || '').toLowerCase() === filters.promo.toLowerCase();
+      const matchClass = filters.classGroup === 'all' || (student?.classe || student?.classGroup || '').toLowerCase() === filters.classGroup.toLowerCase();
+      return matchLine && matchPromo && matchClass;
+    });
+  }, [students, filters]);
+
+  const filteredPayments = useMemo(() => {
+    const ids = new Set(filteredStudents.map(s => s.id));
+    return (payments || []).filter(p => ids.has(p.studentId));
+  }, [payments, filteredStudents]);
+
+  const filteredEncaisses = useMemo(() => {
+    const ids = new Set(filteredStudents.map(s => s.id));
+    const paiements = (revenusEncaisses.paiements || []).filter(p => ids.has(p.studentId));
+    const total = paiements.reduce((sum, p) => sum + (p.montantTotal || 0), 0);
+    return { total, paiements };
+  }, [revenusEncaisses, filteredStudents]);
+
+  const filteredComptabilises = useMemo(() => {
+    const ids = new Set(filteredStudents.map(s => s.id));
+    const paiements = (revenusComptabilises.paiements || []).filter(p => ids.has(p.studentId));
+    const total = paiements.reduce((sum, p) => sum + (p.montantMensuel || 0), 0);
+    return { total, paiements };
+  }, [revenusComptabilises, filteredStudents]);
 
   useEffect(() => {
     loadData();
@@ -28,10 +79,10 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
     }
   }
 
-  // Calculer les statistiques des étudiants
+  // Calculer les statistiques des Ã©tudiants
   const studentStats = useMemo(() => {
-    const studentStatuses = students.map(s => {
-      const studentPayments = payments.filter(p => p.studentId === s.id);
+    const studentStatuses = filteredStudents.map(s => {
+      const studentPayments = filteredPayments.filter(p => p.studentId === s.id);
       return calculateStudentStatus(s, studentPayments);
     });
 
@@ -48,14 +99,14 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
     const expire = studentStatuses.filter(s => s.statut === 'EXPIRE').length;
 
     return { actifs, retard, expire };
-  }, [students, payments, selectedMonth, selectedYear]);
+  }, [filteredStudents, filteredPayments, selectedMonth, selectedYear]);
 
-  // Données pour le graphique
+  // DonnÃ©es pour le graphique
   const chartData = [
     {
       name: 'Revenus',
-      'Encaissés': revenusEncaisses.total,
-      'Comptabilisés': revenusComptabilises.total,
+      'EncaissÃ©s': filteredEncaisses.total,
+      'ComptabilisÃ©s': filteredComptabilises.total,
     },
   ];
 
@@ -69,7 +120,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
 
   return (
     <div className="space-y-6">
-      {/* Sélecteur de mois */}
+      {/* SÃ©lecteur de mois */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center gap-4">
           <Calendar className="w-5 h-5 text-gray-400" />
@@ -96,16 +147,55 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
             </select>
           </div>
         </div>
+        <div className="mt-4 flex flex-wrap gap-3 items-center">
+          <select
+            value={filters.line}
+            onChange={(e) => setFilters(prev => ({ ...prev, line: e.target.value }))}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+          >
+            <option value="all">Toutes les lignes</option>
+            {lineOptions.map(line => (
+              <option key={line.id} value={line.id}>{line.name}</option>
+            ))}
+          </select>
+          <select
+            value={filters.promo}
+            onChange={(e) => setFilters(prev => ({ ...prev, promo: e.target.value }))}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+          >
+            <option value="all">Toutes les promos</option>
+            {promoOptions.map(promo => (
+              <option key={promo} value={promo}>{promo}</option>
+            ))}
+          </select>
+          <select
+            value={filters.classGroup}
+            onChange={(e) => setFilters(prev => ({ ...prev, classGroup: e.target.value }))}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+          >
+            <option value="all">Toutes les classes</option>
+            {classOptions.map(classe => (
+              <option key={classe} value={classe}>{classe}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+            onClick={() => setFilters({ line: 'all', promo: 'all', classGroup: 'all' })}
+          >
+            Réinitialiser
+          </button>
+        </div>
       </div>
 
-      {/* Cartes de résumé */}
+      {/* Cartes de rÃ©sumÃ© */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Revenus encaissés</p>
+              <p className="text-sm font-medium text-gray-600">Revenus encaissÃ©s</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
-                {revenusEncaisses.total.toLocaleString('fr-FR')} FCFA
+                {filteredEncaisses.total.toLocaleString('fr-FR')} FCFA
               </p>
             </div>
             <div className="p-3 bg-yellow-100 rounded-full">
@@ -117,9 +207,9 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Revenus comptabilisés</p>
+              <p className="text-sm font-medium text-gray-600">Revenus comptabilisÃ©s</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
-                {revenusComptabilises.total.toLocaleString('fr-FR')} FCFA
+                {filteredComptabilises.total.toLocaleString('fr-FR')} FCFA
               </p>
             </div>
             <div className="p-3 bg-green-100 rounded-full">
@@ -145,7 +235,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">En retard / Expirés</p>
+              <p className="text-sm font-medium text-gray-600">En retard / ExpirÃ©s</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
                 {studentStats.retard + studentStats.expire}
               </p>
@@ -167,31 +257,31 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
             <YAxis />
             <Tooltip formatter={(value) => `${Number(value).toLocaleString('fr-FR')} FCFA`} />
             <Legend />
-            <Bar dataKey="Encaissés" fill="#fbbf24" />
-            <Bar dataKey="Comptabilisés" fill="#10b981" />
+            <Bar dataKey="EncaissÃ©s" fill="#fbbf24" />
+            <Bar dataKey="ComptabilisÃ©s" fill="#10b981" />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Détails des paiements encaissés */}
+      {/* DÃ©tails des paiements encaissÃ©s */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Paiements encaissés ce mois</h3>
-        {revenusEncaisses.paiements.length === 0 ? (
-          <p className="text-gray-500">Aucun paiement encaissé ce mois</p>
+        <h3 className="text-lg font-semibold mb-4">Paiements encaissÃ©s ce mois</h3>
+        {filteredEncaisses.paiements.length === 0 ? (
+          <p className="text-gray-500">Aucun paiement encaissÃ© ce mois</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Étudiant</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ã‰tudiant</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mois</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {revenusEncaisses.paiements.map(payment => {
-                  const student = students.find(s => s.id === payment.studentId);
+                {filteredEncaisses.paiements.map(payment => {
+                  const student = filteredStudents.find(s => s.id === payment.studentId) || students.find(s => s.id === payment.studentId);
                   return (
                     <tr key={payment.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -215,25 +305,25 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
         )}
       </div>
 
-      {/* Détails des revenus comptabilisés */}
+      {/* DÃ©tails des revenus comptabilisÃ©s */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Abonnements actifs ce mois (répartition mensuelle)</h3>
-        {revenusComptabilises.paiements.length === 0 ? (
+        <h3 className="text-lg font-semibold mb-4">Abonnements actifs ce mois (rÃ©partition mensuelle)</h3>
+        {filteredComptabilises.paiements.length === 0 ? (
           <p className="text-gray-500">Aucun abonnement actif ce mois</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Étudiant</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Période</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ã‰tudiant</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PÃ©riode</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant mensuel</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {revenusComptabilises.paiements.map(payment => {
-                  const student = students.find(s => s.id === payment.studentId);
+                {filteredComptabilises.paiements.map(payment => {
+                  const student = filteredStudents.find(s => s.id === payment.studentId) || students.find(s => s.id === payment.studentId);
                   return (
                     <tr key={payment.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -259,4 +349,8 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
     </div>
   );
 }
+
+
+
+
 

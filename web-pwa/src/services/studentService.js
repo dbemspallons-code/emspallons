@@ -1,5 +1,5 @@
-/**
- * Service de gestion des étudiants et paiements
+﻿/**
+ * Service de gestion des Ã©tudiants et paiements
  * Utilise window.storage avec shared:true
  */
 
@@ -27,6 +27,22 @@ function normalizePhone(value) {
   const cleaned = String(value).replace(/[^0-9+]/g, '');
   if (!cleaned) return null;
   return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+}
+
+function toFrenchSupabaseError(error) {
+  const raw = String(error?.message || error || '').trim();
+  if (!raw) return 'Erreur inconnue';
+
+  if (/schema cache/i.test(raw) || /column .* does not exist/i.test(raw) || /relation .* does not exist/i.test(raw)) {
+    return 'Schema Supabase incomplet. Ajoutez les colonnes requises puis rechargez le schema.';
+  }
+  if (/duplicate key/i.test(raw) || /unique constraint/i.test(raw)) {
+    return 'Valeur deja existante (doublon). Verifiez les donnees.';
+  }
+  if (/foreign key/i.test(raw)) {
+    return 'Reference invalide. Verifiez les donnees liees.';
+  }
+  return raw;
 }
 
 function normalizeStudentRow(row) {
@@ -96,7 +112,7 @@ function normalizePaymentRow(row) {
 }
 
 /**
- * Structure étudiant:
+ * Structure Ã©tudiant:
  * {
  *   id: string,
  *   nom: string,
@@ -119,30 +135,30 @@ function normalizePaymentRow(row) {
  *   moisDebut: string (ISO - toujours 1er du mois),
  *   moisFin: string (ISO - dernier jour du mois),
  *   dateGraceFin: string (ISO - moisFin + 5 jours),
- *   montantMensuel: number (calculé: montantTotal / nombreMois),
+ *   montantMensuel: number (calculÃ©: montantTotal / nombreMois),
  *   description: string,
  *   educateurNom: string,
  *   educateurId: string,
- *   dateEnregistrement: string (ISO - date réelle du paiement)
+ *   dateEnregistrement: string (ISO - date rÃ©elle du paiement)
  * }
  */
 
 /**
- * Calcule les dates d'abonnement selon les règles:
+ * Calcule les dates d'abonnement selon les rÃ¨gles:
  * - Toujours commencer le 1er du mois en cours
  * - Finir le dernier jour du dernier mois couvert
- * - Période de grâce: +5 jours après la fin
+ * - PÃ©riode de grÃ¢ce: +5 jours aprÃ¨s la fin
  */
 function calculateSubscriptionDates(datePaiement, nombreMois) {
   const date = new Date(datePaiement);
   
-  // Mois de début: toujours le 1er du mois en cours
+  // Mois de dÃ©but: toujours le 1er du mois en cours
   const moisDebut = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
   
   // Mois de fin: dernier jour du dernier mois couvert
   const moisFin = new Date(date.getFullYear(), date.getMonth() + nombreMois, 0, 23, 59, 59, 999);
   
-  // Date de fin de grâce configurable
+  // Date de fin de grÃ¢ce configurable
   const dateGraceFin = new Date(moisFin);
   dateGraceFin.setDate(dateGraceFin.getDate() + PAYMENT_CONFIG.GRACE_PERIOD_DAYS);
   dateGraceFin.setHours(23, 59, 59, 999);
@@ -155,7 +171,7 @@ function calculateSubscriptionDates(datePaiement, nombreMois) {
 }
 
 /**
- * Récupère tous les étudiants (Supabase `subscribers`)
+ * RÃ©cupÃ¨re tous les Ã©tudiants (Supabase `subscribers`)
  */
 export async function getAllStudents() {
   try {
@@ -169,7 +185,7 @@ export async function getAllStudents() {
 }
 
 /**
- * Récupère un étudiant par ID (Supabase)
+ * RÃ©cupÃ¨re un Ã©tudiant par ID (Supabase)
  */
 export async function getStudentById(id) {
   try {
@@ -184,12 +200,12 @@ export async function getStudentById(id) {
 }
 
 /**
- * Crée un nouvel étudiant
+ * CrÃ©e un nouvel Ã©tudiant
  */
 export async function createStudent(studentData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez être connecté');
+    throw new Error('Vous devez Ãªtre connectÃ©');
   }
 
   const lastName = (studentData.nom || '').trim();
@@ -197,7 +213,7 @@ export async function createStudent(studentData) {
   const fullName = [lastName, firstName].filter(Boolean).join(' ').trim();
 
   const newStudent = {
-    name: fullName || lastName || firstName || 'Étudiant',
+    name: fullName || lastName || firstName || 'Ã‰tudiant',
     first_name: firstName || null,
     last_name: lastName || null,
     promo: studentData.promo?.trim() || studentData.niveau?.trim() || null,
@@ -223,7 +239,7 @@ export async function createStudent(studentData) {
       const printableCard = await qrCodeService.generatePrintableCard(temp, qrImage);
       // Optionally persist QR token via Netlify function or supabase table (qr_codes table exists server-side)
     } catch (error) {
-      console.warn('Génération QR échouée', error);
+      console.warn('GÃ©nÃ©ration QR Ã©chouÃ©e', error);
     }
 
     await historyService.log({
@@ -242,20 +258,17 @@ export async function createStudent(studentData) {
     return normalizeStudentRow(created);
   } catch (error) {
     console.error('Erreur createStudent (Supabase):', error);
-    if (String(error?.message || '').includes('column')) {
-      throw new Error('Schéma Supabase incomplet: ajoutez les colonnes pour busLine, promo, classe, etc. (voir instructions de mise à jour).');
-    }
-    throw error;
+    throw new Error(toFrenchSupabaseError(error));
   }
 }
 
 /**
- * Met à jour un étudiant
+ * Met Ã  jour un Ã©tudiant
  */
 export async function updateStudent(studentId, updates) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez être connecté');
+    throw new Error('Vous devez Ãªtre connectÃ©');
   }
 
   const updateData = {};
@@ -293,15 +306,12 @@ export async function updateStudent(studentId, updates) {
     return data;
   } catch (error) {
     console.error('Erreur updateStudent (Supabase):', error);
-    if (String(error?.message || '').includes('column')) {
-      throw new Error('Schéma Supabase incomplet: ajoutez les colonnes pour busLine, promo, classe, etc. (voir instructions de mise à jour).');
-    }
-    throw error;
+    throw new Error(toFrenchSupabaseError(error));
   }
 }
 
 /**
- * Supprime un étudiant
+ * Supprime un Ã©tudiant
  */
 export async function deleteStudent(studentId) {
   try {
@@ -317,7 +327,7 @@ export async function deleteStudent(studentId) {
 }
 
 /**
- * Récupère tous les paiements
+ * RÃ©cupÃ¨re tous les paiements
  */
 export async function getAllPayments() {
   try {
@@ -331,7 +341,7 @@ export async function getAllPayments() {
 }
 
 /**
- * Récupère les paiements d'un étudiant
+ * RÃ©cupÃ¨re les paiements d'un Ã©tudiant
  */
 export async function getPaymentsByStudentId(studentId) {
   try {
@@ -345,17 +355,17 @@ export async function getPaymentsByStudentId(studentId) {
 }
 
 /**
- * Crée un nouveau paiement
+ * CrÃ©e un nouveau paiement
  */
 export async function createPayment(paymentData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez être connecté');
+    throw new Error('Vous devez Ãªtre connectÃ©');
   }
 
-  // Vérifier que l'étudiant existe
+  // VÃ©rifier que l'Ã©tudiant existe
   const student = await getStudentById(paymentData.studentId);
-  if (!student) throw new Error('Étudiant introuvable');
+  if (!student) throw new Error('Ã‰tudiant introuvable');
 
   const plan = paymentData.plan || null;
   const nombreMois = Number(paymentData.nombreMois || plan?.numberOfMonths || 1);
@@ -421,10 +431,7 @@ export async function createPayment(paymentData) {
     return normalizePaymentRow(data);
   } catch (error) {
     console.error('Erreur createPayment (Supabase):', error);
-    if (String(error?.message || '').includes('column')) {
-      throw new Error('Schéma Supabase incomplet: ajoutez les colonnes pour les paiements (voir instructions de mise à jour).');
-    }
-    throw error;
+    throw new Error(toFrenchSupabaseError(error));
   }
 }
 
@@ -438,7 +445,7 @@ export async function deletePayment(paymentId) {
 }
 
 /**
- * Calcule le statut d'un étudiant
+ * Calcule le statut d'un Ã©tudiant
  */
 export function calculateStudentStatus(student, payments) {
   const studentPayments = payments.filter(p => p.studentId === student.id);
@@ -454,7 +461,7 @@ export function calculateStudentStatus(student, payments) {
     };
   }
 
-  // Trouver le paiement avec la date de fin la plus éloignée
+  // Trouver le paiement avec la date de fin la plus Ã©loignÃ©e
   const dernierPaiement = studentPayments.reduce((latest, current) => {
     const latestDate = new Date(latest.moisFin);
     const currentDate = new Date(current.moisFin);
@@ -480,7 +487,7 @@ export function calculateStudentStatus(student, payments) {
   }
 
   if (aujourdhui <= moisFin) {
-    // Période active
+    // PÃ©riode active
     const joursRestants = calculerJours(aujourdhui, moisFin);
     
     if (joursRestants <= 15) {
@@ -497,29 +504,29 @@ export function calculateStudentStatus(student, payments) {
     return {
       statut: 'ACTIF',
       couleur: 'green',
-      message: `Payé jusqu'au ${formatDate(moisFin)}`,
+      message: `PayÃ© jusqu'au ${formatDate(moisFin)}`,
       acces: true,
       dateFin: moisFin.toISOString(),
       joursRestants,
     };
   } else if (aujourdhui <= dateGraceFin) {
-    // Période de grâce (5 jours)
+    // PÃ©riode de grÃ¢ce (5 jours)
     const joursGrace = calculerJours(aujourdhui, dateGraceFin);
     return {
       statut: 'RETARD',
       couleur: 'orange',
-      message: `EN RETARD - ${joursGrace} jours de grâce restants`,
+      message: `EN RETARD - ${joursGrace} jours de grÃ¢ce restants`,
       acces: true,
       dateFin: moisFin.toISOString(),
       joursRestants: -joursGrace,
     };
   } else {
-    // Expiré
+    // ExpirÃ©
     const joursExpire = calculerJours(dateGraceFin, aujourdhui);
     return {
       statut: 'EXPIRE',
       couleur: 'red',
-      message: `EXPIRÉ depuis ${joursExpire} jours`,
+      message: `EXPIRÃ‰ depuis ${joursExpire} jours`,
       acces: false,
       dateFin: moisFin.toISOString(),
       joursRestants: null,
@@ -528,7 +535,7 @@ export function calculateStudentStatus(student, payments) {
 }
 
 /**
- * Récupère les revenus encaissés pour un mois donné
+ * RÃ©cupÃ¨re les revenus encaissÃ©s pour un mois donnÃ©
  */
 export async function getRevenusEncaisses(annee, mois) {
   const payments = await getAllPayments();
@@ -549,7 +556,7 @@ export async function getRevenusEncaisses(annee, mois) {
 }
 
 /**
- * Récupère les revenus comptabilisés pour un mois donné
+ * RÃ©cupÃ¨re les revenus comptabilisÃ©s pour un mois donnÃ©
  */
 export async function getRevenusComptabilises(annee, mois) {
   const payments = await getAllPayments();
@@ -572,12 +579,12 @@ export async function getRevenusComptabilises(annee, mois) {
 }
 
 /**
- * Importe plusieurs étudiants en masse
+ * Importe plusieurs Ã©tudiants en masse
  */
 export async function importStudentsBulk(studentsData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez être connecté');
+    throw new Error('Vous devez Ãªtre connectÃ©');
   }
 
   const students = await getAllStudents();
@@ -595,7 +602,7 @@ export async function importStudentsBulk(studentsData) {
     notes: studentData.notes?.trim() || '',
   }));
 
-  // Fusionner avec les étudiants existants (éviter les doublons par ID)
+  // Fusionner avec les Ã©tudiants existants (Ã©viter les doublons par ID)
   const existingIds = new Set(students.map(s => s.id));
   const toAdd = newStudents.filter(s => !existingIds.has(s.id));
   const merged = [...students, ...toAdd];
@@ -610,7 +617,7 @@ export async function importStudentsBulk(studentsData) {
 export async function importPaymentsBulk(paymentsData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez être connecté');
+    throw new Error('Vous devez Ãªtre connectÃ©');
   }
 
   const payments = await getAllPayments();
@@ -629,7 +636,7 @@ export async function importPaymentsBulk(paymentsData) {
     dateEnregistrement: paymentData.dateEnregistrement || new Date().toISOString(),
   }));
 
-  // Fusionner avec les paiements existants (éviter les doublons par ID)
+  // Fusionner avec les paiements existants (Ã©viter les doublons par ID)
   const existingIds = new Set(payments.map(p => p.id));
   const toAdd = newPayments.filter(p => !existingIds.has(p.id));
   const merged = [...payments, ...toAdd];
@@ -639,7 +646,7 @@ export async function importPaymentsBulk(paymentsData) {
 }
 
 /**
- * Remplace toutes les données (utilisé pour l'import complet)
+ * Remplace toutes les donnÃ©es (utilisÃ© pour l'import complet)
  */
 export async function replaceAllData({ students: newStudents, payments: newPayments }) {
   await setStorage(STUDENTS_KEY, newStudents || []);
@@ -647,10 +654,28 @@ export async function replaceAllData({ students: newStudents, payments: newPayme
 }
 
 /**
- * Supprime tous les étudiants et paiements (mais pas les utilisateurs)
+ * Supprime tous les Ã©tudiants et paiements (mais pas les utilisateurs)
  */
 export async function clearStudentsAndPayments() {
+  try {
+    const { error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    if (paymentsError) throw paymentsError;
+
+    const { error: studentsError } = await supabase
+      .from('subscribers')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+    if (studentsError) throw studentsError;
+  } catch (error) {
+    console.error('Erreur clearStudentsAndPayments (Supabase):', error);
+    throw error;
+  }
+
   await setStorage(STUDENTS_KEY, []);
   await setStorage(PAYMENTS_KEY, []);
 }
+
 

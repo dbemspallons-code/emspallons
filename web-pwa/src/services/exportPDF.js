@@ -1,5 +1,5 @@
-export function exportMonthlyReportPDF({ rows, summary }, title = 'Bilan mensuel') {
-  // Génère une page imprimable (impression -> Enregistrer en PDF)
+﻿export function exportMonthlyReportPDF({ rows, summary }, title = 'Bilan mensuel') {
+  // GÃ©nÃ¨re une page imprimable (impression -> Enregistrer en PDF)
   const win = window.open('', '_blank');
   if (!win) return;
   const style = `
@@ -15,14 +15,14 @@ export function exportMonthlyReportPDF({ rows, summary }, title = 'Bilan mensuel
   `;
   const head = `
     <h1>${escapeHtml(title)}</h1>
-    <div class="meta">Session: ${escapeHtml(summary?.sessionId || '')} — Généré le ${new Date().toLocaleString('fr-FR')}</div>
+    <div class="meta">Session: ${escapeHtml(summary?.sessionId || '')} â€” GÃ©nÃ©rÃ© le ${new Date().toLocaleString('fr-FR')}</div>
     <div class="summary">
-      <div>Total étudiants: ${summary?.totalStudents ?? 0}</div>
-      <div>Payés dans délai: ${summary?.paidOnTime ?? 0}</div>
-      <div>Payés en grâce: ${summary?.paidInGrace ?? 0}</div>
-      <div>Grâce active (impayés fin mois): ${summary?.unpaid ?? 0}</div>
-      <div>Défaillants: ${summary?.defaulters ?? 0}</div>
-      <div>Payés hors délai: ${summary?.paidOutOfGrace ?? 0}</div>
+      <div>Total Ã©tudiants: ${summary?.totalStudents ?? 0}</div>
+      <div>PayÃ©s dans dÃ©lai: ${summary?.paidOnTime ?? 0}</div>
+      <div>PayÃ©s en grÃ¢ce: ${summary?.paidInGrace ?? 0}</div>
+      <div>GrÃ¢ce active (impayÃ©s fin mois): ${summary?.unpaid ?? 0}</div>
+      <div>DÃ©faillants: ${summary?.defaulters ?? 0}</div>
+      <div>PayÃ©s hors dÃ©lai: ${summary?.paidOutOfGrace ?? 0}</div>
     </div>
   `;
   const table = `
@@ -30,6 +30,8 @@ export function exportMonthlyReportPDF({ rows, summary }, title = 'Bilan mensuel
       <thead>
         <tr>
           <th>Nom</th>
+          <th>Promo</th>
+          <th>Classe</th>
           <th>Ligne</th>
           <th>Statut</th>
           <th>Date paiement</th>
@@ -40,7 +42,9 @@ export function exportMonthlyReportPDF({ rows, summary }, title = 'Bilan mensuel
         ${(rows || []).map(r => `
           <tr>
             <td>${escapeHtml(r.name || '')}</td>
-            <td>${escapeHtml(r.busLine || '')}</td>
+            <td>${escapeHtml(r.promo || '')}</td>
+            <td>${escapeHtml(r.classGroup || '')}</td>
+            <td>${escapeHtml(r.busLineLabel || r.busLine || '')}</td>
             <td>${escapeHtml(r.status || '')}</td>
             <td>${r.paidAt ? new Date(r.paidAt).toLocaleDateString('fr-FR') : '-'}</td>
             <td>${Number(r.amount || 0).toLocaleString('fr-FR')}</td>
@@ -51,7 +55,7 @@ export function exportMonthlyReportPDF({ rows, summary }, title = 'Bilan mensuel
   `;
   win.document.write(`<!doctype html><html><head><meta charset="utf-8" />${style}<title>${escapeHtml(title)}</title></head><body>${head}${table}</body></html>`);
   win.document.close();
-  // Attendre le rendu puis ouvrir la boîte de dialogue d'impression
+  // Attendre le rendu puis ouvrir la boÃ®te de dialogue d'impression
   setTimeout(() => win.print(), 300);
 }
 
@@ -60,3 +64,4 @@ function escapeHtml(str) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[s]));
 }
+

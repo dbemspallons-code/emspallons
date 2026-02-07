@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState, useEffect } from 'react';
 import { Calendar, FileDown, BarChart2, FileText } from 'lucide-react';
 import { buildMonthlyReport } from '../models/sessions';
 import { getSessionIdFromDate, generateSessionList, getSessionLabel } from '../models/sessionCalendar';
@@ -29,10 +29,10 @@ const modalStyle = {
   overflowY: 'auto',
 };
 
-export default function MonthlyReports({ students = [], onClose, open = true, onReSubscribe }) {
+export default function MonthlyReports({ students = [], onClose, open = true, onReSubscribe, lines = [] }) {
   const [sessionId, setSessionId] = useState(() => {
-    // Initialiser avec la session actuelle de manière asynchrone
-    return null; // Sera mis à jour dans useEffect
+    // Initialiser avec la session actuelle de maniÃ¨re asynchrone
+    return null; // Sera mis Ã  jour dans useEffect
   });
   const [history, setHistory] = useState([]);
   const [message, setMessage] = useState('');
@@ -40,6 +40,34 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
   const [comparisonSession1, setComparisonSession1] = useState(null);
   const [comparisonSession2, setComparisonSession2] = useState(null);
   const [predictionMonths, setPredictionMonths] = useState(3);
+  const [filters, setFilters] = useState({ line: 'all', promo: 'all', classGroup: 'all' });
+
+  const lineOptions = useMemo(() => (Array.isArray(lines) ? lines : []), [lines]);
+  const promoOptions = useMemo(() => {
+    const values = new Set();
+    (students || []).forEach(student => {
+      const value = (student?.niveau || student?.promo || '').trim();
+      if (value) values.add(value);
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [students]);
+  const classOptions = useMemo(() => {
+    const values = new Set();
+    (students || []).forEach(student => {
+      const value = (student?.classGroup || student?.classe || '').trim();
+      if (value) values.add(value);
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [students]);
+
+  const filteredStudents = useMemo(() => {
+    return (students || []).filter(student => {
+      const matchLine = filters.line === 'all' || student?.busLine === filters.line;
+      const matchPromo = filters.promo === 'all' || (student?.niveau || student?.promo || '').toLowerCase() === filters.promo.toLowerCase();
+      const matchClass = filters.classGroup === 'all' || (student?.classGroup || student?.classe || '').toLowerCase() === filters.classGroup.toLowerCase();
+      return matchLine && matchPromo && matchClass;
+    });
+  }, [students, filters]);
 
   // Initialiser la session actuelle
   useEffect(() => {
@@ -62,19 +90,27 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
 
   const { summary, rows } = useMemo(() => {
     if (!sessionId) return { summary: {}, rows: [] };
-    return buildMonthlyReport(students, sessionId);
-  }, [students, sessionId]);
+    return buildMonthlyReport(filteredStudents, sessionId);
+  }, [filteredStudents, sessionId]);
+
+  const lineLookup = useMemo(() => Object.fromEntries(lineOptions.map(line => [line.id, line])), [lineOptions]);
+  const displayRows = useMemo(() => {
+    return (rows || []).map(row => ({
+      ...row,
+      busLineLabel: lineLookup[row.busLine]?.name || row.busLine || '',
+    }));
+  }, [rows, lineLookup]);
 
   const handleExport = () => {
-    exportMonthlyReportCSV({ rows, summary }, `bilan-${sessionId}.csv`);
+    exportMonthlyReportCSV({ rows: displayRows, summary }, `bilan-${sessionId}.csv`);
   };
   const handleExportPDF = () => {
-    exportMonthlyReportPDF({ rows, summary }, `Bilan ${sessionId}`);
+    exportMonthlyReportPDF({ rows: displayRows, summary }, `Bilan ${sessionId}`);
   };
   const handleArchive = async () => {
     try {
       await saveMonthlyReport({ sessionId, summary, rows });
-      setMessage('Bilan archivé.');
+      setMessage('Bilan archivÃ©.');
       const list = await fetchMonthlyReports(24);
       setHistory(list);
     } catch (err) {
@@ -87,14 +123,14 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
   useEffect(() => {
     (async () => {
       try {
-        // Générer la liste des sessions (mois) disponibles
+        // GÃ©nÃ©rer la liste des sessions (mois) disponibles
         const sessions = await generateSessionList(13);
         setMonthsOptions(sessions.map(s => ({
           id: s.id,
           label: s.label, // Ex: "janvier 2025"
         })));
       } catch (err) {
-        console.warn('Erreur génération liste sessions:', err);
+        console.warn('Erreur gÃ©nÃ©ration liste sessions:', err);
         // Fallback: utiliser la date actuelle
         const now = new Date();
         const currentId = await getSessionIdFromDate(now);
@@ -140,7 +176,7 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                 disabled={!sessionId || monthsOptions.findIndex(m => m.id === sessionId) === 0}
                 style={{ padding: '0.5rem 0.75rem' }}
               >
-                ← MOIS PRÉCÉDENT
+                â† MOIS PRÃ‰CÃ‰DENT
               </button>
               <label className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '200px' }}>
                 <Calendar size={16} />
@@ -167,15 +203,15 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                 disabled={!sessionId || monthsOptions.findIndex(m => m.id === sessionId) === monthsOptions.length - 1}
                 style={{ padding: '0.5rem 0.75rem' }}
               >
-                MOIS SUIVANT →
+                MOIS SUIVANT â†’
               </button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button className="button" type="button" onClick={handleExport}>
-                <FileDown size={16} /> Télécharger CSV
+                <FileDown size={16} /> TÃ©lÃ©charger CSV
               </button>
               <button className="button" type="button" onClick={handleExportPDF}>
-                <FileText size={16} /> Télécharger PDF
+                <FileText size={16} /> TÃ©lÃ©charger PDF
               </button>
               <button className="button button--subtle" type="button" onClick={handleArchive}>
                 Archiver le bilan
@@ -183,35 +219,78 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
             </div>
           </div>
 
+          <div className="toolbar" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <span className="subtitle" style={{ fontWeight: 600 }}>Filtres :</span>
+            <select
+              className="input-field"
+              value={filters.line}
+              onChange={e => setFilters(prev => ({ ...prev, line: e.target.value }))}
+            >
+              <option value="all">Toutes les lignes</option>
+              {lineOptions.map(line => (
+                <option key={line.id} value={line.id}>{line.name}</option>
+              ))}
+            </select>
+            <select
+              className="input-field"
+              value={filters.promo}
+              onChange={e => setFilters(prev => ({ ...prev, promo: e.target.value }))}
+            >
+              <option value="all">Toutes les promos</option>
+              {promoOptions.map(promo => (
+                <option key={promo} value={promo}>{promo}</option>
+              ))}
+            </select>
+            <select
+              className="input-field"
+              value={filters.classGroup}
+              onChange={e => setFilters(prev => ({ ...prev, classGroup: e.target.value }))}
+            >
+              <option value="all">Toutes les classes</option>
+              {classOptions.map(classe => (
+                <option key={classe} value={classe}>{classe}</option>
+              ))}
+            </select>
+            <button
+              className="button button--subtle"
+              type="button"
+              onClick={() => setFilters({ line: 'all', promo: 'all', classGroup: 'all' })}
+            >
+              RÃ©initialiser filtres
+            </button>
+          </div>
+
           <div className="card" style={{ padding: '1rem', marginBottom: '1rem' }}>
-            <h4 className="section-title" style={{ marginBottom: '0.5rem' }}>Résumé</h4>
+            <h4 className="section-title" style={{ marginBottom: '0.5rem' }}>RÃ©sumÃ©</h4>
             <div className="chips" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span className="chip">Total étudiants: {summary.totalStudents}</span>
-              <span className="chip chip--success">Payés dans délai: {summary.paidOnTime}</span>
+              <span className="chip">Total Ã©tudiants: {summary.totalStudents}</span>
+              <span className="chip chip--success">PayÃ©s dans dÃ©lai: {summary.paidOnTime}</span>
               <span className="chip" style={{ background: 'rgba(251, 191, 36, 0.2)', borderColor: 'rgba(251, 191, 36, 0.5)' }}>
-                Payés en grâce: {summary.paidInGrace}
+                PayÃ©s en grÃ¢ce: {summary.paidInGrace}
               </span>
               {summary.paidInAdvance > 0 && (
                 <span className="chip" style={{ background: 'rgba(34, 197, 94, 0.2)', borderColor: 'rgba(34, 197, 94, 0.5)', fontWeight: 600 }}>
-                  Payés en avance: {summary.paidInAdvance} ({summary.totalAdvanceMonths || 0} mois)
+                  PayÃ©s en avance: {summary.paidInAdvance} ({summary.totalAdvanceMonths || 0} mois)
                 </span>
               )}
-              <span className="chip">Grâce active (impayés fin mois): {summary.unpaid}</span>
-              <span className="chip chip--danger">Défaillants: {summary.defaulters}</span>
-              <span className="chip">Payés hors délai: {summary.paidOutOfGrace}</span>
+              <span className="chip">GrÃ¢ce active (impayÃ©s fin mois): {summary.unpaid}</span>
+              <span className="chip chip--danger">DÃ©faillants: {summary.defaulters}</span>
+              <span className="chip">PayÃ©s hors dÃ©lai: {summary.paidOutOfGrace}</span>
               <span className="chip" style={{ background: '#eef2ff', borderColor: '#c7d2fe', fontWeight: 600 }}>
-                Total perçu pour ce mois: {Number(summary.totalAmountForSession || 0).toLocaleString('fr-FR')} FCFA
+                Total perÃ§u pour ce mois: {Number(summary.totalAmountForSession || 0).toLocaleString('fr-FR')} FCFA
               </span>
             </div>
           </div>
 
           <div className="card" style={{ padding: '1rem' }}>
-            <h4 className="section-title" style={{ marginBottom: '0.5rem' }}>Détails</h4>
+            <h4 className="section-title" style={{ marginBottom: '0.5rem' }}>DÃ©tails</h4>
             <div className="table-wrapper">
               <table className="table">
                 <thead>
                   <tr>
                     <th>Nom</th>
+                    <th>Promo</th>
+                    <th>Classe</th>
                     <th>Ligne</th>
                     <th>Statut</th>
                     <th>Date paiement</th>
@@ -219,17 +298,19 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(r => (
+                  {displayRows.map(r => (
                     <tr key={r.studentId} style={r.advanceInfo ? { background: 'rgba(34, 197, 94, 0.05)' } : {}}>
                       <td>{r.name}</td>
-                      <td>{r.busLine}</td>
+                      <td>{r.promo || '-'}</td>
+                      <td>{r.classGroup || '-'}</td>
+                      <td>{r.busLineLabel || r.busLine}</td>
                       <td>
                         <span style={{ fontWeight: r.advanceInfo ? 600 : 'normal', color: r.advanceInfo ? '#16a34a' : 'inherit' }}>
                           {r.status}
                         </span>
                         {r.advanceInfo && r.advanceInfo.totalAdvanceMonths > 1 && (
                           <small style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
-                            Total: {r.advanceInfo.totalAdvanceMonths} mois payés en avance
+                            Total: {r.advanceInfo.totalAdvanceMonths} mois payÃ©s en avance
                           </small>
                         )}
                       </td>
@@ -240,9 +321,9 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                           type="button"
                           style={{ marginLeft: '0.5rem' }}
                           onClick={() => onReSubscribe?.(r.studentId)}
-                          title="Réabonner"
+                          title="RÃ©abonner"
                         >
-                          Réabonner
+                          RÃ©abonner
                         </button>
                       </td>
                       <td>{Number(r.amount || 0).toLocaleString('fr-FR')}</td>
@@ -253,17 +334,17 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
             </div>
           </div>
 
-          {/* Rapports Avancés */}
+          {/* Rapports AvancÃ©s */}
           <div className="card" style={{ padding: '1rem', marginTop: '1rem', background: '#f8fafc' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h4 className="section-title" style={{ margin: 0 }}>Rapports Avancés</h4>
+              <h4 className="section-title" style={{ margin: 0 }}>Rapports AvancÃ©s</h4>
               <button
                 className="button button--subtle"
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 style={{ padding: '0.5rem 0.75rem' }}
               >
-                {showAdvanced ? 'Masquer' : 'Afficher'} Rapports Avancés
+                {showAdvanced ? 'Masquer' : 'Afficher'} Rapports AvancÃ©s
               </button>
             </div>
             
@@ -278,7 +359,7 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                       value={comparisonSession1 || ''}
                       onChange={e => setComparisonSession1(e.target.value)}
                     >
-                      <option value="">Sélectionner session 1</option>
+                      <option value="">SÃ©lectionner session 1</option>
                       {monthsOptions.map(opt => (
                         <option key={opt.id} value={opt.id}>{opt.label}</option>
                       ))}
@@ -288,7 +369,7 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                       value={comparisonSession2 || ''}
                       onChange={e => setComparisonSession2(e.target.value)}
                     >
-                      <option value="">Sélectionner session 2</option>
+                      <option value="">SÃ©lectionner session 2</option>
                       {monthsOptions.map(opt => (
                         <option key={opt.id} value={opt.id}>{opt.label}</option>
                       ))}
@@ -297,12 +378,12 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                   {comparisonSession1 && comparisonSession2 && (
                     <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px' }}>
                       {(() => {
-                        const comparison = compareSessions(students, comparisonSession1, comparisonSession2);
+                        const comparison = compareSessions(filteredStudents, comparisonSession1, comparisonSession2);
                         return (
                           <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.85rem' }}>
-                            <div><strong>Différence Total étudiants:</strong> {comparison.comparison.totalStudentsDiff > 0 ? '+' : ''}{comparison.comparison.totalStudentsDiff}</div>
-                            <div><strong>Différence Payés à temps:</strong> {comparison.comparison.paidOnTimeDiff > 0 ? '+' : ''}{comparison.comparison.paidOnTimeDiff}</div>
-                            <div><strong>Différence Défaillants:</strong> {comparison.comparison.defaultersDiff > 0 ? '+' : ''}{comparison.comparison.defaultersDiff}</div>
+                            <div><strong>DiffÃ©rence Total Ã©tudiants:</strong> {comparison.comparison.totalStudentsDiff > 0 ? '+' : ''}{comparison.comparison.totalStudentsDiff}</div>
+                            <div><strong>DiffÃ©rence PayÃ©s Ã  temps:</strong> {comparison.comparison.paidOnTimeDiff > 0 ? '+' : ''}{comparison.comparison.paidOnTimeDiff}</div>
+                            <div><strong>DiffÃ©rence DÃ©faillants:</strong> {comparison.comparison.defaultersDiff > 0 ? '+' : ''}{comparison.comparison.defaultersDiff}</div>
                           </div>
                         );
                       })()}
@@ -310,12 +391,12 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                   )}
                 </div>
 
-                {/* Prédictions de revenus */}
+                {/* PrÃ©dictions de revenus */}
                 <div className="card" style={{ padding: '1rem', background: 'white' }}>
-                  <h5 style={{ marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}>Prédictions de Revenus</h5>
+                  <h5 style={{ marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}>PrÃ©dictions de Revenus</h5>
                   <div style={{ marginBottom: '0.75rem' }}>
                     <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
-                      Nombre de mois à prédire:
+                      Nombre de mois Ã  prÃ©dire:
                       <input
                         className="input-field"
                         type="number"
@@ -328,17 +409,17 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                     </label>
                   </div>
                   {(() => {
-                    const predictions = predictFutureRevenue(students, predictionMonths);
+                    const predictions = predictFutureRevenue(filteredStudents, predictionMonths);
                     return (
                       <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '8px' }}>
                         <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                           <strong>Revenu mensuel moyen actuel:</strong> {predictions.currentAverage.toLocaleString('fr-FR')} FCFA
                         </div>
                         <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                          <strong>Étudiants actifs:</strong> {predictions.currentActiveStudents}
+                          <strong>Ã‰tudiants actifs:</strong> {predictions.currentActiveStudents}
                         </div>
                         <div style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}>
-                          <strong>Prédictions:</strong>
+                          <strong>PrÃ©dictions:</strong>
                           <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
                             {predictions.predictions.map((p, i) => (
                               <li key={i} style={{ marginBottom: '0.25rem' }}>
@@ -356,7 +437,7 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
           </div>
 
           <div className="card" style={{ padding: '1rem', marginTop: '1rem' }}>
-            <h4 className="section-title" style={{ marginBottom: '0.5rem' }}>Historique des bilans archivés</h4>
+            <h4 className="section-title" style={{ marginBottom: '0.5rem' }}>Historique des bilans archivÃ©s</h4>
             <ul className="list">
               {(history || []).map(item => (
                 <li key={item.id} className="list__item" style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -367,7 +448,7 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
                   </div>
                 </li>
               ))}
-              {(!history || history.length === 0) && <li className="list__item">Aucun bilan archivé pour le moment.</li>}
+              {(!history || history.length === 0) && <li className="list__item">Aucun bilan archivÃ© pour le moment.</li>}
             </ul>
           </div>
         </div>
@@ -375,5 +456,4 @@ export default function MonthlyReports({ students = [], onClose, open = true, on
     </div>
   );
 }
-
 
