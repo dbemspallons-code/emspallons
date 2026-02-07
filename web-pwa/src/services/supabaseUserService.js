@@ -25,14 +25,19 @@ export async function createUser(userData, options = {}) {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token || null;
 
-  const res = await fetch('/.netlify/functions/admin-create-user', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ email, password, name, role }),
-  });
+  let res;
+  try {
+    res = await fetch('/.netlify/functions/admin-create-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ email, password, name, role }),
+    });
+  } catch (err) {
+    throw new Error('Impossible de contacter le serveur. Verifiez votre connexion et les fonctions Netlify.');
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const message = data.error || 'Erreur creation utilisateur';

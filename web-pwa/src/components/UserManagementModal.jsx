@@ -54,7 +54,12 @@ export default function UserManagementModal({ onClose }) {
       setSuccessMessage('Utilisateur cree avec succes. Mot de passe a changer a la premiere connexion.');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (error) {
-      alert(error.message || 'Erreur lors de la creation');
+      const msg = error?.message || 'Erreur lors de la creation';
+      if (msg.toLowerCase().includes('failed to fetch')) {
+        alert('Impossible de contacter le serveur. Verifiez votre connexion et les fonctions Netlify.');
+      } else {
+        alert(msg);
+      }
       throw error;
     }
   }
