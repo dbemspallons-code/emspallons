@@ -4,7 +4,7 @@ import { BUS_LINES, SUBSCRIPTION_PLANS } from '../models/entities';
 import { fetchPromos, fetchClasses } from '../services/classService';
 
 const PRIX_MENSUEL_FIXE = 12500;
-const PHONE_REGEX = /^\+[0-9\s-]{8,18}$/;
+const PHONE_REGEX = /^\+?[0-9\s-]{8,18}$/;
 
 function normalizePhone(value) {
   if (!value) return '';
@@ -46,8 +46,8 @@ export default function StudentForm({
     () => ({
       ...emptyStudent,
       ...defaultValues,
-      subscriptionPlan: defaultValues.subscriptionPlan || defaultValues.subscription.planId || emptyStudent.subscriptionPlan,
-      busLine: defaultValues.busLine || emptyStudent.busLine,
+      subscriptionPlan: defaultValues?.subscriptionPlan || defaultValues?.subscription?.planId || emptyStudent.subscriptionPlan,
+      busLine: defaultValues?.busLine || emptyStudent.busLine,
     }),
     [defaultValues],
   );
@@ -82,12 +82,12 @@ export default function StudentForm({
     }
   }
 
-  // Toujours appliquer le prix mensuel fixe par defaut (modifiable ensuite)
+  // Toujours appliquer le prix mensuel fixe par dÃ©faut (modifiable ensuite)
   useEffect(() => {
     setFormData(prev => {
-      // si le montant n'a jamais ete saisi (>0), on ne force pas
+      // si le montant n'a jamais Ã©tÃ© saisi (>0), on ne force pas
       const shouldSetDefault = !prev || !Number(prev.monthlyFee) || prev.monthlyFee <= 0;
-      return shouldSetDefault  { ...prev, monthlyFee: PRIX_MENSUEL_FIXE } : prev;
+      return shouldSetDefault ? { ...prev, monthlyFee: PRIX_MENSUEL_FIXE } : prev;
     });
   }, []);
 
@@ -97,19 +97,19 @@ export default function StudentForm({
 
   const validate = () => {
     const nextErrors = {};
-    if (!formData.name.trim()) nextErrors.name = 'Nom obligatoire';
-    if (!formData.contact.trim()) nextErrors.contact = 'Contact obligatoire';
+    if (!formData.name?.trim()) nextErrors.name = 'Nom obligatoire';
+    if (!formData.contact?.trim()) nextErrors.contact = 'Contact obligatoire';
     const normalizedContact = normalizePhone(ensureCivPrefix(formData.contact));
     if (normalizedContact && !PHONE_REGEX.test(normalizedContact.trim())) {
-      nextErrors.contact = 'Format de numero invalide';
+      nextErrors.contact = 'Format de numÃ©ro invalide';
     }
-    if (!formData.busLine.trim()) nextErrors.busLine = 'Ligne requise';
-    // Point de ramassage obligatoire seulement a la creation (pas a la modification)
-    if (!defaultValues && !formData.pickupPoint.trim()) nextErrors.pickupPoint = 'Point de ramassage obligatoire';
-    if (!formData.niveau.trim()) nextErrors.niveau = 'Promotion obligatoire';
+    if (!formData.busLine?.trim()) nextErrors.busLine = 'Ligne requise';
+    // Point de ramassage obligatoire seulement Ã  la crÃ©ation (pas Ã  la modification)
+    if (!defaultValues && !formData.pickupPoint?.trim()) nextErrors.pickupPoint = 'Point de ramassage obligatoire';
+    if (!formData.niveau?.trim()) nextErrors.niveau = 'Promotion obligatoire';
     if (!hasClasses) {
-      nextErrors.classGroup = 'Aucune classe disponible. Ajoutez une classe dans Parametres.';
-    } else if (!formData.classGroup.trim()) {
+      nextErrors.classGroup = 'Aucune classe disponible. Ajoutez une classe dans ParamÃ¨tres.';
+    } else if (!formData.classGroup?.trim()) {
       nextErrors.classGroup = 'Classe obligatoire';
     }
     return nextErrors;
@@ -121,7 +121,7 @@ export default function StudentForm({
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
     const normalizedContact = normalizePhone(ensureCivPrefix(formData.contact));
-    onSubmit({
+    onSubmit?.({
       ...formData,
       contact: normalizedContact || formData.contact,
       subscriptionPlan: formData.subscriptionPlan,
@@ -133,12 +133,12 @@ export default function StudentForm({
   return (
     <form className="card layout-grid fade-in scroll-reveal" style={{ padding: '1.5rem' }} onSubmit={handleSubmit}>
       <div>
-        <h2 className="section-title">Nouvel etudiant</h2>
-        <p className="subtitle">Ajoutez un nouvel etudiant pour le transport scolaire.</p>
+        <h2 className="section-title">Nouvel Ã©tudiant</h2>
+        <p className="subtitle">Ajoutez un nouvel Ã©tudiant pour le transport scolaire.</p>
       </div>
 
       <div className="layout-grid layout-grid--balanced">
-        <Field label="Nom de l'etudiant" error={errors.name}>
+        <Field label="Nom de l'Ã©tudiant" error={errors.name}>
           <input
             className="input-field"
             type="text"
@@ -164,7 +164,7 @@ export default function StudentForm({
             onChange={evt => setField('niveau', evt.target.value)}
             required
           >
-            <option value="">Selectionner une promotion</option>
+            <option value="">SÃ©lectionner une promotion</option>
             {loadingData ? (
               <option>Chargement...</option>
             ) : promos.length > 0 ? (
@@ -175,11 +175,11 @@ export default function StudentForm({
               ))
             ) : (
               <>
-                <option value="Licence 1">Licence 1</option>
-                <option value="Licence 2">Licence 2</option>
-                <option value="Licence 3">Licence 3</option>
-                <option value="Master 1">Master 1</option>
-                <option value="Master 2">Master 2</option>
+            <option value="Licence 1">Licence 1</option>
+            <option value="Licence 2">Licence 2</option>
+            <option value="Licence 3">Licence 3</option>
+            <option value="Master 1">Master 1</option>
+            <option value="Master 2">Master 2</option>
               </>
             )}
           </select>
@@ -193,7 +193,7 @@ export default function StudentForm({
             required
           >
             <option value="">
-              {loadingData ? 'Chargement...' : hasClasses ? 'Selectionner une classe' : 'Aucune classe disponible'}
+              {loadingData ? 'Chargement...' : hasClasses ? 'SÃ©lectionner une classe' : 'Aucune classe disponible'}
             </option>
             {classes.map(classe => (
               <option key={classe.id} value={classe.name}>
@@ -203,7 +203,7 @@ export default function StudentForm({
           </select>
           {!hasClasses && !loadingData && (
             <p style={{ fontSize: '0.75rem', color: '#b91c1c', marginTop: '0.35rem' }}>
-              Ajoutez d'abord une classe dans Parametres > Classes/Promos.
+              Ajoutez d'abord une classe dans ParamÃ¨tres > Classes/Promos.
             </p>
           )}
         </Field>
@@ -240,7 +240,7 @@ export default function StudentForm({
           />
           {defaultValues && (
             <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
-              Modifiable a tout moment
+              Modifiable Ã  tout moment
             </p>
           )}
         </Field>
@@ -263,7 +263,7 @@ export default function StudentForm({
         <textarea
           className="input-field"
           rows={3}
-          placeholder="Informations importantes a retenir..."
+          placeholder="Informations importantes Ã  retenir..."
           value={formData.notes}
           onChange={evt => setField('notes', evt.target.value)}
         />
@@ -293,7 +293,7 @@ function Field({ label, error, children }) {
     <label className="layout-grid" style={{ gap: '0.35rem' }}>
       <span style={{ fontWeight: 600, color: '#0f172a' }}>{label}</span>
       {children}
-      {error  <span style={{ color: '#b91c1c', fontSize: '0.8rem' }}>{error}</span> : null}
+      {error ? <span style={{ color: '#b91c1c', fontSize: '0.8rem' }}>{error}</span> : null}
     </label>
   );
 }

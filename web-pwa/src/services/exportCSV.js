@@ -1,8 +1,8 @@
 ﻿/**
- * Exporte des etudiants en CSV avec colonnes personnalisables
- * @param {Array} subscribers - Liste des etudiants
+ * Exporte des Ã©tudiants en CSV avec colonnes personnalisables
+ * @param {Array} subscribers - Liste des Ã©tudiants
  * @param {string} filename - Nom du fichier
- * @param {Array} selectedColumns - Colonnes a exporter (optionnel, toutes par defaut)
+ * @param {Array} selectedColumns - Colonnes Ã  exporter (optionnel, toutes par dÃ©faut)
  */
 export function exportSubscribersCSV(subscribers, filename = 'students.csv', selectedColumns = null) {
   if (!Array.isArray(subscribers)) subscribers = [];
@@ -24,7 +24,7 @@ export function exportSubscribersCSV(subscribers, filename = 'students.csv', sel
     'updatedAt',
   ];
   
-  // Utiliser les colonnes selectionnees ou toutes par defaut
+  // Utiliser les colonnes sÃ©lectionnÃ©es ou toutes par dÃ©faut
   const headers = selectedColumns && Array.isArray(selectedColumns) && selectedColumns.length > 0
     ? allHeaders.filter(h => selectedColumns.includes(h))
     : allHeaders;
@@ -75,13 +75,13 @@ export function exportMonthlyReportCSV({ rows, summary }, filename = 'bilan-mens
   const meta = [
     '',
     `# Session: ${summary?.sessionId || ''}`,
-    `# Total etudiants: ${summary?.totalStudents ?? 0}`,
-    `# Payes dans delai: ${summary?.paidOnTime ?? 0}`,
-    `# Payes en grace: ${summary?.paidInGrace ?? 0}`,
-    `# Impayes fin mois (grace active): ${summary?.unpaid ?? 0}`,
-    `# Defaillants: ${summary?.defaulters ?? 0}`,
-    `# Payes hors delai: ${summary?.paidOutOfGrace ?? 0}`,
-    `# Total percu pour ce mois (FCFA): ${Number(summary?.totalAmountForSession || 0)}`,
+    `# Total Ã©tudiants: ${summary?.totalStudents ?? 0}`,
+    `# PayÃ©s dans dÃ©lai: ${summary?.paidOnTime ?? 0}`,
+    `# PayÃ©s en grÃ¢ce: ${summary?.paidInGrace ?? 0}`,
+    `# ImpayÃ©s fin mois (grÃ¢ce active): ${summary?.unpaid ?? 0}`,
+    `# DÃ©faillants: ${summary?.defaulters ?? 0}`,
+    `# PayÃ©s hors dÃ©lai: ${summary?.paidOutOfGrace ?? 0}`,
+    `# Total perÃ§u pour ce mois (FCFA): ${Number(summary?.totalAmountForSession || 0)}`,
   ];
   const csv = [head, ...body, ...meta].join('\n');
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });

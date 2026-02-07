@@ -107,7 +107,7 @@ export default function NoticeModal({ isOpen, onClose }) {
               <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
                 <li>Utilisez les filtres pour afficher uniquement une <strong>ligne</strong>, une <strong>promo</strong> ou une <strong>classe</strong>.</li>
                 <li>La recherche accepte aussi le <strong>nom de ligne</strong> et la <strong>promo</strong>.</li>
-                <li>Le bouton <strong>Rinitialiser filtres</strong> remet tout  zro.</li>
+                <li>Le bouton <strong>R?initialiser filtres</strong> remet tout ? z?ro.</li>
               </ul>
             </div>
           </section>
@@ -120,8 +120,8 @@ export default function NoticeModal({ isOpen, onClose }) {
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
               <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
                 <li>L'export CSV est <strong>compatible Excel</strong>.</li>
-                <li>Si un filtre est actif, l'export ne contient que cette liste filtre.</li>
-                <li>Colonnes incluses : nom, prnom, promo, classe, ligne, statut, contact.</li>
+                <li>Si un filtre est actif, l'export ne contient que cette liste filtr?e.</li>
+                <li>Colonnes incluses : nom, pr?nom, promo, classe, ligne, statut, contact.</li>
               </ul>
             </div>
           </section>
@@ -133,9 +133,9 @@ export default function NoticeModal({ isOpen, onClose }) {
             </h3>
             <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
               <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                <li>Vous pouvez importer un CSV cr dans Excel (sparateur <strong>;</strong> ou <strong>,</strong>).</li>
-                <li>Champs reconnus : nom, prnom, promo, classe, ligne, contact, notes.</li>
-                <li>Astuce : exportez d'abord un CSV puis rimportez-le aprs modification.</li>
+                <li>Vous pouvez importer un CSV cr?? dans Excel (s?parateur <strong>;</strong> ou <strong>,</strong>).</li>
+                <li>Champs reconnus : nom, pr?nom, promo, classe, ligne, contact, notes.</li>
+                <li>Astuce : exportez d'abord un CSV puis r?importez-le apr?s modification.</li>
               </ul>
             </div>
           </section>
@@ -147,7 +147,7 @@ export default function NoticeModal({ isOpen, onClose }) {
             </h3>
             <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
               <p className="text-sm text-gray-600">
-                Cliquez sur l'icône <strong></strong> à côté des champs pour obtenir de l'aide contextuelle.
+                Cliquez sur l'icône <strong>?</strong> à côté des champs pour obtenir de l'aide contextuelle.
               </p>
             </div>
           </section>

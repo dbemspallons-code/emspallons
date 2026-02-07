@@ -1,5 +1,5 @@
 ﻿export function exportMonthlyReportPDF({ rows, summary }, title = 'Bilan mensuel') {
-  // Genere une page imprimable (impression -> Enregistrer en PDF)
+  // GÃ©nÃ¨re une page imprimable (impression -> Enregistrer en PDF)
   const win = window.open('', '_blank');
   if (!win) return;
   const style = `
@@ -15,14 +15,14 @@
   `;
   const head = `
     <h1>${escapeHtml(title)}</h1>
-    <div class="meta">Session: ${escapeHtml(summary?.sessionId || '')} - Genere le ${new Date().toLocaleString('fr-FR')}</div>
+    <div class="meta">Session: ${escapeHtml(summary?.sessionId || '')} â€” GÃ©nÃ©rÃ© le ${new Date().toLocaleString('fr-FR')}</div>
     <div class="summary">
-      <div>Total etudiants: ${summary?.totalStudents ?? 0}</div>
-      <div>Payes dans delai: ${summary?.paidOnTime ?? 0}</div>
-      <div>Payes en grace: ${summary?.paidInGrace ?? 0}</div>
-      <div>Grace active (impayes fin mois): ${summary?.unpaid ?? 0}</div>
-      <div>Defaillants: ${summary?.defaulters ?? 0}</div>
-      <div>Payes hors delai: ${summary?.paidOutOfGrace ?? 0}</div>
+      <div>Total Ã©tudiants: ${summary?.totalStudents ?? 0}</div>
+      <div>PayÃ©s dans dÃ©lai: ${summary?.paidOnTime ?? 0}</div>
+      <div>PayÃ©s en grÃ¢ce: ${summary?.paidInGrace ?? 0}</div>
+      <div>GrÃ¢ce active (impayÃ©s fin mois): ${summary?.unpaid ?? 0}</div>
+      <div>DÃ©faillants: ${summary?.defaulters ?? 0}</div>
+      <div>PayÃ©s hors dÃ©lai: ${summary?.paidOutOfGrace ?? 0}</div>
     </div>
   `;
   const table = `
@@ -55,7 +55,7 @@
   `;
   win.document.write(`<!doctype html><html><head><meta charset="utf-8" />${style}<title>${escapeHtml(title)}</title></head><body>${head}${table}</body></html>`);
   win.document.close();
-  // Attendre le rendu puis ouvrir la boite de dialogue d'impression
+  // Attendre le rendu puis ouvrir la boÃ®te de dialogue d'impression
   setTimeout(() => win.print(), 300);
 }
 
