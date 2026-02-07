@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Plus, Edit2, Trash2, UserPlus, Mail, Lock, Crown, User, AlertTriangle } from 'lucide-react';
-import { getAllUsers, createUser, updateUser, deleteUser, canCreateUsers, getCurrentUser } from '../services/authService';
+import { X, Plus, Edit2, Trash2, UserPlus, Mail, Lock, Crown, User, AlertTriangle, Key } from 'lucide-react';
+import { getAllUsers, createUser, updateUser, deleteUser, canCreateUsers, getCurrentUser, resetUserPassword } from '../services/authService';
 export default function UserManagementModal({ onClose }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -8,6 +8,12 @@ export default function UserManagementModal({ onClose }) {
   const [editingUser, setEditingUser] = useState(null);
   const [canCreate, setCanCreate] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const hasAdmin = useMemo(() => users.some(user => user.role === 'admin'), [users]);
 
   useEffect(() => {
@@ -45,6 +51,8 @@ export default function UserManagementModal({ onClose }) {
       await createUser(userData);
       await loadUsers();
       setShowForm(false);
+      setSuccessMessage('Utilisateur cree avec succes. Mot de passe a changer a la premiere connexion.');
+      setTimeout(() => setSuccessMessage(''), 4000);
     } catch (error) {
       alert(error.message || 'Erreur lors de la creation');
       throw error;
@@ -146,6 +154,38 @@ export default function UserManagementModal({ onClose }) {
     }
   }
 
+  async function handleResetPasswordSubmit(e) {
+    e.preventDefault();
+    setResetError('');
+
+    if (!resetPassword || resetPassword.length < 6) {
+      setResetError('Le mot de passe doit contenir au moins 6 caracteres');
+      return;
+    }
+
+    if (resetPassword !== resetConfirm) {
+      setResetError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (!resetTarget) return;
+
+    setResetLoading(true);
+    try {
+      await resetUserPassword(resetTarget.id, resetPassword);
+      setResetTarget(null);
+      setResetPassword('');
+      setResetConfirm('');
+      setResetError('');
+      setSuccessMessage('Mot de passe reinitialise. L\'utilisateur devra le changer a la prochaine connexion.');
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (error) {
+      setResetError(error.message || 'Erreur lors de la reinitialisation');
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   return (
     <div className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-enter">
@@ -181,6 +221,11 @@ export default function UserManagementModal({ onClose }) {
             </div>
           ) : (
             <div className="overflow-x-auto">
+              {successMessage && (
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                  {successMessage}
+                </div>
+              )}
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -230,6 +275,20 @@ export default function UserManagementModal({ onClose }) {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          {canCreate && (
+                            <button
+                              onClick={() => {
+                                setResetTarget(user);
+                                setResetPassword('');
+                                setResetConfirm('');
+                                setResetError('');
+                              }}
+                              className="text-amber-600 hover:text-amber-800"
+                              title="Reinitialiser le mot de passe"
+                            >
+                              <Key className="w-4 h-4" />
+                            </button>
+                          )}
                           {(canCreate || (currentUser && currentUser.id === user.id)) && (
                             <button
                               onClick={() => handleDeleteUser(user.id)}
@@ -272,6 +331,95 @@ export default function UserManagementModal({ onClose }) {
           onSave={editingUser ? (updates) => handleUpdateUser(editingUser.id, updates) : handleCreateUser}
           hasAdminAlready={hasAdmin}
         />
+      )}
+
+      {resetTarget && (
+        <div className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold">Reinitialiser le mot de passe</h2>
+              <button
+                onClick={() => {
+                  setResetTarget(null);
+                  setResetPassword('');
+                  setResetConfirm('');
+                  setResetError('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleResetPasswordSubmit} className="p-6 space-y-4">
+              {resetError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                  {resetError}
+                </div>
+              )}
+
+              <div className="text-sm text-gray-600">
+                Utilisateur: <span className="font-semibold text-gray-900">{resetTarget.nom || resetTarget.name || resetTarget.email}</span>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nouveau mot de passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="password"
+                    value={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirmer le mot de passe
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="password"
+                    value={resetConfirm}
+                    onChange={(e) => setResetConfirm(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetTarget(null);
+                    setResetPassword('');
+                    setResetConfirm('');
+                    setResetError('');
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-green-500 text-white rounded-lg hover:from-yellow-500 hover:to-green-600 disabled:opacity-50"
+                >
+                  {resetLoading ? 'Reinitialisation...' : 'Reinitialiser'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

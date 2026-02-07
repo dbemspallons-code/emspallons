@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LogIn, User, Lock, AlertCircle, ShieldCheck } from 'lucide-react';
-import { login, isFirstUser, getRecentUsers } from '../services/authService';
+import { login, isFirstUser, getRecentUsers, requestPasswordReset } from '../services/authService';
 import FirstAdminSetup from './FirstAdminSetup';
 
 export default function Login({ onLoginSuccess }) {
@@ -11,6 +11,8 @@ export default function Login({ onLoginSuccess }) {
   const [isFirst, setIsFirst] = useState(false);
   const [checking, setChecking] = useState(true);
   const [recentUsers, setRecentUsers] = useState([]);
+  const [resetMessage, setResetMessage] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const passwordRef = useRef(null);
 
   useEffect(() => {
@@ -56,6 +58,25 @@ export default function Login({ onLoginSuccess }) {
     }
   }
 
+  async function handleForgotPassword() {
+    const targetEmail = email.trim();
+    if (!targetEmail) {
+      setError('Entrez votre email pour reinitialiser le mot de passe');
+      return;
+    }
+    setError('');
+    setResetMessage('');
+    setResetLoading(true);
+    try {
+      await requestPasswordReset(targetEmail);
+      setResetMessage('Email de reinitialisation envoye. Verifiez votre boite mail.');
+    } catch (err) {
+      setError(err.message || 'Impossible d\'envoyer l\'email');
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   function handleSelectProfile(profile) {
     setEmail(profile.email);
     setPassword('');
@@ -96,6 +117,13 @@ export default function Login({ onLoginSuccess }) {
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          {resetMessage && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-green-700">{resetMessage}</p>
             </div>
           )}
 
@@ -161,6 +189,16 @@ export default function Login({ onLoginSuccess }) {
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition"
                   placeholder="••••••••"
                 />
+              </div>
+              <div className="mt-2 text-right">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                >
+                  {resetLoading ? 'Envoi...' : 'Mot de passe oublie ?'}
+                </button>
               </div>
             </div>
 

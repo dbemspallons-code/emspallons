@@ -25,7 +25,9 @@ export async function signOut() {
 
 export async function createUserWithEmailAndPassword({ email, password }) {
   // This uses client signup; for admin creation, use server-side createUser
-  return supabase.auth.signUp({ email, password });
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const options = origin ? { emailRedirectTo: `${origin}/auth/callback` } : undefined;
+  return supabase.auth.signUp({ email, password, options });
 }
 
 export async function updatePassword(newPassword) {

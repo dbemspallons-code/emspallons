@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import ControllerScan from './components/ControllerScan';
+import ResetPassword from './components/ResetPassword';
+import AuthCallback from './components/AuthCallback';
+import ForcePasswordChange from './components/ForcePasswordChange';
 import { triggerSync, getOutboxLength } from './services/offlineService';
 import { getCurrentUser, logout } from './services/authService';
 
@@ -112,6 +115,14 @@ export default function AppNew() {
     </div>
   );
 
+  if (path.startsWith('/reset-password')) {
+    return <ResetPassword />;
+  }
+
+  if (path.startsWith('/auth/callback') || path.startsWith('/confirm')) {
+    return <AuthCallback />;
+  }
+
   // Routes publiques pour les contrôleurs (sans authentification)
   if (path.startsWith('/chauffeur') || path.startsWith('/controller/scan') || path.startsWith('/verify-driver')) {
     return <ControllerScan />;
@@ -119,6 +130,16 @@ export default function AppNew() {
 
   if (!user) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  if (user?.must_change_password) {
+    return (
+      <ForcePasswordChange
+        user={user}
+        onComplete={checkAuth}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return <Dashboard user={user} onLogout={handleLogout} />;

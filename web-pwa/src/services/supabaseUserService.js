@@ -18,13 +18,26 @@ export function subscribeUsers(callback) {
 }
 
 export async function createUser(userData, options = {}) {
-  // Create Supabase Auth user via server (recommended) -- for client, we use signUp
-  const { email, password, name, role = 'educator' } = userData;
-  if (!email) throw new Error('Email required');
-  // Sign up on client (will require email confirmation depending on your supabase setup)
-  await supabase.auth.signUp({ email, password });
-  const { data: users } = await supabase.from('educators').insert([{ email, name, role }]).select().limit(1);
-  return users && users[0];
+  const { email, password, name, role = 'educateur' } = userData;
+  if (!email) throw new Error('Email requis');
+  if (!password || password.length < 6) throw new Error('Mot de passe invalide');
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token || null;
+
+  const res = await fetch('/.netlify/functions/admin-create-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ email, password, name, role }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'Erreur creation utilisateur');
+  }
+  return data.user;
 }
 
 export async function updateUser(userId, updates) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { MessageCircle, X, Copy } from 'lucide-react';
 
 export default function WhatsAppReminderModal({
   open,
@@ -7,6 +7,7 @@ export default function WhatsAppReminderModal({
   reminders = [],
   onSendOne,
   onSendAll,
+  onCopyMessage,
 }) {
   if (!open) return null;
 
@@ -50,13 +51,24 @@ export default function WhatsAppReminderModal({
                       {reminder.messagePreview}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    className="ui-btn ui-btn--primary"
-                    onClick={() => onSendOne(reminder)}
-                  >
-                    <MessageCircle size={16} /> Ouvrir WhatsApp
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {onCopyMessage && (
+                      <button
+                        type="button"
+                        className="button button--subtle"
+                        onClick={() => onCopyMessage(reminder)}
+                      >
+                        <Copy size={16} /> Copier
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="ui-btn ui-btn--primary"
+                      onClick={() => onSendOne(reminder)}
+                    >
+                      <MessageCircle size={16} /> Ouvrir WhatsApp
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}

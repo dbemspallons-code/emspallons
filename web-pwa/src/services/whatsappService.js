@@ -1,3 +1,27 @@
+export function normalizeWhatsAppNumber(value, defaultCountryCode = '225') {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw || raw.includes('@')) return null;
+  let cleaned = raw.replace(/[^0-9+]/g, '');
+  if (!cleaned) return null;
+
+  if (cleaned.startsWith('00')) {
+    cleaned = `+${cleaned.slice(2)}`;
+  }
+
+  if (!cleaned.startsWith('+')) {
+    if (cleaned.startsWith(defaultCountryCode)) {
+      cleaned = `+${cleaned}`;
+    } else {
+      cleaned = `+${defaultCountryCode}${cleaned}`;
+    }
+  }
+
+  const digits = cleaned.replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  return cleaned;
+}
+
 /**
  * Ouvre WhatsApp avec un message pré-rempli
  * Utilise le lien direct WhatsApp (whatsapp://send) qui ouvre l'application WhatsApp
@@ -5,11 +29,10 @@
  * @param {string} text - Message à envoyer
  */
 export function openWhatsAppWithMessage(phone, text) {
-  // Nettoyer le numéro de téléphone (enlever espaces, tirets, etc.)
-  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-  
-  // S'assurer que le numéro commence par +
-  const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+${cleanPhone}`;
+  const formattedPhone = normalizeWhatsAppNumber(phone);
+  if (!formattedPhone) {
+    throw new Error('Numero WhatsApp invalide');
+  }
   
   // Encoder le message pour l'URL
   const encodedMessage = encodeURIComponent(text);
@@ -52,9 +75,10 @@ export function openWhatsAppWithMessage(phone, text) {
  * @param {string} imageDataUrl - Image en base64 (data URL)
  */
 export function openWhatsAppWithImage(phone, text, imageDataUrl) {
-  // Nettoyer le numéro de téléphone
-  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-  const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+${cleanPhone}`;
+  const formattedPhone = normalizeWhatsAppNumber(phone);
+  if (!formattedPhone) {
+    throw new Error('Numero WhatsApp invalide');
+  }
   
   // Encoder le message
   const encodedMessage = encodeURIComponent(text);

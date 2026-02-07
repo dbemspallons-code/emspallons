@@ -14,7 +14,7 @@ import {
   calculateStudentStatus, getRevenusEncaisses, getRevenusComptabilises,
   replaceAllData
 } from '../services/studentService';
-import { openWhatsAppWithMessage, openWhatsAppWithImage } from '../services/whatsappService';
+import { openWhatsAppWithMessage, openWhatsAppWithImage, normalizeWhatsAppNumber } from '../services/whatsappService';
 import { logReminderSend } from '../services/reminderService';
 import { fetchLatestSubscriptions } from '../services/subscriptionService';
 import { exportStudentsCSV, exportStudentsXLSX, exportPaymentsCSV, exportPaymentsXLSX, exportAllJSON, importJSON, importStudentsCSV, importStudentsXLSX } from '../services/exportService';
@@ -133,13 +133,32 @@ export default function Dashboard({ user, onLogout }) {
     await loadLines();
   }
 
-  const normalizeWhatsAppPhone = (value) => {
-    if (!value) return null;
-    const str = String(value).trim();
-    if (!str || str.includes('@')) return null;
-    const cleaned = str.replace(/[^0-9+]/g, '');
-    if (cleaned.length < 8) return null;
-    return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+  const normalizeWhatsAppPhone = (value) => normalizeWhatsAppNumber(value, '225');
+
+  const copyToClipboard = async (text) => {
+    if (!text) return false;
+    try {
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (err) {
+      // fallback below
+    }
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return ok;
+    } catch (err) {
+      return false;
+    }
   };
 
   function buildReminderMessage({ studentName, expiresAtLabel, daysRemaining, type }) {
@@ -469,6 +488,9 @@ export default function Dashboard({ user, onLogout }) {
       const qrCard = await qrCodeService.generatePrintableCard(temp, qrImage);
 
       const message = `Bonjour ${studentName},\n\nVoici votre QR code d'acces au transport scolaire.\n\nMerci de le conserver et de le presenter lors du scan.\n\nEMSP - Transport scolaire`;
+      await copyToClipboard(message);
+      setMessage('Message WhatsApp copie. Ajoutez le QR telecharge dans WhatsApp.');
+      setTimeout(() => setMessage(''), 4000);
       openWhatsAppWithImage(phone, message, qrCard || qrImage);
 
       await logReminderSend({
@@ -506,13 +528,26 @@ export default function Dashboard({ user, onLogout }) {
     }
   }
 
+  async function handleCopyReminderMessage(reminder) {
+    const ok = await copyToClipboard(reminder.message);
+    if (ok) {
+      setMessage('Message WhatsApp copie dans le presse-papiers.');
+    } else {
+      setMessage('Impossible de copier le message.');
+    }
+    setTimeout(() => setMessage(''), 2500);
+  }
+
   async function handleSendAllReminders() {
     if (remindersQueue.length === 0) return;
     if (!window.confirm(`Ouvrir WhatsApp pour ${remindersQueue.length} rappel(s) `)) return;
+    let index = 0;
     setMessage('Ouverture des conversations WhatsApp...');
     for (const reminder of remindersQueue) {
+      index += 1;
+      setMessage(`Ouverture WhatsApp ${index}/${remindersQueue.length}`);
       await handleSendReminderWhatsApp(reminder);
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => setTimeout(resolve, 1200));
     }
     setTimeout(() => setMessage(''), 3000);
   }
@@ -1102,6 +1137,7 @@ export default function Dashboard({ user, onLogout }) {
           onClose={() => setShowWhatsAppReminders(false)}
           onSendOne={handleSendReminderWhatsApp}
           onSendAll={handleSendAllReminders}
+          onCopyMessage={handleCopyReminderMessage}
         />
       )}
     </div>

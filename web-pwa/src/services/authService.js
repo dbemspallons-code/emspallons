@@ -6,6 +6,7 @@
 
 import { fetchWithQueue } from './offlineService';
 import { signIn, signOut as supabaseSignOut, createUserWithEmailAndPassword as supabaseCreateUserWithEmailAndPassword, updatePassword as supabaseUpdatePassword, getCurrentUser as getCurrentSupabaseUser, getEducatorById } from './supabaseAuthAdapter';
+import { supabase } from '../supabase/supabaseClient';
 import { fetchUsers as fetchUsersSupabase, createUser as createUserSupabase, updateUser as updateUserSupabase, deleteUser as deleteUserSupabase } from './supabaseUserService';
 import { getStorage, setStorage } from './storageService'; // Pour les utilisateurs récents uniquement (session)
 
@@ -116,6 +117,13 @@ export async function login(email, motDePasse) {
     // Récupérer le profil éducator dans Supabase
     const profile = await getEducatorById(user.id || user.uid);
     if (!profile) throw new Error('Compte utilisateur introuvable dans Supabase');
+
+    // Mettre a jour la date de derniere connexion
+    try {
+      await supabase.from('educators').update({ last_login_at: new Date().toISOString() }).eq('id', user.id || user.uid);
+    } catch (err) {
+      // non bloquant
+    }
 
     const out = {
       id: user.id || user.uid,
@@ -232,7 +240,13 @@ export async function updateUser(userId, updates) {
     }
     firestoreUpdates.role = updates.role;
   }
-  
+
+  // Mise a jour du mot de passe via API admin (si fourni)
+  const nextPassword = updates.motDePasse || updates.password;
+  if (nextPassword && typeof nextPassword === 'string') {
+    await resetUserPassword(userId, nextPassword);
+  }
+
   // ✅ NOUVEAU : Enregistrer dans l'historique si promotion admin
   if (updates.role === 'admin' && !wasAdmin) {
     const { logEducatorActivity } = await import('./firestoreService');
@@ -492,15 +506,21 @@ export async function resetUserPassword(userId, newPassword) {
   }
 
   try {
-    const response = await fetch('/.netlify/functions/resetUserPassword', {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token || null;
+    if (!token) {
+      throw new Error('Session invalide, veuillez vous reconnecter');
+    }
+
+    const response = await fetch('/.netlify/functions/admin-reset-password', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         userId,
         newPassword,
-        adminId: currentUser.id,
       }),
     });
 
@@ -515,6 +535,53 @@ export async function resetUserPassword(userId, newPassword) {
     console.error('Erreur resetUserPassword:', error);
     throw error;
   }
+}
+
+/**
+ * Demande un email de reinitialisation (mot de passe oublie)
+ */
+export async function requestPasswordReset(email) {
+  const clean = (email || '').trim().toLowerCase();
+  if (!clean) throw new Error('Email requis');
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const redirectTo = origin ? `${origin}/reset-password` : undefined;
+  const { error } = await supabase.auth.resetPasswordForEmail(clean, redirectTo ? { redirectTo } : undefined);
+  if (error) throw error;
+  return { success: true };
+}
+
+/**
+ * Termine la reinitialisation depuis le lien email (session recovery)
+ */
+export async function completePasswordReset(newPassword) {
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error('Le nouveau mot de passe doit contenir au moins 6 caracteres');
+  }
+  const res = await supabaseUpdatePassword(newPassword);
+  if (res?.error) throw res.error;
+  const { data } = await supabase.auth.getUser();
+  const userId = data?.user?.id;
+  if (userId) {
+    await supabase.from('educators').update({ must_change_password: false }).eq('id', userId);
+  }
+  return { success: true };
+}
+
+/**
+ * Change le mot de passe sans exiger l'ancien (force first login)
+ */
+export async function forceUpdatePassword(newPassword) {
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error('Le nouveau mot de passe doit contenir au moins 6 caracteres');
+  }
+  const res = await supabaseUpdatePassword(newPassword);
+  if (res?.error) throw res.error;
+  const { data } = await supabase.auth.getUser();
+  const userId = data?.user?.id;
+  if (userId) {
+    await supabase.from('educators').update({ must_change_password: false, last_login_at: new Date().toISOString() }).eq('id', userId);
+  }
+  return { success: true };
 }
 
 
