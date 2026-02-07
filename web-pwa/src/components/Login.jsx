@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LogIn, User, Lock, AlertCircle, ShieldCheck } from 'lucide-react';
+import { LogIn, User, Lock, AlertCircle, ShieldCheck, X } from 'lucide-react';
 import { login, isFirstUser, getRecentUsers, requestPasswordReset } from '../services/authService';
 import FirstAdminSetup from './FirstAdminSetup';
 
@@ -13,6 +13,10 @@ export default function Login({ onLoginSuccess }) {
   const [recentUsers, setRecentUsers] = useState([]);
   const [resetMessage, setResetMessage] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
   const passwordRef = useRef(null);
 
   useEffect(() => {
@@ -58,20 +62,23 @@ export default function Login({ onLoginSuccess }) {
     }
   }
 
-  async function handleForgotPassword() {
-    const targetEmail = email.trim();
+  async function handleForgotPassword(target) {
+    const targetEmail = (target || email || '').trim();
     if (!targetEmail) {
-      setError('Entrez votre email pour reinitialiser le mot de passe');
+      setResetError('Entrez votre email pour reinitialiser le mot de passe');
       return;
     }
-    setError('');
+    setResetError('');
+    setResetSuccess('');
     setResetMessage('');
     setResetLoading(true);
     try {
       await requestPasswordReset(targetEmail);
-      setResetMessage('Email de reinitialisation envoye. Verifiez votre boite mail.');
+      const okMsg = 'Email de reinitialisation envoye. Verifiez votre boite mail.';
+      setResetMessage(okMsg);
+      setResetSuccess(okMsg);
     } catch (err) {
-      setError(err.message || 'Impossible d\'envoyer l\'email');
+      setResetError(err.message || 'Impossible d\'envoyer l\'email');
     } finally {
       setResetLoading(false);
     }
@@ -190,16 +197,6 @@ export default function Login({ onLoginSuccess }) {
                   placeholder="••••••••"
                 />
               </div>
-              <div className="mt-2 text-right">
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={resetLoading}
-                  className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
-                >
-                  {resetLoading ? 'Envoi...' : 'Mot de passe oublie ?'}
-                </button>
-              </div>
             </div>
 
             <button
@@ -208,6 +205,19 @@ export default function Login({ onLoginSuccess }) {
               className="ui-btn ui-btn--primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Connexion...' : 'Se connecter'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setResetEmail(email);
+                setResetError('');
+                setResetSuccess('');
+                setShowResetModal(true);
+              }}
+              className="w-full text-sm font-semibold text-emerald-700 hover:text-emerald-800 underline mt-2"
+            >
+              Mot de passe oublie ?
             </button>
           </form>
 
@@ -228,6 +238,69 @@ export default function Login({ onLoginSuccess }) {
           </div>
         </div>
       </div>
+
+      {showResetModal && (
+        <div className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold">Reinitialiser le mot de passe</h2>
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleForgotPassword(resetEmail);
+              }}
+              className="p-6 space-y-4"
+            >
+              {resetError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                  {resetError}
+                </div>
+              )}
+              {resetSuccess && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                  {resetSuccess}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                  placeholder="votre@email.com"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-green-500 text-white rounded-lg hover:from-yellow-500 hover:to-green-600 disabled:opacity-50"
+                >
+                  {resetLoading ? 'Envoi...' : 'Envoyer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
