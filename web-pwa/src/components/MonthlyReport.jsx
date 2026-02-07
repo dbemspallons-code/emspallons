@@ -17,7 +17,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
   const promoOptions = useMemo(() => {
     const values = new Set();
     (students || []).forEach(student => {
-      const value = (student?.promo || student?.niveau || '').trim();
+      const value = (student.promo || student.niveau || '').trim();
       if (value) values.add(value);
     });
     return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
@@ -25,7 +25,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
   const classOptions = useMemo(() => {
     const values = new Set();
     (students || []).forEach(student => {
-      const value = (student?.classe || student?.classGroup || '').trim();
+      const value = (student.classe || student.classGroup || '').trim();
       if (value) values.add(value);
     });
     return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
@@ -33,9 +33,9 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
 
   const filteredStudents = useMemo(() => {
     return (students || []).filter(student => {
-      const matchLine = filters.line === 'all' || student?.busLine === filters.line;
-      const matchPromo = filters.promo === 'all' || (student?.promo || student?.niveau || '').toLowerCase() === filters.promo.toLowerCase();
-      const matchClass = filters.classGroup === 'all' || (student?.classe || student?.classGroup || '').toLowerCase() === filters.classGroup.toLowerCase();
+      const matchLine = filters.line === 'all' || student.busLine === filters.line;
+      const matchPromo = filters.promo === 'all' || (student.promo || student.niveau || '').toLowerCase() === filters.promo.toLowerCase();
+      const matchClass = filters.classGroup === 'all' || (student.classe || student.classGroup || '').toLowerCase() === filters.classGroup.toLowerCase();
       return matchLine && matchPromo && matchClass;
     });
   }, [students, filters]);
@@ -79,7 +79,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
     }
   }
 
-  // Calculer les statistiques des Ã©tudiants
+  // Calculer les statistiques des etudiants
   const studentStats = useMemo(() => {
     const studentStatuses = filteredStudents.map(s => {
       const studentPayments = filteredPayments.filter(p => p.studentId === s.id);
@@ -101,12 +101,12 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
     return { actifs, retard, expire };
   }, [filteredStudents, filteredPayments, selectedMonth, selectedYear]);
 
-  // DonnÃ©es pour le graphique
+  // Donnees pour le graphique
   const chartData = [
     {
       name: 'Revenus',
-      'EncaissÃ©s': filteredEncaisses.total,
-      'ComptabilisÃ©s': filteredComptabilises.total,
+      'Encaisses': filteredEncaisses.total,
+      'Comptabilises': filteredComptabilises.total,
     },
   ];
 
@@ -120,7 +120,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
 
   return (
     <div className="space-y-6">
-      {/* SÃ©lecteur de mois */}
+      {/* Selecteur de mois */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center gap-4">
           <Calendar className="w-5 h-5 text-gray-400" />
@@ -188,12 +188,12 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
         </div>
       </div>
 
-      {/* Cartes de rÃ©sumÃ© */}
+      {/* Cartes de resume */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Revenus encaissÃ©s</p>
+              <p className="text-sm font-medium text-gray-600">Revenus encaisses</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
                 {filteredEncaisses.total.toLocaleString('fr-FR')} FCFA
               </p>
@@ -207,7 +207,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Revenus comptabilisÃ©s</p>
+              <p className="text-sm font-medium text-gray-600">Revenus comptabilises</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
                 {filteredComptabilises.total.toLocaleString('fr-FR')} FCFA
               </p>
@@ -235,7 +235,7 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">En retard / ExpirÃ©s</p>
+              <p className="text-sm font-medium text-gray-600">En retard / Expires</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">
                 {studentStats.retard + studentStats.expire}
               </p>
@@ -257,24 +257,24 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
             <YAxis />
             <Tooltip formatter={(value) => `${Number(value).toLocaleString('fr-FR')} FCFA`} />
             <Legend />
-            <Bar dataKey="EncaissÃ©s" fill="#fbbf24" />
-            <Bar dataKey="ComptabilisÃ©s" fill="#10b981" />
+            <Bar dataKey="Encaisses" fill="#fbbf24" />
+            <Bar dataKey="Comptabilises" fill="#10b981" />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      {/* DÃ©tails des paiements encaissÃ©s */}
+      {/* Details des paiements encaisses */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Paiements encaissÃ©s ce mois</h3>
+        <h3 className="text-lg font-semibold mb-4">Paiements encaisses ce mois</h3>
         {filteredEncaisses.paiements.length === 0 ? (
-          <p className="text-gray-500">Aucun paiement encaissÃ© ce mois</p>
+          <p className="text-gray-500">Aucun paiement encaisse ce mois</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ã‰tudiant</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Etudiant</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mois</th>
                 </tr>
@@ -305,9 +305,9 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
         )}
       </div>
 
-      {/* DÃ©tails des revenus comptabilisÃ©s */}
+      {/* Details des revenus comptabilises */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">Abonnements actifs ce mois (rÃ©partition mensuelle)</h3>
+        <h3 className="text-lg font-semibold mb-4">Abonnements actifs ce mois (repartition mensuelle)</h3>
         {filteredComptabilises.paiements.length === 0 ? (
           <p className="text-gray-500">Aucun abonnement actif ce mois</p>
         ) : (
@@ -315,8 +315,8 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ã‰tudiant</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PÃ©riode</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Etudiant</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Periode</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant mensuel</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                 </tr>

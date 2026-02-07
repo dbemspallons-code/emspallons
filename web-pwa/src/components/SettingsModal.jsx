@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, Settings, DollarSign, Bell } from 'lucide-react';
 import { getSettings, updateSettings } from '../services/settingsService';
 
-export default function SettingsModal({ isOpen, onClose, isAdmin }) {
+export default function SettingsModal({ isOpen, onClose, isAdmin, onReset, showResetConfirm }) {
   const [defaultMonthlyFee, setDefaultMonthlyFee] = useState(12500);
   const [alertThreshold, setAlertThreshold] = useState(15);
   const [controllerAccessCode, setControllerAccessCode] = useState('1234-5678-9012');
@@ -189,6 +189,22 @@ export default function SettingsModal({ isOpen, onClose, isAdmin }) {
               placeholder="Contrôleur"
             />
           </div>
+
+          {isAdmin && onReset && (
+            <div className="border border-red-200 bg-red-50 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-red-700">Zone sensible</h3>
+              <p className="text-xs text-red-700 mt-1">
+                Cette action supprime tous les etudiants et paiements. Les utilisateurs ne seront pas supprimes.
+              </p>
+              <button
+                type="button"
+                onClick={onReset}
+                className="mt-3 px-4 py-2 rounded-lg border border-red-300 text-red-700 bg-white hover:bg-red-100 transition"
+              >
+                {showResetConfirm ? 'Confirmer la reinitialisation' : 'Reinitialiser les donnees'}
+              </button>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4">
             <button

@@ -3,7 +3,7 @@ import { X, Save, User, GraduationCap, Phone, Bus, MapPin, Users } from 'lucide-
 import { fetchPromos, fetchClasses } from '../services/classService';
 import { fetchLines } from '../services/firestoreService';
 
-const PHONE_REGEX = /^\+?[0-9\s-]{8,18}$/;
+const PHONE_REGEX = /^\+[0-9\s-]{8,18}$/;
 
 function normalizePhone(value) {
   if (!value) return '';
@@ -60,9 +60,9 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       setNom('');
       setPrenom('');
       setPromo('');
-      setClasse(classes[0]?.name || '');
+      setClasse(classes[0].name || '');
       setContact('+225');
-      setBusLine(lines[0]?.id || '');
+      setBusLine(lines[0].id || '');
       setPickupPoint('');
       setGuardian('');
       setNotes('');
@@ -102,11 +102,11 @@ export default function StudentFormModal({ student, onClose, onSave }) {
     if (!contact.trim()) nextErrors.contact = 'Contact obligatoire';
     const normalizedContact = normalizePhone(ensureCivPrefix(contact));
     if (contact && !PHONE_REGEX.test(contact.trim())) {
-      nextErrors.contact = 'Format de numÃ©ro invalide';
+      nextErrors.contact = 'Format de numero invalide';
     }
     if (!promo.trim()) nextErrors.promo = 'Promotion obligatoire';
     if (!classes.length) {
-      nextErrors.classe = 'Aucune classe disponible. Ajoutez une classe dans ParamÃ¨tres.';
+      nextErrors.classe = 'Aucune classe disponible. Ajoutez une classe dans Parametres.';
     } else if (!classe.trim()) {
       nextErrors.classe = 'Classe obligatoire';
     }
@@ -142,7 +142,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[92vh] overflow-y-auto modal-enter">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
-            {isEditing ? 'Modifier lâ€™Ã©tudiant' : 'Nouvel Ã©tudiant'}
+            {isEditing ? 'Modifier l\'etudiant' : 'Nouvel etudiant'}
           </h2>
           <button
             onClick={onClose}
@@ -180,7 +180,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                PrÃ©nom
+                Prenom
               </label>
               <input
                 type="text"
@@ -204,7 +204,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   disabled={loadingOptions}
                   required
                 >
-                  <option value="">{loadingOptions ? 'Chargement...' : 'SÃ©lectionner une promo'}</option>
+                  <option value="">{loadingOptions ? 'Chargement...' : 'Selectionner une promo'}</option>
                   {promos.map((item) => (
                     <option key={item.id} value={item.name}>
                       {item.name}
@@ -229,7 +229,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   required
                 >
                   <option value="">
-                    {loadingOptions ? 'Chargement...' : classes.length ? 'SÃ©lectionner une classe' : 'Aucune classe disponible'}
+                    {loadingOptions ? 'Chargement...' : classes.length ? 'Selectionner une classe' : 'Aucune classe disponible'}
                   </option>
                   {classes.map((item) => (
                     <option key={item.id} value={item.name}>
@@ -241,7 +241,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
               {errors.classe && <p className="text-xs text-red-600 mt-1">{errors.classe}</p>}
               {!loadingOptions && classes.length === 0 && (
                 <p className="text-xs text-red-600 mt-1">
-                  Ajoutez d'abord une classe dans ParamÃ¨tres &gt; Classes/Promos.
+                  Ajoutez d'abord une classe dans Parametres &gt; Classes/Promos.
                 </p>
               )}
             </div>
@@ -258,7 +258,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                   required
                 >
-                  <option value="">SÃ©lectionner une ligne</option>
+                  <option value="">Selectionner une ligne</option>
                   {lines.map((line) => (
                     <option key={line.id} value={line.id}>
                       {line.name}
@@ -285,7 +285,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
                   required
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Format conseillÃ©: +2250700000000</p>
+              <p className="text-xs text-gray-500 mt-1">Format conseille: +2250700000000</p>
               {errors.contact && <p className="text-xs text-red-600 mt-1">{errors.contact}</p>}
             </div>
 

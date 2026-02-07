@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Edit2, Trash2, UserPlus, Mail, Lock, Crown, User, AlertTriangle } from 'lucide-react';
 import { getAllUsers, createUser, updateUser, deleteUser, canCreateUsers, getCurrentUser } from '../services/authService';
-import { useNavigate } from 'react-router-dom';
-
 export default function UserManagementModal({ onClose }) {
-  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -49,25 +46,25 @@ export default function UserManagementModal({ onClose }) {
       await loadUsers();
       setShowForm(false);
     } catch (error) {
-      alert(error.message || 'Erreur lors de la création');
+      alert(error.message || 'Erreur lors de la creation');
       throw error;
     }
   }
 
   async function handleUpdateUser(userId, updates) {
     try {
-      // ✅ NOUVEAU : Confirmation si promotion admin
+      // Confirmation si promotion admin
       if (updates.role === 'admin') {
         const user = users.find(u => u.id === userId);
         const userName = user?.nom || user?.name || user?.email || 'cet utilisateur';
         
-        const confirmMessage = 
-          `⚠️ ATTENTION\n\n` +
-          `Vous allez donner les droits administrateur à "${userName}".\n\n` +
-          `Cette personne aura accès à TOUTES les fonctionnalités, y compris :\n` +
-          `- Création/suppression d'utilisateurs\n` +
-          `- Réinitialisation de mots de passe\n` +
-          `- Gestion complète du système\n\n` +
+        const confirmMessage =
+          `ATTENTION\n\n` +
+          `Vous allez donner les droits administrateur a "${userName}".\n\n` +
+          `Cette personne aura acces a TOUTES les fonctionnalites, y compris :\n` +
+          `- Creation/suppression d'utilisateurs\n` +
+          `- Reinitialisation de mots de passe\n` +
+          `- Gestion complete du systeme\n\n` +
           `Confirmer cette promotion ?`;
         
         if (!window.confirm(confirmMessage)) {
@@ -78,9 +75,9 @@ export default function UserManagementModal({ onClose }) {
       await updateUser(userId, updates);
       await loadUsers();
       setEditingUser(null);
-      alert('✅ Rôle mis à jour avec succès.');
+      alert('Role mis a jour avec succes.');
     } catch (error) {
-      alert(error.message || 'Erreur lors de la mise à jour');
+      alert(error.message || 'Erreur lors de la mise a jour');
       throw error;
     }
   }
@@ -89,14 +86,14 @@ export default function UserManagementModal({ onClose }) {
     const user = users.find(u => u.id === userId);
     const isSelfDeletion = currentUser && currentUser.id === userId;
     
-    // ✅ NOUVEAU : Confirmation renforcée pour auto-suppression
+    // Confirmation renforcee pour auto-suppression
     if (isSelfDeletion) {
       await handleDeleteOwnAccount(userId);
       return;
     }
     
     // Suppression normale pour les autres utilisateurs
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+    if (!window.confirm('Etes-vous sur de vouloir supprimer cet utilisateur ?')) {
       return;
     }
     try {
@@ -107,32 +104,32 @@ export default function UserManagementModal({ onClose }) {
     }
   }
 
-  // ✅ NOUVEAU : Gestion de l'auto-suppression avec confirmation renforcée
+  // Gestion de l'auto-suppression avec confirmation renforcee
   async function handleDeleteOwnAccount(userId) {
     const user = users.find(u => u.id === userId);
     const userName = user?.nom || user?.name || currentUser?.name || 'Vous';
     
-    // Étape 1 : Saisie de confirmation textuelle
+    // Etape 1 : Saisie de confirmation textuelle
     const confirmation = window.prompt(
-      '⚠️ ATTENTION : Vous allez supprimer votre propre compte administrateur.\n\n' +
-      'Cette action est IRRÉVERSIBLE et vous serez immédiatement déconnecté.\n\n' +
+      'ATTENTION : Vous allez supprimer votre propre compte administrateur.\n\n' +
+      'Cette action est IRREVERSIBLE et vous serez immediatement deconnecte.\n\n' +
       'Pour confirmer, tapez exactement : SUPPRIMER MON COMPTE'
     );
     
     if (confirmation !== 'SUPPRIMER MON COMPTE') {
-      alert('❌ Confirmation incorrecte. Suppression annulée.');
+      alert('Confirmation incorrecte. Suppression annulee.');
       return;
     }
-    
-    // Étape 2 : Double confirmation
+
+    // Etape 2 : Double confirmation
     const finalConfirm = window.confirm(
-      '🚨 DERNIÈRE CONFIRMATION\n\n' +
-      'Êtes-vous ABSOLUMENT SÛR de vouloir supprimer votre compte administrateur ?\n\n' +
-      'Cliquez sur OK pour confirmer la suppression définitive.'
+      'DERNIERE CONFIRMATION\n\n' +
+      'Etes-vous ABSOLUMENT SUR de vouloir supprimer votre compte administrateur ?\n\n' +
+      'Cliquez sur OK pour confirmer la suppression definitive.'
     );
-    
+
     if (!finalConfirm) {
-      alert('Suppression annulée.');
+      alert('Suppression annulee.');
       return;
     }
     
@@ -140,13 +137,12 @@ export default function UserManagementModal({ onClose }) {
       // Suppression avec forceSelfDeletion = true
       await deleteUser(userId, { forceSelfDeletion: true });
       
-      // Redirection vers login (la déconnexion est déjà faite dans deleteUser)
-      alert('✅ Votre compte a été supprimé. Vous allez être redirigé vers la page de connexion.');
-      navigate('/login');
-      window.location.reload(); // Forcer le rechargement pour nettoyer l'état
+      // Redirection vers l'accueil (la deconnexion est deja faite dans deleteUser)
+      alert('Votre compte a ete supprime. Vous allez etre redirige vers la page de connexion.');
+      window.location.href = '/';
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
-      alert(error.message || '❌ Erreur lors de la suppression du compte.');
+      alert(error.message || 'Erreur lors de la suppression du compte.');
     }
   }
 
@@ -190,7 +186,7 @@ export default function UserManagementModal({ onClose }) {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rôle</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
@@ -217,7 +213,7 @@ export default function UserManagementModal({ onClose }) {
                           ) : (
                             <>
                               <User className="w-3 h-3 mr-1" />
-                              Éducateur
+                              Educateur
                             </>
                           )}
                         </span>
@@ -237,10 +233,10 @@ export default function UserManagementModal({ onClose }) {
                           {(canCreate || (currentUser && currentUser.id === user.id)) && (
                             <button
                               onClick={() => handleDeleteUser(user.id)}
-                              className={`${
+                            className={`${
                                 currentUser && currentUser.id === user.id
-                                  ? 'text-red-700 hover:text-red-900 font-semibold'
-                                  : 'text-red-600 hover:text-red-900'
+                                  ? 'text-amber-700 hover:text-red-700 font-semibold'
+                                  : 'text-gray-500 hover:text-red-600'
                               }`}
                               title={
                                 currentUser && currentUser.id === user.id
@@ -297,7 +293,7 @@ function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
     }
   }, [user]);
 
-  // Permettre à l'admin de créer d'autres admins
+  // Permettre a l'admin de creer d'autres admins
   const adminOptionDisabled = false;
 
   async function handleSubmit(e) {
@@ -307,14 +303,14 @@ function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
 
     try {
       if (user) {
-        // Mise à jour
+        // Mise a jour
         const updates = { nom, email, role };
         if (password) {
           updates.motDePasse = password;
         }
         await onSave(updates);
       } else {
-        // Création
+        // Creation
         if (!password) {
           setError('Le mot de passe est requis pour un nouvel utilisateur');
           setLoading(false);
@@ -394,14 +390,14 @@ function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
                 required={!user}
                 minLength={6}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-                placeholder={user ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'}
+                placeholder={user ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caracteres'}
               />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rôle <span className="text-red-500">*</span>
+              Role <span className="text-red-500">*</span>
             </label>
             <select
               value={role}
@@ -410,7 +406,7 @@ function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
             >
               <option value="educateur">
-                Éducateur
+                Educateur
               </option>
               <option value="admin">
                 Administrateur
@@ -418,17 +414,17 @@ function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
             </select>
             {!user && role === 'admin' && (
               <p className="mt-1 text-xs text-amber-600">
-                ⚠️ Cet utilisateur aura tous les droits administrateur.
+                Attention : cet utilisateur aura tous les droits administrateur.
               </p>
             )}
             {user && user.role === 'educateur' && role === 'admin' && (
               <p className="mt-1 text-xs text-amber-600">
-                ⚠️ Vous allez promouvoir cet éducateur au rôle administrateur.
+                Attention : vous allez promouvoir cet educateur au role administrateur.
               </p>
             )}
             {user && user.role === 'admin' && role === 'educateur' && (
               <p className="mt-1 text-xs text-red-600">
-                ⚠️ Attention : Vous retirez les droits administrateur. Assurez-vous qu'il reste au moins un autre admin.
+                Attention : vous retirez les droits administrateur. Assurez-vous qu'il reste au moins un autre admin.
               </p>
             )}
           </div>

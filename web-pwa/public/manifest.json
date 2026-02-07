@@ -41,11 +41,5 @@
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "share_target": {
-    "action": "/",
-    "method": "GET",
-    "enctype": "application/x-www-form-urlencoded"
-  },
-  "offline_enabled": true,
-  "prefer_related_applications": false
+  "offline_enabled": true
 }

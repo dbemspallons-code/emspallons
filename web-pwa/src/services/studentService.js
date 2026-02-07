@@ -205,7 +205,7 @@ export async function getStudentById(id) {
 export async function createStudent(studentData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez etre connecte');
   }
 
   const lastName = (studentData.nom || '').trim();
@@ -213,7 +213,7 @@ export async function createStudent(studentData) {
   const fullName = [lastName, firstName].filter(Boolean).join(' ').trim();
 
   const newStudent = {
-    name: fullName || lastName || firstName || 'Ã‰tudiant',
+    name: fullName || lastName || firstName || 'Etudiant',
     first_name: firstName || null,
     last_name: lastName || null,
     promo: studentData.promo?.trim() || studentData.niveau?.trim() || null,
@@ -239,7 +239,7 @@ export async function createStudent(studentData) {
       const printableCard = await qrCodeService.generatePrintableCard(temp, qrImage);
       // Optionally persist QR token via Netlify function or supabase table (qr_codes table exists server-side)
     } catch (error) {
-      console.warn('GÃ©nÃ©ration QR Ã©chouÃ©e', error);
+      console.warn('Generation QR echouee', error);
     }
 
     await historyService.log({
@@ -268,7 +268,7 @@ export async function createStudent(studentData) {
 export async function updateStudent(studentId, updates) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez etre connecte');
   }
 
   const updateData = {};
@@ -360,12 +360,12 @@ export async function getPaymentsByStudentId(studentId) {
 export async function createPayment(paymentData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez etre connecte');
   }
 
   // VÃ©rifier que l'Ã©tudiant existe
   const student = await getStudentById(paymentData.studentId);
-  if (!student) throw new Error('Ã‰tudiant introuvable');
+  if (!student) throw new Error('Etudiant introuvable');
 
   const plan = paymentData.plan || null;
   const nombreMois = Number(paymentData.nombreMois || plan?.numberOfMonths || 1);
@@ -504,7 +504,7 @@ export function calculateStudentStatus(student, payments) {
     return {
       statut: 'ACTIF',
       couleur: 'green',
-      message: `PayÃ© jusqu'au ${formatDate(moisFin)}`,
+      message: `Paye jusqu'au ${formatDate(moisFin)}`,
       acces: true,
       dateFin: moisFin.toISOString(),
       joursRestants,
@@ -515,7 +515,7 @@ export function calculateStudentStatus(student, payments) {
     return {
       statut: 'RETARD',
       couleur: 'orange',
-      message: `EN RETARD - ${joursGrace} jours de grÃ¢ce restants`,
+      message: `EN RETARD - ${joursGrace} jours de grace restants`,
       acces: true,
       dateFin: moisFin.toISOString(),
       joursRestants: -joursGrace,
@@ -526,7 +526,7 @@ export function calculateStudentStatus(student, payments) {
     return {
       statut: 'EXPIRE',
       couleur: 'red',
-      message: `EXPIRÃ‰ depuis ${joursExpire} jours`,
+      message: `EXPIRE depuis ${joursExpire} jours`,
       acces: false,
       dateFin: moisFin.toISOString(),
       joursRestants: null,
@@ -584,7 +584,7 @@ export async function getRevenusComptabilises(annee, mois) {
 export async function importStudentsBulk(studentsData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez etre connecte');
   }
 
   const students = await getAllStudents();
@@ -617,7 +617,7 @@ export async function importStudentsBulk(studentsData) {
 export async function importPaymentsBulk(paymentsData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez etre connecte');
   }
 
   const payments = await getAllPayments();

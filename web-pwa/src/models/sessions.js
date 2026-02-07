@@ -44,22 +44,22 @@ export function computeMonthlyPaymentStatus(student, sessionId) {
 
   // During month (1..30/31)
   if (now <= end) {
-    if (entryForSession) return { code: 'PAYE', label: 'PAYÃ‰', paidAt: entryForSession.paidAt };
-    if (paidInMonth) return { code: 'PAYE', label: 'PAYÃ‰', paidAt: paidInMonth.paidAt };
-    return { code: 'IMPAYE', label: 'IMPAYÃ‰', paidAt: null };
+    if (entryForSession) return { code: 'PAYE', label: 'PAYE', paidAt: entryForSession.paidAt };
+    if (paidInMonth) return { code: 'PAYE', label: 'PAYE', paidAt: paidInMonth.paidAt };
+    return { code: 'IMPAYE', label: 'IMPAYE', paidAt: null };
   }
 
   // During grace (1..5 next month)
   if (now > end && now <= graceEnd) {
-    if (entryForSession) return { code: 'PAYE_EN_RETARD', label: 'PAYÃ‰ EN RETARD', paidAt: entryForSession.paidAt };
-    if (paidInGrace) return { code: 'PAYE_EN_RETARD', label: 'PAYÃ‰ EN RETARD', paidAt: paidInGrace.paidAt };
-    return { code: 'GRACE_ACTIVE', label: 'GRÃ‚CE ACTIVE', paidAt: null };
+    if (entryForSession) return { code: 'PAYE_EN_RETARD', label: 'PAYE EN RETARD', paidAt: entryForSession.paidAt };
+    if (paidInGrace) return { code: 'PAYE_EN_RETARD', label: 'PAYE EN RETARD', paidAt: paidInGrace.paidAt };
+    return { code: 'GRACE_ACTIVE', label: 'GRACE ACTIVE', paidAt: null };
   }
 
   // After grace (> 5)
-  if (entryForSession) return { code: 'PAYE_HORS_DELAI', label: 'PAYÃ‰ HORS DÃ‰LAI', paidAt: entryForSession.paidAt };
-  if (paidInGrace) return { code: 'PAYE_HORS_DELAI', label: 'PAYÃ‰ HORS DÃ‰LAI', paidAt: paidInGrace.paidAt };
-  return { code: 'DEFAILLANT', label: 'DÃ‰FAILLANT', paidAt: null };
+  if (entryForSession) return { code: 'PAYE_HORS_DELAI', label: 'PAYE HORS DELAI', paidAt: entryForSession.paidAt };
+  if (paidInGrace) return { code: 'PAYE_HORS_DELAI', label: 'PAYE HORS DELAI', paidAt: paidInGrace.paidAt };
+  return { code: 'DEFAILLANT', label: 'DEFAILLANT', paidAt: null };
 }
 
 /**
@@ -152,7 +152,7 @@ export function buildMonthlyReport(students, sessionId) {
         promo: promoLabel,
         classGroup: classLabel,
         busLine: student.busLine || '',
-        status: `PAYÃ‰ EN AVANCE (${monthsAhead} mois)`,
+        status: `PAYE EN AVANCE (${monthsAhead} mois)`,
         paidAt: paymentForSession?.paidAt || '',
         amount: amountForAdvance,
         advanceInfo: {
