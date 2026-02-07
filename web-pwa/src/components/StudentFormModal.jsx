@@ -131,7 +131,12 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       });
       onClose();
     } catch (err) {
-      setError(err.message || 'Erreur lors de la sauvegarde');
+      const raw = err?.message || '';
+      if (raw.toLowerCase().includes('row-level security')) {
+        setError('Autorisation insuffisante pour creer un etudiant. Verifiez les policies RLS de la table subscribers.');
+      } else {
+        setError(raw || 'Erreur lors de la sauvegarde');
+      }
     } finally {
       setLoading(false);
     }
