@@ -1600,9 +1600,15 @@ h3,
   overflow: hidden;
 }
 
-.app-bg > * {
+.app-bg > *:not(.modal-overlay) {
   position: relative;
   z-index: 1;
+}
+
+.modal-overlay {
+  position: fixed !important;
+  inset: 0;
+  z-index: 1000;
 }
 
 .app-bg::before,
