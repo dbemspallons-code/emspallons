@@ -7,8 +7,8 @@ const headers = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
 function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers });
@@ -30,7 +30,7 @@ export default async (req) => {
   }
 
   if (!supabaseUrl || !serviceKey) {
-    return json(500, { error: 'Missing Supabase service configuration' });
+    return json(500, { error: 'Configuration Supabase manquante. Verifiez SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY.' });
   }
 
   const supabase = createClient(supabaseUrl, serviceKey, {
@@ -121,7 +121,6 @@ export default async (req) => {
     return json(200, { ok: true, user: edu });
   } catch (err) {
     console.error('admin-create-user error', err);
-    return json(500, { error: 'Internal error' });
+    return json(500, { error: 'Erreur interne' });
   }
 };
-

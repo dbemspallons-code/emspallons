@@ -546,7 +546,13 @@ export async function requestPasswordReset(email) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const redirectTo = origin ? `${origin}/reset-password` : undefined;
   const { error } = await supabase.auth.resetPasswordForEmail(clean, redirectTo ? { redirectTo } : undefined);
-  if (error) throw error;
+  if (error) {
+    const msg = String(error.message || '');
+    if (msg.toLowerCase().includes('recovery') || msg.toLowerCase().includes('smtp')) {
+      throw new Error('Impossible d\'envoyer l\'email de reinitialisation. Verifiez la configuration SMTP.');
+    }
+    throw new Error('Erreur lors de l\'envoi de l\'email de reinitialisation.');
+  }
   return { success: true };
 }
 

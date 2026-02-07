@@ -797,7 +797,9 @@ export default function Dashboard({ user, onLogout }) {
               </div>
               <div className="top-nav__user">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{user.nom}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {user.nom || user.name || user.email || 'Utilisateur'}
+                  </p>
                   <p className="text-xs text-gray-500">{user.role === 'admin' ? 'Administrateur' : 'Educateur'}</p>
                 </div>
                 <button

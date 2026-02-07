@@ -35,7 +35,11 @@ export async function createUser(userData, options = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || 'Erreur creation utilisateur');
+    const message = data.error || 'Erreur creation utilisateur';
+    if (message.includes('Configuration Supabase manquante')) {
+      throw new Error('Configuration serveur manquante. Verifiez les variables Netlify (SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY).');
+    }
+    throw new Error(message);
   }
   return data.user;
 }
