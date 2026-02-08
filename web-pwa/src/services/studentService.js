@@ -1,5 +1,5 @@
 ﻿/**
- * Service de gestion des Ã©tudiants et paiements
+ * Service de gestion des étudiants et paiements
  * Utilise window.storage avec shared:true
  */
 
@@ -30,7 +30,7 @@ function normalizePhone(value) {
 }
 
 function toFrenchSupabaseError(error) {
-  const raw = String(error?.message || error || '').trim();
+  const raw = String(error.message || error || '').trim();
   if (!raw) return 'Erreur inconnue';
 
   if (/schema cache/i.test(raw) || /column .* does not exist/i.test(raw) || /relation .* does not exist/i.test(raw)) {
@@ -112,7 +112,7 @@ function normalizePaymentRow(row) {
 }
 
 /**
- * Structure Ã©tudiant:
+ * Structure étudiant:
  * {
  *   id: string,
  *   nom: string,
@@ -135,30 +135,30 @@ function normalizePaymentRow(row) {
  *   moisDebut: string (ISO - toujours 1er du mois),
  *   moisFin: string (ISO - dernier jour du mois),
  *   dateGraceFin: string (ISO - moisFin + 5 jours),
- *   montantMensuel: number (calculÃ©: montantTotal / nombreMois),
+ *   montantMensuel: number (calculé: montantTotal / nombreMois),
  *   description: string,
  *   educateurNom: string,
  *   educateurId: string,
- *   dateEnregistrement: string (ISO - date rÃ©elle du paiement)
+ *   dateEnregistrement: string (ISO - date réelle du paiement)
  * }
  */
 
 /**
- * Calcule les dates d'abonnement selon les rÃ¨gles:
+ * Calcule les dates d'abonnement selon les règles:
  * - Toujours commencer le 1er du mois en cours
  * - Finir le dernier jour du dernier mois couvert
- * - PÃ©riode de grÃ¢ce: +5 jours aprÃ¨s la fin
+ * - Période de grâce: +5 jours après la fin
  */
 function calculateSubscriptionDates(datePaiement, nombreMois) {
   const date = new Date(datePaiement);
   
-  // Mois de dÃ©but: toujours le 1er du mois en cours
+  // Mois de début: toujours le 1er du mois en cours
   const moisDebut = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
   
   // Mois de fin: dernier jour du dernier mois couvert
   const moisFin = new Date(date.getFullYear(), date.getMonth() + nombreMois, 0, 23, 59, 59, 999);
   
-  // Date de fin de grÃ¢ce configurable
+  // Date de fin de grâce configurable
   const dateGraceFin = new Date(moisFin);
   dateGraceFin.setDate(dateGraceFin.getDate() + PAYMENT_CONFIG.GRACE_PERIOD_DAYS);
   dateGraceFin.setHours(23, 59, 59, 999);
@@ -171,7 +171,7 @@ function calculateSubscriptionDates(datePaiement, nombreMois) {
 }
 
 /**
- * RÃ©cupÃ¨re tous les Ã©tudiants (Supabase `subscribers`)
+ * Récupère tous les étudiants (Supabase `subscribers`)
  */
 export async function getAllStudents() {
   try {
@@ -185,7 +185,7 @@ export async function getAllStudents() {
 }
 
 /**
- * RÃ©cupÃ¨re un Ã©tudiant par ID (Supabase)
+ * Récupère un étudiant par ID (Supabase)
  */
 export async function getStudentById(id) {
   try {
@@ -200,12 +200,12 @@ export async function getStudentById(id) {
 }
 
 /**
- * CrÃ©e un nouvel Ã©tudiant
+ * Crée un nouvel étudiant
  */
 export async function createStudent(studentData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez être connecté');
   }
 
   const lastName = (studentData.nom || '').trim();
@@ -213,17 +213,17 @@ export async function createStudent(studentData) {
   const fullName = [lastName, firstName].filter(Boolean).join(' ').trim();
 
   const newStudent = {
-    name: fullName || lastName || firstName || 'Ã‰tudiant',
+    name: fullName || lastName || firstName || 'Étudiant',
     first_name: firstName || null,
     last_name: lastName || null,
-    promo: studentData.promo?.trim() || studentData.niveau?.trim() || null,
-    class: studentData.classe?.trim() || studentData.classGroup?.trim() || '',
+    promo: studentData.promo.trim() || studentData.niveau.trim() || null,
+    class: studentData.classe.trim() || studentData.classGroup.trim() || '',
     bus_line: studentData.busLine || null,
-    pickup_point: studentData.pickupPoint?.trim() || null,
-    guardian: studentData.guardian?.trim() || null,
-    phone: normalizePhone(studentData.contact) || studentData.contact?.trim() || null,
-    email: studentData.email?.trim() || null,
-    notes: studentData.notes?.trim() || null,
+    pickup_point: studentData.pickupPoint.trim() || null,
+    guardian: studentData.guardian.trim() || null,
+    phone: normalizePhone(studentData.contact) || studentData.contact.trim() || null,
+    email: studentData.email.trim() || null,
+    notes: studentData.notes.trim() || null,
     status: 'active',
   };
 
@@ -239,7 +239,7 @@ export async function createStudent(studentData) {
       const printableCard = await qrCodeService.generatePrintableCard(temp, qrImage);
       // Optionally persist QR token via Netlify function or supabase table (qr_codes table exists server-side)
     } catch (error) {
-      console.warn('GÃ©nÃ©ration QR Ã©chouÃ©e', error);
+      console.warn('Génération QR échouée', error);
     }
 
     await historyService.log({
@@ -263,12 +263,12 @@ export async function createStudent(studentData) {
 }
 
 /**
- * Met Ã  jour un Ã©tudiant
+ * Met à jour un étudiant
  */
 export async function updateStudent(studentId, updates) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez être connecté');
   }
 
   const updateData = {};
@@ -281,8 +281,8 @@ export async function updateStudent(studentId, updates) {
   if (updates.promo !== undefined || updates.niveau !== undefined) updateData.promo = (updates.promo || updates.niveau || '').trim();
   if (updates.classe !== undefined || updates.classGroup !== undefined) updateData.class = (updates.classe || updates.classGroup || '').trim();
   if (updates.busLine !== undefined) updateData.bus_line = updates.busLine || null;
-  if (updates.pickupPoint !== undefined) updateData.pickup_point = updates.pickupPoint?.trim() || null;
-  if (updates.guardian !== undefined) updateData.guardian = updates.guardian?.trim() || null;
+  if (updates.pickupPoint !== undefined) updateData.pickup_point = updates.pickupPoint.trim() || null;
+  if (updates.guardian !== undefined) updateData.guardian = updates.guardian.trim() || null;
   if (updates.contact !== undefined) updateData.phone = normalizePhone(updates.contact) || updates.contact.trim();
   if (updates.email !== undefined) updateData.email = updates.email.trim();
   if (updates.notes !== undefined) updateData.notes = updates.notes.trim();
@@ -311,7 +311,7 @@ export async function updateStudent(studentId, updates) {
 }
 
 /**
- * Supprime un Ã©tudiant
+ * Supprime un étudiant
  */
 export async function deleteStudent(studentId) {
   try {
@@ -327,7 +327,7 @@ export async function deleteStudent(studentId) {
 }
 
 /**
- * RÃ©cupÃ¨re tous les paiements
+ * Récupère tous les paiements
  */
 export async function getAllPayments() {
   try {
@@ -341,7 +341,7 @@ export async function getAllPayments() {
 }
 
 /**
- * RÃ©cupÃ¨re les paiements d'un Ã©tudiant
+ * Récupère les paiements d'un étudiant
  */
 export async function getPaymentsByStudentId(studentId) {
   try {
@@ -355,29 +355,29 @@ export async function getPaymentsByStudentId(studentId) {
 }
 
 /**
- * CrÃ©e un nouveau paiement
+ * Crée un nouveau paiement
  */
 export async function createPayment(paymentData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez être connecté');
   }
 
-  // VÃ©rifier que l'Ã©tudiant existe
+  // Vérifier que l'étudiant existe
   const student = await getStudentById(paymentData.studentId);
-  if (!student) throw new Error('Ã‰tudiant introuvable');
+  if (!student) throw new Error('Étudiant introuvable');
 
   const plan = paymentData.plan || null;
-  const nombreMois = Number(paymentData.nombreMois || plan?.numberOfMonths || 1);
-  const montantMensuel = Number(paymentData.montantMensuel || plan?.monthlyFee || PAYMENT_CONFIG.DEFAULT_MONTHLY_FEE);
-  const montantTotal = Number(paymentData.montantTotal || plan?.totalAmount || (montantMensuel * nombreMois));
+  const nombreMois = Number(paymentData.nombreMois || plan.numberOfMonths || 1);
+  const montantMensuel = Number(paymentData.montantMensuel || plan.monthlyFee || PAYMENT_CONFIG.DEFAULT_MONTHLY_FEE);
+  const montantTotal = Number(paymentData.montantTotal || plan.totalAmount || (montantMensuel * nombreMois));
   const dateEnregistrement = paymentData.dateEnregistrement || new Date().toISOString();
   const { moisDebut, moisFin, dateGraceFin } = calculateSubscriptionDates(dateEnregistrement, nombreMois);
-  const periodStart = plan?.periodStart ? new Date(plan.periodStart).toISOString() : moisDebut;
-  const periodEnd = plan?.periodEnd ? new Date(plan.periodEnd).toISOString() : moisFin;
-  const graceEnd = plan?.graceEnd ? new Date(plan.graceEnd).toISOString() : dateGraceFin;
+  const periodStart = plan.periodStart ? new Date(plan.periodStart).toISOString() : moisDebut;
+  const periodEnd = plan.periodEnd ? new Date(plan.periodEnd).toISOString() : moisFin;
+  const graceEnd = plan.graceEnd ? new Date(plan.graceEnd).toISOString() : dateGraceFin;
 
-  const resolvedBusLine = paymentData.busLine || student.busLine || student?.raw?.bus_line || null;
+  const resolvedBusLine = paymentData.busLine || student.busLine || student.raw.bus_line || null;
 
   const paymentRow = {
     subscriber_id: paymentData.studentId,
@@ -445,7 +445,7 @@ export async function deletePayment(paymentId) {
 }
 
 /**
- * Calcule le statut d'un Ã©tudiant
+ * Calcule le statut d'un étudiant
  */
 export function calculateStudentStatus(student, payments) {
   const studentPayments = payments.filter(p => p.studentId === student.id);
@@ -461,7 +461,7 @@ export function calculateStudentStatus(student, payments) {
     };
   }
 
-  // Trouver le paiement avec la date de fin la plus Ã©loignÃ©e
+  // Trouver le paiement avec la date de fin la plus éloignée
   const dernierPaiement = studentPayments.reduce((latest, current) => {
     const latestDate = new Date(latest.moisFin);
     const currentDate = new Date(current.moisFin);
@@ -487,7 +487,7 @@ export function calculateStudentStatus(student, payments) {
   }
 
   if (aujourdhui <= moisFin) {
-    // PÃ©riode active
+    // Période active
     const joursRestants = calculerJours(aujourdhui, moisFin);
     
     if (joursRestants <= 15) {
@@ -504,29 +504,29 @@ export function calculateStudentStatus(student, payments) {
     return {
       statut: 'ACTIF',
       couleur: 'green',
-      message: `PayÃ© jusqu'au ${formatDate(moisFin)}`,
+      message: `Payé jusqu'au ${formatDate(moisFin)}`,
       acces: true,
       dateFin: moisFin.toISOString(),
       joursRestants,
     };
   } else if (aujourdhui <= dateGraceFin) {
-    // PÃ©riode de grÃ¢ce (5 jours)
+    // Période de grâce (5 jours)
     const joursGrace = calculerJours(aujourdhui, dateGraceFin);
     return {
       statut: 'RETARD',
       couleur: 'orange',
-      message: `EN RETARD - ${joursGrace} jours de grÃ¢ce restants`,
+      message: `EN RETARD - ${joursGrace} jours de grâce restants`,
       acces: true,
       dateFin: moisFin.toISOString(),
       joursRestants: -joursGrace,
     };
   } else {
-    // ExpirÃ©
+    // Expiré
     const joursExpire = calculerJours(dateGraceFin, aujourdhui);
     return {
       statut: 'EXPIRE',
       couleur: 'red',
-      message: `EXPIRÃ‰ depuis ${joursExpire} jours`,
+      message: `EXPIRÉ depuis ${joursExpire} jours`,
       acces: false,
       dateFin: moisFin.toISOString(),
       joursRestants: null,
@@ -535,7 +535,7 @@ export function calculateStudentStatus(student, payments) {
 }
 
 /**
- * RÃ©cupÃ¨re les revenus encaissÃ©s pour un mois donnÃ©
+ * Récupère les revenus encaissés pour un mois donné
  */
 export async function getRevenusEncaisses(annee, mois) {
   const payments = await getAllPayments();
@@ -556,7 +556,7 @@ export async function getRevenusEncaisses(annee, mois) {
 }
 
 /**
- * RÃ©cupÃ¨re les revenus comptabilisÃ©s pour un mois donnÃ©
+ * Récupère les revenus comptabilisés pour un mois donné
  */
 export async function getRevenusComptabilises(annee, mois) {
   const payments = await getAllPayments();
@@ -579,30 +579,30 @@ export async function getRevenusComptabilises(annee, mois) {
 }
 
 /**
- * Importe plusieurs Ã©tudiants en masse
+ * Importe plusieurs étudiants en masse
  */
 export async function importStudentsBulk(studentsData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez être connecté');
   }
 
   const students = await getAllStudents();
   const newStudents = studentsData.map(studentData => ({
     id: studentData.id || `student_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    nom: studentData.nom?.trim() || '',
-    prenom: studentData.prenom?.trim() || '',
-    classe: studentData.classe?.trim() || '',
-    contact: studentData.contact?.trim() || '',
+    nom: studentData.nom.trim() || '',
+    prenom: studentData.prenom.trim() || '',
+    classe: studentData.classe.trim() || '',
+    contact: studentData.contact.trim() || '',
     dateCreation: studentData.dateCreation || new Date().toISOString(),
     creePar: studentData.creePar || {
       userId: currentUser.id,
       nom: currentUser.nom,
     },
-    notes: studentData.notes?.trim() || '',
+    notes: studentData.notes.trim() || '',
   }));
 
-  // Fusionner avec les Ã©tudiants existants (Ã©viter les doublons par ID)
+  // Fusionner avec les étudiants existants (éviter les doublons par ID)
   const existingIds = new Set(students.map(s => s.id));
   const toAdd = newStudents.filter(s => !existingIds.has(s.id));
   const merged = [...students, ...toAdd];
@@ -617,7 +617,7 @@ export async function importStudentsBulk(studentsData) {
 export async function importPaymentsBulk(paymentsData) {
   const currentUser = await getCurrentUser();
   if (!currentUser) {
-    throw new Error('Vous devez Ãªtre connectÃ©');
+    throw new Error('Vous devez être connecté');
   }
 
   const payments = await getAllPayments();
@@ -630,13 +630,13 @@ export async function importPaymentsBulk(paymentsData) {
     moisFin: paymentData.moisFin || '',
     dateGraceFin: paymentData.dateGraceFin || '',
     montantMensuel: Number(paymentData.montantMensuel) || 0,
-    description: paymentData.description?.trim() || '',
+    description: paymentData.description.trim() || '',
     educateurNom: paymentData.educateurNom || currentUser.nom,
     educateurId: paymentData.educateurId || currentUser.id,
     dateEnregistrement: paymentData.dateEnregistrement || new Date().toISOString(),
   }));
 
-  // Fusionner avec les paiements existants (Ã©viter les doublons par ID)
+  // Fusionner avec les paiements existants (éviter les doublons par ID)
   const existingIds = new Set(payments.map(p => p.id));
   const toAdd = newPayments.filter(p => !existingIds.has(p.id));
   const merged = [...payments, ...toAdd];
@@ -646,7 +646,7 @@ export async function importPaymentsBulk(paymentsData) {
 }
 
 /**
- * Remplace toutes les donnÃ©es (utilisÃ© pour l'import complet)
+ * Remplace toutes les données (utilisé pour l'import complet)
  */
 export async function replaceAllData({ students: newStudents, payments: newPayments }) {
   await setStorage(STUDENTS_KEY, newStudents || []);
@@ -654,7 +654,7 @@ export async function replaceAllData({ students: newStudents, payments: newPayme
 }
 
 /**
- * Supprime tous les Ã©tudiants et paiements (mais pas les utilisateurs)
+ * Supprime tous les étudiants et paiements (mais pas les utilisateurs)
  */
 export async function clearStudentsAndPayments() {
   try {
@@ -677,5 +677,4 @@ export async function clearStudentsAndPayments() {
   await setStorage(STUDENTS_KEY, []);
   await setStorage(PAYMENTS_KEY, []);
 }
-
 

@@ -20,7 +20,7 @@ export async function uploadPhoto(file) {
 
   // Get public URL (requires bucket to be public or use signed URLs)
   const { data: urlData } = await supabase.storage.from(BUCKET).getPublicUrl(path);
-  const publicUrl = urlData?.publicUrl || null;
+  const publicUrl = urlData.publicUrl || null;
 
   // Persist metadata in DB
   const { data, error } = await supabase.from(TABLE).insert([{ file_name: file.name, storage_path: path, url: publicUrl }]).select().maybeSingle();

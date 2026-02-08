@@ -33,8 +33,8 @@ export function isInSessionMonth(dateIso, sessionId) {
 // Determine monthly payment status according to the spec
 export function computeMonthlyPaymentStatus(student, sessionId) {
   // monthsPaid entries: { monthCount, paidAt, sessionId }
-  const payments = Array.isArray(student?.monthsPaid) ? student.monthsPaid : [];
-  // Paiement pour ce mois spÃ©cifiquement (supporte paiement Ã  l'avance grÃ¢ce Ã  sessionId)
+  const payments = Array.isArray(student.monthsPaid) ? student.monthsPaid : [];
+  // Paiement pour ce mois spécifiquement (supporte paiement à l'avance grâce à sessionId)
   const entryForSession = payments.find(p => p.sessionId === sessionId);
   const paidInMonth = payments.find(p => isInSessionMonth(p.paidAt, sessionId));
   const paidInGrace = payments.find(p => isInGraceForSession(p.paidAt, sessionId));
@@ -44,26 +44,26 @@ export function computeMonthlyPaymentStatus(student, sessionId) {
 
   // During month (1..30/31)
   if (now <= end) {
-    if (entryForSession) return { code: 'PAYE', label: 'PAYÃ‰', paidAt: entryForSession.paidAt };
-    if (paidInMonth) return { code: 'PAYE', label: 'PAYÃ‰', paidAt: paidInMonth.paidAt };
-    return { code: 'IMPAYE', label: 'IMPAYÃ‰', paidAt: null };
+    if (entryForSession) return { code: 'PAYE', label: 'PAYÉ', paidAt: entryForSession.paidAt };
+    if (paidInMonth) return { code: 'PAYE', label: 'PAYÉ', paidAt: paidInMonth.paidAt };
+    return { code: 'IMPAYE', label: 'IMPAYÉ', paidAt: null };
   }
 
   // During grace (1..5 next month)
   if (now > end && now <= graceEnd) {
-    if (entryForSession) return { code: 'PAYE_EN_RETARD', label: 'PAYÃ‰ EN RETARD', paidAt: entryForSession.paidAt };
-    if (paidInGrace) return { code: 'PAYE_EN_RETARD', label: 'PAYÃ‰ EN RETARD', paidAt: paidInGrace.paidAt };
-    return { code: 'GRACE_ACTIVE', label: 'GRÃ‚CE ACTIVE', paidAt: null };
+    if (entryForSession) return { code: 'PAYE_EN_RETARD', label: 'PAYÉ EN RETARD', paidAt: entryForSession.paidAt };
+    if (paidInGrace) return { code: 'PAYE_EN_RETARD', label: 'PAYÉ EN RETARD', paidAt: paidInGrace.paidAt };
+    return { code: 'GRACE_ACTIVE', label: 'GRÂCE ACTIVE', paidAt: null };
   }
 
   // After grace (> 5)
-  if (entryForSession) return { code: 'PAYE_HORS_DELAI', label: 'PAYÃ‰ HORS DÃ‰LAI', paidAt: entryForSession.paidAt };
-  if (paidInGrace) return { code: 'PAYE_HORS_DELAI', label: 'PAYÃ‰ HORS DÃ‰LAI', paidAt: paidInGrace.paidAt };
-  return { code: 'DEFAILLANT', label: 'DÃ‰FAILLANT', paidAt: null };
+  if (entryForSession) return { code: 'PAYE_HORS_DELAI', label: 'PAYÉ HORS DÉLAI', paidAt: entryForSession.paidAt };
+  if (paidInGrace) return { code: 'PAYE_HORS_DELAI', label: 'PAYÉ HORS DÉLAI', paidAt: paidInGrace.paidAt };
+  return { code: 'DEFAILLANT', label: 'DÉFAILLANT', paidAt: null };
 }
 
 /**
- * Calcule le nombre de mois d'avance pour un mois donnÃ©
+ * Calcule le nombre de mois d'avance pour un mois donné
  * Retourne 0 si le mois n'est pas dans le futur
  */
 function calculateMonthsInAdvance(sessionYear, sessionMonth, currentYear, currentMonth) {
@@ -76,11 +76,11 @@ function calculateMonthsInAdvance(sessionYear, sessionMonth, currentYear, curren
 }
 
 /**
- * Trouve tous les mois payÃ©s en avance pour un Ã©tudiant
+ * Trouve tous les mois payés en avance pour un étudiant
  */
 function getAdvancePayments(student, currentYear, currentMonth) {
-  const ledger = Array.isArray(student?.monthsLedger) ? student.monthsLedger : [];
-  const payments = Array.isArray(student?.monthsPaid) ? student.monthsPaid : [];
+  const ledger = Array.isArray(student.monthsLedger) ? student.monthsLedger : [];
+  const payments = Array.isArray(student.monthsPaid) ? student.monthsPaid : [];
   const advancePayments = [];
   
   for (const sessionId of ledger) {
@@ -92,7 +92,7 @@ function getAdvancePayments(student, currentYear, currentMonth) {
       advancePayments.push({
         sessionId,
         monthsAhead,
-        paidAt: payment?.paidAt || null,
+        paidAt: payment.paidAt || null,
       });
     }
   }
@@ -109,15 +109,15 @@ export function buildMonthlyReport(students, sessionId) {
   let defaulters = 0;
   let paidOutOfGrace = 0;
   let paidInAdvance = 0;
-  let totalAdvanceMonths = 0; // Total de mois payÃ©s en avance
-  let totalAmountForSession = 0; // Somme totale attribuÃ©e Ã  cette session
+  let totalAdvanceMonths = 0; // Total de mois payés en avance
+  let totalAmountForSession = 0; // Somme totale attribuée à cette session
 
-  // Extraire l'annÃ©e et le mois de la session pour vÃ©rifier les paiements en avance
+  // Extraire l'année et le mois de la session pour vérifier les paiements en avance
   const [sessionYear, sessionMonth] = sessionId.split('-').map(Number);
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1; // 1-based
-  // Un mois est dans le futur si son annÃ©e est supÃ©rieure, ou si mÃªme annÃ©e mais mois supÃ©rieur
+  // Un mois est dans le futur si son année est supérieure, ou si même année mais mois supérieur
   const isFutureMonth = sessionYear > currentYear || (sessionYear === currentYear && sessionMonth > currentMonth);
   const monthsAhead = calculateMonthsInAdvance(sessionYear, sessionMonth, currentYear, currentMonth);
 
@@ -127,24 +127,24 @@ export function buildMonthlyReport(students, sessionId) {
     const promoLabel = student.niveau || student.promo || '';
     const classLabel = student.classGroup || student.classe || '';
 
-    // VÃ©rifier si l'Ã©tudiant a payÃ© en avance pour ce mois
-    const ledger = Array.isArray(student?.monthsLedger) ? student.monthsLedger : [];
+    // Vérifier si l'étudiant a payé en avance pour ce mois
+    const ledger = Array.isArray(student.monthsLedger) ? student.monthsLedger : [];
     const hasPaidForSession = ledger.includes(sessionId);
     const isAdvancePayment = hasPaidForSession && isFutureMonth;
     
     // Si c'est un paiement en avance, marquer directement comme tel
     if (isAdvancePayment) {
       paidInAdvance += 1;
-      totalAdvanceMonths += 1; // Compter ce mois payÃ© en avance
+      totalAdvanceMonths += 1; // Compter ce mois payé en avance
       
-      // Obtenir tous les mois payÃ©s en avance pour cet Ã©tudiant (pour info)
+      // Obtenir tous les mois payés en avance pour cet étudiant (pour info)
       const allAdvancePayments = getAdvancePayments(student, currentYear, currentMonth);
       
-      const payments = Array.isArray(student?.monthsPaid) ? student.monthsPaid : [];
+      const payments = Array.isArray(student.monthsPaid) ? student.monthsPaid : [];
       const paymentForSession = payments.find(p => p.sessionId === sessionId);
       
-      // Montant attribuÃ© Ã  cette session (paiement en avance pour un mois futur = on compte pour cette session future uniquement)
-      const amountForAdvance = Number(paymentForSession?.amountPerMonth || 0);
+      // Montant attribué à cette session (paiement en avance pour un mois futur = on compte pour cette session future uniquement)
+      const amountForAdvance = Number(paymentForSession.amountPerMonth || 0);
       totalAmountForSession += amountForAdvance;
       rows.push({
         studentId: student.id,
@@ -152,8 +152,8 @@ export function buildMonthlyReport(students, sessionId) {
         promo: promoLabel,
         classGroup: classLabel,
         busLine: student.busLine || '',
-        status: `PAYÃ‰ EN AVANCE (${monthsAhead} mois)`,
-        paidAt: paymentForSession?.paidAt || '',
+        status: `PAYÉ EN AVANCE (${monthsAhead} mois)`,
+        paidAt: paymentForSession.paidAt || '',
         amount: amountForAdvance,
         advanceInfo: {
           monthsAhead,
@@ -165,8 +165,8 @@ export function buildMonthlyReport(students, sessionId) {
     }
     
     const status = computeMonthlyPaymentStatus(student, sessionId);
-    // Ne pas marquer "IMPAYÃ‰" pour un nouvel Ã©tudiant du mois courant sans paiement attendu
-    const createdAtIso = student.audit?.createdAt || student.audit?.created_at || null;
+    // Ne pas marquer "IMPAYÉ" pour un nouvel étudiant du mois courant sans paiement attendu
+    const createdAtIso = student.audit.createdAt || student.audit.created_at || null;
     const createdInThisSession = createdAtIso && isInSessionMonth(createdAtIso, sessionId);
     const isNewWithoutPayment = createdInThisSession && status.code === 'IMPAYE';
     const effectiveStatus = isNewWithoutPayment ? { code: 'NOUVEAU', label: 'NOUVEAU', paidAt: null } : status;
@@ -176,8 +176,8 @@ export function buildMonthlyReport(students, sessionId) {
     else if (effectiveStatus.code === 'PAYE_EN_RETARD') paidInGrace += 1;
     else if (effectiveStatus.code === 'DEFAILLANT') defaulters += 1;
     else if (effectiveStatus.code === 'PAYE_HORS_DELAI') paidOutOfGrace += 1;
-    // Calcul du montant attribuable Ã  cette session: sommer amountPerMonth pour les entrÃ©es correspondant exactement Ã  ce sessionId
-    const payments = Array.isArray(student?.monthsPaid) ? student.monthsPaid : [];
+    // Calcul du montant attribuable à cette session: sommer amountPerMonth pour les entrées correspondant exactement à ce sessionId
+    const payments = Array.isArray(student.monthsPaid) ? student.monthsPaid : [];
     const entriesForSession = payments.filter(p => p.sessionId === sessionId);
     const amountForStudent = entriesForSession.reduce((sum, p) => sum + (Number(p.amountPerMonth) || 0), 0);
     totalAmountForSession += amountForStudent;
@@ -209,4 +209,3 @@ export function buildMonthlyReport(students, sessionId) {
 
   return { summary, rows };
 }
-

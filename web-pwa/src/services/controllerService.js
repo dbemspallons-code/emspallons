@@ -48,7 +48,7 @@ async function generateUniqueCode(existingControllers) {
     const candidate = formatCode();
     const exists = controllers.some((controller) => {
       const code = controller.code || controller.password;
-      return code?.toUpperCase() === candidate;
+      return code.toUpperCase() === candidate;
     });
     if (!exists) {
       return candidate;
@@ -105,7 +105,7 @@ export async function createController({ nom, code, actif = true, assignedLineId
 
   if (controllers.some((controller) => {
     const controllerCode = controller.code || controller.password;
-    return controllerCode?.toUpperCase() === finalCode;
+    return controllerCode.toUpperCase() === finalCode;
   })) {
     throw new Error('Ce code est déjà utilisé par un autre contrôleur');
   }
@@ -119,7 +119,7 @@ export async function createController({ nom, code, actif = true, assignedLineId
       password: password || finalCode,
       active: actif !== false,
       assigned_line_id: assignedLineId || null,
-      created_by: currentUser?.id || null,
+      created_by: currentUser.id || null,
     };
     const { data, error } = await supabase.from('controllers').insert([row]).select().maybeSingle();
     if (error) throw error;
@@ -195,7 +195,7 @@ export async function deleteController(controllerId) {
   try {
     const { error } = await supabase.from('controllers').delete().eq('id', controllerId);
     if (error) throw error;
-    await historyService.log({ type: 'CONTROLLER_DELETED', entityId: controllerId, entityType: 'CONTROLLER', action: 'CONTROLLER_DELETED', details: { deletedBy: currentUser?.id } });
+    await historyService.log({ type: 'CONTROLLER_DELETED', entityId: controllerId, entityType: 'CONTROLLER', action: 'CONTROLLER_DELETED', details: { deletedBy: currentUser.id } });
     return { success: true };
   } catch (error) {
     console.error('Erreur deleteController (Supabase):', error);
@@ -225,6 +225,7 @@ export async function authenticateController(accessCode) {
       id: controller.id,
       nom: controller.name,
       assignedLineId: controller.assigned_line_id || null,
+      code,
     };
 
     saveControllerSession(sessionController);

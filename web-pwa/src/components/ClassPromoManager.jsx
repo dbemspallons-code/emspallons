@@ -29,7 +29,7 @@ export default function ClassPromoManager({ onClose }) {
       // Initialiser les promos par défaut si aucune n'existe
       if (promosData.length === 0) {
         const currentUser = await getCurrentUser().catch(() => null);
-        await initDefaultPromos({ userId: currentUser?.uid || null });
+        await initDefaultPromos({ userId: currentUser.uid || null });
         const updatedPromos = await fetchPromos();
         setPromos(updatedPromos);
       }
@@ -64,7 +64,7 @@ export default function ClassPromoManager({ onClose }) {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name?.trim()) {
+    if (!formData.name.trim()) {
       newErrors.name = 'Le nom est obligatoire';
     }
     setErrors(newErrors);
@@ -77,7 +77,7 @@ export default function ClassPromoManager({ onClose }) {
 
     try {
       const currentUser = await getCurrentUser().catch(() => null);
-      const options = { userId: currentUser?.uid || null };
+      const options = { userId: currentUser.uid || null };
 
       if (activeTab === 'promos') {
         if (editingItem === 'new') {
@@ -102,7 +102,7 @@ export default function ClassPromoManager({ onClose }) {
 
   const handleDelete = async (item) => {
     const itemType = activeTab === 'promos' ? 'promo' : 'classe';
-    if (!window.confirm(`Supprimer ${itemType === 'promo' ? 'la promo' : 'la classe'} "${item.name}" ?`)) {
+    if (!window.confirm(`Supprimer ${itemType === 'promo' ? 'la promo' : 'la classe'} "${item.name}" `)) {
       return;
     }
 
@@ -193,7 +193,9 @@ export default function ClassPromoManager({ onClose }) {
             {(editingItem === 'new' || editingItem) && (
               <form onSubmit={handleSubmit} className="card" style={{ padding: '1.5rem', marginBottom: '1.5rem', background: '#f8fafc' }}>
                 <h3 className="section-title" style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>
-                  {editingItem === 'new' ? `Nouvelle ${activeTab === 'promos' ? 'promo' : 'classe'}` : `Modifier ${activeTab === 'promos' ? 'la promo' : 'la classe'}`}
+                  {editingItem === 'new'
+                    ? `Nouvelle ${activeTab === 'promos' ? 'promo' : 'classe'}`
+                    : `Modifier ${activeTab === 'promos' ? 'la promo' : 'la classe'}`}
                 </h3>
                 
                 {errors.submit && (

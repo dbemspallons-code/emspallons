@@ -321,7 +321,7 @@ export async function resetTodayScanLogs() {
   // Prefer server-side deletion (requires service role). Try POST to admin Netlify function.
   try {
     const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
+    const token = sessionData.session.access_token;
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers.Authorization = `Bearer ${token}`;
     const res = await fetch('/.netlify/functions/reset-scan-logs', { method: 'POST', headers });

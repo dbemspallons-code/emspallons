@@ -61,7 +61,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
 
     async function startCamera() {
       setError(null);
-      if (!navigator?.mediaDevices?.getUserMedia) {
+      if (!navigator.mediaDevices.getUserMedia) {
         setError('Caméra non disponible sur cet appareil.');
         setActive(false);
         return;
@@ -300,7 +300,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
       }
 
       // Mettre à jour l'état de détection pour le feedback visuel
-      if (code?.location) {
+      if (code.location) {
         setQrDetected(true);
         // Calculer la position relative du QR code dans le cadre
         const qrCenterX = (code.location.topLeftCorner.x + code.location.topRightCorner.x + 
@@ -316,7 +316,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
         setQrLocation(null);
       }
 
-      if (code?.data && !lockRef.current) {
+      if (code.data && !lockRef.current) {
         const token = code.data.trim();
         // Vérifier que le token a une longueur raisonnable (au moins 10 caractères)
         if (token.length >= 10 && token !== lastTokenRef.current) {
@@ -421,15 +421,15 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
       // Selon les spécifications : "NE PAS ENREGISTRER un nouveau scan" si scan récent existe
       if (verification.status !== SCAN_STATUS.DUPLICATE) {
         await safeLogAttempt({
-          passId: verification.passId ?? null,
-          studentId: verification.studentId ?? student?.id ?? null,
-          studentName: student?.name ?? null, // Inclure le nom de l'étudiant dans les logs
+          passId: verification.passId null,
+          studentId: verification.studentId student.id null,
+          studentName: student.name null, // Inclure le nom de l'étudiant dans les logs
           driverId,
           controllerId: activeControllerId,
           controllerName: activeControllerName,
-          busLine: student?.busLine ?? verification.busLine ?? null,
-          status: verification.status ?? SCAN_STATUS.ERROR,
-          reason: verification.reason ?? null,
+          busLine: student.busLine verification.busLine null,
+          status: verification.status SCAN_STATUS.ERROR,
+          reason: verification.reason null,
           location,
         });
       } else {
@@ -565,7 +565,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
           </div>
         </header>
 
-        {error ? (
+        {error (
           <div className="card" style={{ padding: '1rem', background: 'rgba(248, 113, 113, 0.16)', border: '1px solid rgba(220, 38, 38, 0.25)', marginBottom: '1rem' }}>
             <p className="subtitle" style={{ color: '#b91c1c', margin: 0 }}>
               <AlertTriangle size={16} style={{ marginRight: '0.4rem' }} /> {error}
@@ -605,7 +605,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
               }}
             />
             <canvas ref={canvasRef} className="scanner-canvas" />
-            {!active ? (
+            {!active (
               <div className="scanner-overlay">
                 <Camera size={48} />
                 <p>Appuyez sur "Démarrer" pour activer la caméra.</p>
@@ -656,8 +656,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
                             transition: 'transform 0.2s ease-out',
                             borderColor: qrDetected ? 'rgba(34, 197, 94, 1)' : 'rgba(34, 197, 94, 0.9)',
                             boxShadow: qrDetected 
-                              ? '0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 1), inset 0 0 30px rgba(34, 197, 94, 0.4)'
-                              : '0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 30px rgba(34, 197, 94, 0.8), inset 0 0 20px rgba(34, 197, 94, 0.3)',
+                              ? '0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 1), inset 0 0 30px rgba(34, 197, 94, 0.4)' : '0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 30px rgba(34, 197, 94, 0.8), inset 0 0 20px rgba(34, 197, 94, 0.3)',
                           }}
                         >
                   {/* Coins de guidage supplémentaires */}
@@ -737,7 +736,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
                 )}
               </h4>
               <ul className="scan-history">
-                {history.length === 0 ? (
+                {history.length === 0 (
                   <li className="scan-history__item scan-history__item--empty">
                     <Clock size={16} /> Aucun scan pour le moment
                   </li>
@@ -747,7 +746,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
                       <span className="scan-history__status" style={{ color: STATUS_COLORS[item.status] || '#334155' }}>
                         ● {statusLabel(item.status)}
                       </span>
-                      <span className="scan-history__name">{item.student?.name || 'Étudiant inconnu'}</span>
+                      <span className="scan-history__name">{item.student.name || 'Étudiant inconnu'}</span>
                       <span className="scan-history__time">
                         {new Date(item.timestamp).toLocaleString('fr-FR', { 
                           day: '2-digit', 
@@ -756,7 +755,7 @@ export default function DriverScanner({ driverId = 'driver-demo', controllerId, 
                           minute: '2-digit' 
                         })}
                       </span>
-                      {item.reason ? <span className="scan-history__reason">{item.reason}</span> : null}
+                      {item.reason <span className="scan-history__reason">{item.reason}</span> : null}
                     </li>
                   ))
                 )}
@@ -830,14 +829,13 @@ function renderStatus(status) {
     const color = STATUS_COLORS[verification.status] || '#0f172a';
     
     // Calculer le statut d'abonnement détaillé
-    const subscriptionStatus = student ? computeSubscriptionStatus(student) : null;
+    const subscriptionStatus = student computeSubscriptionStatus(student) : null;
     
     // Si expiré, utiliser un fond rouge plus prononcé pour bien indiquer "pas d'accès"
     const bgColor = isExpired 
-      ? 'rgba(220, 38, 38, 0.15)' 
+      'rgba(220, 38, 38, 0.15)' 
       : isAuthorized 
-        ? 'rgba(22, 163, 74, 0.1)' 
-        : 'rgba(220, 38, 38, 0.1)';
+        ? 'rgba(22, 163, 74, 0.1)' : 'rgba(220, 38, 38, 0.1)';
     
     return (
       <div className="scanner-status" style={{ borderColor: color, background: bgColor, padding: '1rem', borderRadius: '8px' }}>
@@ -857,17 +855,15 @@ function renderStatus(status) {
               marginBottom: '0.75rem', 
               padding: '0.5rem', 
               background: subscriptionStatus.status === 'ACTIF' 
-                ? 'rgba(22, 163, 74, 0.1)' 
+                'rgba(22, 163, 74, 0.1)' 
                 : subscriptionStatus.status === 'EN RETARD'
-                  ? 'rgba(251, 191, 36, 0.1)'
-                  : 'rgba(220, 38, 38, 0.1)',
+                  ? 'rgba(251, 191, 36, 0.1)' : 'rgba(220, 38, 38, 0.1)',
               borderRadius: '4px',
               border: `1px solid ${
                 subscriptionStatus.status === 'ACTIF' 
-                  ? 'rgba(22, 163, 74, 0.3)' 
+                  'rgba(22, 163, 74, 0.3)' 
                   : subscriptionStatus.status === 'EN RETARD'
-                    ? 'rgba(251, 191, 36, 0.3)'
-                    : 'rgba(220, 38, 38, 0.3)'
+                    ? 'rgba(251, 191, 36, 0.3)' : 'rgba(220, 38, 38, 0.3)'
               }`
             }}>
               <p style={{ 
@@ -875,10 +871,9 @@ function renderStatus(status) {
                 fontWeight: 'bold', 
                 margin: 0,
                 color: subscriptionStatus.status === 'ACTIF' 
-                  ? '#16a34a' 
+                  '#16a34a' 
                   : subscriptionStatus.status === 'EN RETARD'
-                    ? '#d97706'
-                    : '#dc2626'
+                    ? '#d97706' : '#dc2626'
               }}>
                 Statut abonnement : {subscriptionStatus.status}
                 {subscriptionStatus.status === 'EN RETARD' && subscriptionStatus.daysRemaining > 0 && (
@@ -898,17 +893,17 @@ function renderStatus(status) {
           <p style={{ color, fontSize: '0.95rem', marginBottom: '0.5rem' }}>
             {statusLabel(verification.status)}
           </p>
-          {student?.name && (
+          {student.name && (
             <p className="subtitle" style={{ marginBottom: '0.25rem' }}>
               <strong>Nom:</strong> {student.name}
             </p>
           )}
-          {student?.niveau && (
+          {student.niveau && (
             <p className="subtitle" style={{ marginBottom: '0.25rem' }}>
               <strong>Niveau:</strong> {student.niveau}
             </p>
           )}
-          {student?.busLine && (
+          {student.busLine && (
             <p className="subtitle" style={{ marginBottom: '0.25rem' }}>
               <strong>Ligne:</strong> {student.busLine}
             </p>
@@ -962,14 +957,14 @@ function renderStatus(status) {
                 )}
                 {verification.previousScan.scannedAtFormatted && (
                   <p style={{ marginBottom: '0.25rem' }}>
-                    <strong>Heure :</strong> {verification.previousScan.scannedAtFormatted.split(',')[1]?.trim() || verification.previousScan.scannedAtFormatted}
+                    <strong>Heure :</strong> {verification.previousScan.scannedAtFormatted.split(',')[1].trim() || verification.previousScan.scannedAtFormatted}
                   </p>
                 )}
                 {verification.previousScan.minutesAgo !== undefined && (
                   <p style={{ marginBottom: '0.25rem' }}>
                     <strong>Il y a :</strong> {
                       verification.previousScan.hoursAgo && verification.previousScan.hoursAgo > 0
-                        ? `${verification.previousScan.hoursAgo} heure${verification.previousScan.hoursAgo > 1 ? 's' : ''} et ${verification.previousScan.remainingMinutes || 0} minute${(verification.previousScan.remainingMinutes || 0) > 1 ? 's' : ''}`
+                        `${verification.previousScan.hoursAgo} heure${verification.previousScan.hoursAgo > 1 ? 's' : ''} et ${verification.previousScan.remainingMinutes || 0} minute${(verification.previousScan.remainingMinutes || 0) > 1 ? 's' : ''}`
                         : `${verification.previousScan.minutesAgo} minute${verification.previousScan.minutesAgo > 1 ? 's' : ''}`
                     }
                   </p>
@@ -978,10 +973,9 @@ function renderStatus(status) {
                   <p style={{ marginBottom: '0.25rem' }}>
                     <strong>Statut :</strong> {
                       verification.previousScan.status === 'approved' 
-                        ? '✅ Actif' 
+                        '✅ Actif' 
                         : verification.previousScan.status === 'expired'
-                          ? '❌ Expiré'
-                          : '⚠️ En retard'
+                          ? '❌ Expiré' : '⚠️ En retard'
                     }
                   </p>
                 )}

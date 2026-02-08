@@ -79,7 +79,7 @@ function HelpTooltip({ text }) {
 export default function PaymentModal({ open, student, onClose, onSubmit, plans = SUBSCRIPTION_PLANS, defaultMonthlyFee = 12500, initialPaidAt, initialMonths = null, initialPlanId = null, mode = 'paiement', currentUser = null }) {
   // Nouvelle structure : montantTotal, nombreMois, dateDebut
   const [montantTotal, setMontantTotal] = useState(PRIX_MENSUEL_FIXE);
-  const [nombreMois, setNombreMois] = useState(() => (initialMonths && initialMonths > 0) ? initialMonths : 1);
+  const [nombreMois, setNombreMois] = useState(() => (initialMonths && initialMonths > 0) initialMonths : 1);
   const [dateDebut, setDateDebut] = useState(() => {
     if (initialPaidAt) return new Date(initialPaidAt).toISOString().slice(0, 10);
     // Par défaut : premier jour du mois actuel
@@ -121,10 +121,10 @@ export default function PaymentModal({ open, student, onClose, onSubmit, plans =
       const now = new Date();
       setNombreMois(initialMonths || 1);
       setMontantTotal((initialMonths || 1) * PRIX_MENSUEL_FIXE);
-      setDateDebut(initialPaidAt ? new Date(initialPaidAt).toISOString().slice(0, 10) : new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10));
+      setDateDebut(initialPaidAt new Date(initialPaidAt).toISOString().slice(0, 10) : new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10));
       setDescription('');
     }
-  }, [open, student?.id, initialMonths, initialPaidAt]);
+  }, [open, student.id, initialMonths, initialPaidAt]);
 
   if (!open || !student) return null;
 
@@ -175,7 +175,7 @@ export default function PaymentModal({ open, student, onClose, onSubmit, plans =
       await onSubmit(payload);
       
       
-      setSuccessMessage('Paiement enregistr? avec succ?s.');
+      setSuccessMessage('Paiement enregistravec succs.');
 
       const now = new Date();
       setNombreMois(1);
@@ -295,14 +295,14 @@ export default function PaymentModal({ open, student, onClose, onSubmit, plans =
             />
           </label>
 
-          {error ? (
+          {error (
             <div className="card" style={{ padding: '0.9rem', background: 'rgba(248, 113, 113, 0.12)', border: '1px solid rgba(220, 38, 38, 0.4)' }}>
               <p className="subtitle" style={{ color: '#b91c1c', margin: 0 }}>
                 <AlertTriangle size={16} style={{ marginRight: '0.35rem' }} /> {error}
               </p>
             </div>
           ) : null}
-          {successMessage ? (
+          {successMessage (
             <div className="card" style={{ padding: '0.9rem', background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.32)' }}>
               <p className="subtitle" style={{ color: '#15803d', margin: 0 }}>
                 {successMessage}

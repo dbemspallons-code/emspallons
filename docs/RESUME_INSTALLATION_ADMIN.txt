@@ -1,0 +1,139 @@
+================================================================================
+  RÉSUMÉ INSTALLATION - Nouvelles Règles Admin
+  Date : 14 novembre 2024
+================================================================================
+
+✅ FICHIERS CRÉÉS/MODIFIÉS
+================================================================================
+
+1. ✅ netlify/functions/setAdminClaim.js
+   - Fonction serverless pour définir les custom claims Firebase
+   - Suit le pattern des autres fonctions Netlify
+   - Utilise FIREBASE_SERVICE_ACCOUNT ou initialisation par défaut
+
+2. ✅ netlify.toml
+   - Configuration Netlify complète
+   - Build : cd web-pwa && npm run build
+   - Publish : web-pwa/dist
+   - Functions : netlify/functions
+   - Headers de sécurité configurés
+   - Redirections SPA configurées
+
+3. ✅ web-pwa/src/services/authService.js
+   - Ajout appel setAdminClaim lors de création admin
+   - Ajout appel setAdminClaim lors de promotion admin
+   - Support auto-suppression déjà implémenté
+
+4. ✅ web-pwa/src/services/historyService.js
+   - Ajout adaptateur logAction() pour compatibilité
+
+5. ✅ web-pwa/src/components/UserManagementModal.jsx
+   - Déjà modifié précédemment avec toutes les fonctionnalités
+
+================================================================================
+CONFIGURATION REQUISE
+================================================================================
+
+VARIABLES D'ENVIRONNEMENT NETLIFY
+----------------------------------
+
+Option A (Recommandé) : FIREBASE_SERVICE_ACCOUNT
+  - Encoder le fichier JSON Firebase Admin SDK en base64
+  - Ajouter dans Netlify : FIREBASE_SERVICE_ACCOUNT = <base64-string>
+
+Option B : Variables séparées
+  - FIREBASE_PROJECT_ID = busscolaire-9cd12
+  - FIREBASE_CLIENT_EMAIL = firebase-adminsdk-xxxxx@busscolaire-9cd12.iam.gserviceaccount.com
+  - FIREBASE_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+COMMANDES À EXÉCUTER
+---------------------
+
+1. Installer les dépendances (si nécessaire) :
+   cd netlify/functions
+   npm install
+
+2. Commit et push :
+   git add .
+   git commit -m "feat: Ajout fonction setAdminClaim et configuration Netlify"
+   git push
+
+3. Vérifier le déploiement :
+   - Netlify Dashboard > Functions > setAdminClaim
+   - URL : https://allonsemsp.netlify.app/.netlify/functions/setAdminClaim
+
+================================================================================
+FONCTIONNALITÉS IMPLÉMENTÉES
+================================================================================
+
+✅ Création d'admins par admin
+   - Plus de restriction sur le nombre d'admins
+   - Custom claims définis automatiquement
+
+✅ Promotion éducateur → admin
+   - Confirmation avec avertissement
+   - Custom claims définis automatiquement
+   - Enregistrement dans l'historique
+
+✅ Auto-suppression admin
+   - Confirmation renforcée (2 étapes)
+   - Saisie textuelle "SUPPRIMER MON COMPTE"
+   - Double confirmation
+   - Déconnexion automatique
+   - Redirection vers /login
+
+================================================================================
+TESTS À EFFECTUER
+================================================================================
+
+1. Test création admin
+   - Créer un utilisateur avec rôle "Admin"
+   - Vérifier que l'utilisateur est créé
+   - Vérifier les custom claims (optionnel)
+
+2. Test promotion admin
+   - Modifier un éducateur
+   - Changer le rôle vers "Admin"
+   - Vérifier la confirmation
+   - Vérifier que le rôle est mis à jour
+
+3. Test auto-suppression (⚠️ TEST DESTRUCTIF)
+   - Utiliser un compte admin de TEST
+   - Cliquer sur "Supprimer mon compte"
+   - Suivre le processus de confirmation
+   - Vérifier la déconnexion
+
+================================================================================
+DÉPANNAGE
+================================================================================
+
+Erreur : "Firebase non initialisé"
+  → Vérifier FIREBASE_SERVICE_ACCOUNT dans Netlify
+
+Erreur : "Custom claims n'ont pas pu être définis"
+  → Vérifier que la fonction est déployée
+  → Vérifier les logs Netlify Functions
+
+Erreur : "Impossible de supprimer le dernier administrateur"
+  → Protection active : créer un autre admin d'abord
+
+================================================================================
+CHECKLIST FINALE
+================================================================================
+
+- [x] setAdminClaim.js créé
+- [x] netlify.toml créé/mis à jour
+- [x] authService.js mis à jour
+- [x] historyService.js mis à jour
+- [x] UserManagementModal.jsx déjà modifié
+- [ ] Variables d'environnement Netlify configurées
+- [ ] Dépendances installées
+- [ ] Code committé et pushé
+- [ ] Build Netlify réussi
+- [ ] Fonction setAdminClaim déployée
+- [ ] Tests effectués
+
+================================================================================
+FIN DU RÉSUMÉ
+================================================================================
+

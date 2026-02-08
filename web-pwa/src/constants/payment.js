@@ -18,4 +18,3 @@ export const MONTH_NAMES = [
   'Novembre',
   'Décembre',
 ];
-

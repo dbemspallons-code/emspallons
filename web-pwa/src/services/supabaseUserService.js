@@ -23,7 +23,7 @@ export async function createUser(userData, options = {}) {
   if (!password || password.length < 6) throw new Error('Mot de passe invalide');
 
   const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token || null;
+  const token = sessionData.session.access_token || null;
 
   let res;
   try {

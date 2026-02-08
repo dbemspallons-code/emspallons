@@ -33,12 +33,12 @@ export default function OutOfServiceMonthsManager({ onClose }) {
     try {
       setLoading(true);
       const settings = await fetchGlobalSettings();
-      const pausedMonths = Array.isArray(settings.pausedMonths) ? settings.pausedMonths : [];
+      const pausedMonths = Array.isArray(settings.pausedMonths) settings.pausedMonths : [];
       
       // Extraire les mois sélectionnés (format: YYYY-MM)
       const months = pausedMonths.map(monthId => {
         const parts = monthId.split('-');
-        return parts.length === 2 ? parts[1] : null;
+        return parts.length === 2 parts[1] : null;
       }).filter(Boolean);
       
       setSelectedMonths(months);
@@ -72,7 +72,7 @@ export default function OutOfServiceMonthsManager({ onClose }) {
       await saveGlobalSettings({
         pausedMonths,
       }, {
-        userId: currentUser?.uid || null,
+        userId: currentUser.uid || null,
       });
       
       setMessage('Mois hors service enregistrés avec succès');
@@ -199,7 +199,7 @@ export default function OutOfServiceMonthsManager({ onClose }) {
                     background: isSelected ? '#eff6ff' : 'white',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    fontWeight: isSelected ? 600 : 400,
+                    fontWeight: isSelected 600 : 400,
                     color: isSelected ? '#2563eb' : '#0f172a',
                     transition: 'all 0.2s',
                   }}
@@ -233,7 +233,7 @@ export default function OutOfServiceMonthsManager({ onClose }) {
             </h4>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {selectedMonths.map(month => {
-                const monthName = MONTHS.find(m => m.value === month)?.label || month;
+                const monthName = MONTHS.find(m => m.value === month).label || month;
                 return (
                   <span key={month} className="chip" style={{ background: '#2563eb', color: 'white' }}>
                     {monthName} {currentYear}

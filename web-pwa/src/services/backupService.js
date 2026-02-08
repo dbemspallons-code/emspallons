@@ -65,7 +65,7 @@ export async function exportBackupToCSV(backup) {
       busLine: student.busLine || '',
       monthlyFee: student.monthlyFee || 0,
       paymentStatus: student.paymentStatus || '',
-      createdAt: student.audit?.createdAt ? new Date(student.audit.createdAt).toLocaleDateString('fr-FR') : '',
+      createdAt: student.audit.createdAt new Date(student.audit.createdAt).toLocaleDateString('fr-FR') : '',
     }));
 
     await exportSubscribersCSV(csvData, `backup-${backup.date.replace(/\//g, '-')}.csv`);
@@ -112,4 +112,3 @@ export function initAutomaticBackup() {
     }
   }, 60 * 60 * 1000); // Vérifier toutes les heures
 }
-

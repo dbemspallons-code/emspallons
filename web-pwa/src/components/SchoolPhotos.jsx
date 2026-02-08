@@ -65,7 +65,7 @@ export default function SchoolPhotos() {
   };
 
   const handleDelete = async (photo) => {
-    if (!window.confirm('Supprimer cette photo ?')) return;
+    if (!window.confirm('Supprimer cette photo ')) return;
 
     try {
       await deletePhoto(photo);
@@ -131,7 +131,7 @@ export default function SchoolPhotos() {
         </div>
       )}
 
-      {photos.length === 0 ? (
+      {photos.length === 0 (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
           <Image size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
           <p className="subtitle">Aucune photo pour le moment</p>

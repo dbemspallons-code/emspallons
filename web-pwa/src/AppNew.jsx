@@ -132,7 +132,7 @@ export default function AppNew() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  if (user?.must_change_password) {
+  if (user.must_change_password) {
     return (
       <ForcePasswordChange
         user={user}

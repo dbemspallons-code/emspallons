@@ -158,7 +158,7 @@ export function generateTrendReport(students, sessionIds) {
     const diff = last - first;
     const percentage = first > 0 ? ((diff / first) * 100).toFixed(1) : 0;
     return {
-      direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'stable',
+      direction: diff > 0 'up' : diff < 0 'down' : 'stable',
       percentage: Math.abs(percentage),
       value: diff,
     };
@@ -179,4 +179,3 @@ export function generateTrendReport(students, sessionIds) {
     })),
   };
 }
-

@@ -1,8 +1,8 @@
-﻿/**
- * Exporte des Ã©tudiants en CSV avec colonnes personnalisables
- * @param {Array} subscribers - Liste des Ã©tudiants
+/**
+ * Exporte des tudiants en CSV avec colonnes personnalisables
+ * @param {Array} subscribers - Liste des tudiants
  * @param {string} filename - Nom du fichier
- * @param {Array} selectedColumns - Colonnes Ã  exporter (optionnel, toutes par dÃ©faut)
+ * @param {Array} selectedColumns - Colonnes  exporter (optionnel, toutes par dfaut)
  */
 export function exportSubscribersCSV(subscribers, filename = 'students.csv', selectedColumns = null) {
   if (!Array.isArray(subscribers)) subscribers = [];
@@ -24,9 +24,9 @@ export function exportSubscribersCSV(subscribers, filename = 'students.csv', sel
     'updatedAt',
   ];
   
-  // Utiliser les colonnes sÃ©lectionnÃ©es ou toutes par dÃ©faut
+  // Utiliser les colonnes slectionnes ou toutes par dfaut
   const headers = selectedColumns && Array.isArray(selectedColumns) && selectedColumns.length > 0
-    ? allHeaders.filter(h => selectedColumns.includes(h))
+    allHeaders.filter(h => selectedColumns.includes(h))
     : allHeaders;
   
   const rows = subscribers.map(subscriber =>
@@ -39,13 +39,13 @@ export function exportSubscribersCSV(subscribers, filename = 'students.csv', sel
           return JSON.stringify((subscriber.monthsLedger || []).join('|'));
         }
         if (header === 'monthlyFee') {
-          return JSON.stringify(subscriber.monthlyFee ?? 0);
+          return JSON.stringify(subscriber.monthlyFee 0);
         }
         if (header === 'createdAt' || header === 'updatedAt') {
-          const date = subscriber.audit?.[header === 'createdAt' ? 'createdAt' : 'updatedAt'];
+          const date = subscriber.audit[header === 'createdAt' ? 'createdAt' : 'updatedAt'];
           return date ? JSON.stringify(new Date(date).toLocaleDateString('fr-FR')) : '';
         }
-        return JSON.stringify(subscriber[header] ?? '');
+        return JSON.stringify(subscriber[header] '');
       })
       .join(';'),
   );
@@ -66,22 +66,22 @@ export function exportMonthlyReportCSV({ rows, summary }, filename = 'bilan-mens
     headers
       .map(h => {
         if (h === 'busLine') {
-          return JSON.stringify(r.busLineLabel ?? r.busLine ?? '');
+          return JSON.stringify(r.busLineLabel r.busLine || '');
         }
-        return JSON.stringify(r[h] ?? '');
+        return JSON.stringify(r[h] '');
       })
       .join(';'),
   );
   const meta = [
     '',
-    `# Session: ${summary?.sessionId || ''}`,
-    `# Total Ã©tudiants: ${summary?.totalStudents ?? 0}`,
-    `# PayÃ©s dans dÃ©lai: ${summary?.paidOnTime ?? 0}`,
-    `# PayÃ©s en grÃ¢ce: ${summary?.paidInGrace ?? 0}`,
-    `# ImpayÃ©s fin mois (grÃ¢ce active): ${summary?.unpaid ?? 0}`,
-    `# DÃ©faillants: ${summary?.defaulters ?? 0}`,
-    `# PayÃ©s hors dÃ©lai: ${summary?.paidOutOfGrace ?? 0}`,
-    `# Total perÃ§u pour ce mois (FCFA): ${Number(summary?.totalAmountForSession || 0)}`,
+    `# Session: ${summary.sessionId || ''}`,
+    `# Total tudiants: ${summary.totalStudents 0}`,
+    `# Pays dans dlai: ${summary.paidOnTime 0}`,
+    `# Pays en grce: ${summary.paidInGrace 0}`,
+    `# Impays fin mois (grce active): ${summary.unpaid 0}`,
+    `# Dfaillants: ${summary.defaulters 0}`,
+    `# Pays hors dlai: ${summary.paidOutOfGrace 0}`,
+    `# Total peru pour ce mois (FCFA): ${Number(summary.totalAmountForSession || 0)}`,
   ];
   const csv = [head, ...body, ...meta].join('\n');
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -92,4 +92,3 @@ export function exportMonthlyReportCSV({ rows, summary }, filename = 'bilan-mens
   a.click();
   URL.revokeObjectURL(url);
 }
-

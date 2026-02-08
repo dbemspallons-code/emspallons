@@ -2,15 +2,15 @@ import React, { useMemo } from 'react';
 import { Users, Bus, Wallet, Clock, AlertTriangle } from 'lucide-react';
 
 export default function SummaryCards({ stats, students = [] }) {
-  const total = stats?.total ?? 0;
+  const total = stats.total 0;
   const byStatus = {
     up_to_date: 0,
     late: 0,
     out_of_service: 0,
-    ...(stats?.byStatus || {}),
+    ..(stats.byStatus || {}),
   };
-  const estimatedRevenue = Number(stats?.estimatedRevenue ?? 0);
-  const lines = stats?.lines ?? 0;
+  const estimatedRevenue = Number(stats.estimatedRevenue 0);
+  const lines = stats.lines 0;
   
   // Calculer les étudiants expirant bientôt (dans 15 jours)
   const expiringSoon = useMemo(() => {
@@ -18,7 +18,7 @@ export default function SummaryCards({ stats, students = [] }) {
     const now = new Date();
     const in15Days = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
     return students.filter(student => {
-      const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription?.expiresAt ? new Date(student.subscription.expiresAt) : null);
+      const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null);
       if (!expirationDate) return false;
       return expirationDate > now && expirationDate <= in15Days;
     }).length;

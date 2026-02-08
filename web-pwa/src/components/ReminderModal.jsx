@@ -81,7 +81,7 @@ export default function ReminderModal({ open, students = [], onClose, onSend, li
   const handleToggleStudent = (studentId) => {
     setSelectedStudents(prev => 
       prev.includes(studentId)
-        ? prev.filter(id => id !== studentId)
+        prev.filter(id => id !== studentId)
         : [...prev, studentId]
     );
   };
@@ -192,7 +192,7 @@ export default function ReminderModal({ open, students = [], onClose, onSend, li
                 }}
               >
                 <User size={18} color={reminderType === 'individual' ? '#2563eb' : '#64748b'} />
-                <span style={{ fontWeight: reminderType === 'individual' ? 600 : 400 }}>
+                <span style={{ fontWeight: reminderType === 'individual' 600 : 400 }}>
                   Individuel
                 </span>
               </button>
@@ -213,7 +213,7 @@ export default function ReminderModal({ open, students = [], onClose, onSend, li
                 }}
               >
                 <Users size={18} color={reminderType === 'group' ? '#2563eb' : '#64748b'} />
-                <span style={{ fontWeight: reminderType === 'group' ? 600 : 400 }}>
+                <span style={{ fontWeight: reminderType === 'group' 600 : 400 }}>
                   Groupe
                 </span>
               </button>
@@ -223,7 +223,7 @@ export default function ReminderModal({ open, students = [], onClose, onSend, li
           {reminderType === 'individual' && (
             <div style={{ display: 'grid', gap: '0.75rem', maxHeight: '300px', overflow: 'auto' }}>
               <label style={{ fontWeight: 600 }}>Sélectionner les étudiants ({selectedStudents.length} sélectionné{selectedStudents.length > 1 ? 's' : ''})</label>
-              {filteredStudents.length === 0 ? (
+              {filteredStudents.length === 0 (
                 <p className="subtitle">Aucun étudiant avec contact disponible.</p>
               ) : (
                 (() => {
@@ -356,7 +356,7 @@ export default function ReminderModal({ open, students = [], onClose, onSend, li
             </button>
           </label>
 
-          {error ? (
+          {error (
             <div className="card" style={{ padding: '0.9rem', background: 'rgba(248, 113, 113, 0.12)', border: '1px solid rgba(220, 38, 38, 0.4)' }}>
               <p className="subtitle" style={{ color: '#b91c1c', margin: 0 }}>
                 <X size={16} style={{ marginRight: '0.35rem' }} /> {error}
@@ -369,7 +369,7 @@ export default function ReminderModal({ open, students = [], onClose, onSend, li
               <X size={16} /> Annuler
             </button>
             <button type="submit" className="button" disabled={processing || selectedStudents.length === 0}>
-              <Bell size={16} /> {processing ? 'Envoi...' : `Envoyer (${selectedStudents.length})`}
+              <Bell size={16} /> {processing 'Envoi...' : `Envoyer (${selectedStudents.length})`}
             </button>
           </div>
         </form>

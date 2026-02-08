@@ -92,7 +92,7 @@ export default function DriverScreen() {
               <h1 className="section-title" style={{ margin: 0 }}>Espace Chauffeur</h1>
               <p className="subtitle">
                 {authenticatedController 
-                  ? `Connecté en tant que : ${authenticatedController.name}`
+                  `Connecté en tant que : ${authenticatedController.name}`
                   : 'Sélectionnez votre profil et entrez votre mot de passe pour scanner'}
               </p>
             </div>
@@ -151,7 +151,7 @@ export default function DriverScreen() {
               </p>
             </div>
           </div>
-          {controllers.length === 0 ? (
+          {controllers.length === 0 (
             <p className="subtitle" style={{ color: '#64748b', margin: 0 }}>
               Aucun contrôleur disponible. Contactez l'éducatrice pour créer votre compte.
             </p>
@@ -191,7 +191,7 @@ export default function DriverScreen() {
         }}>
           <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
             <h3 className="section-title" style={{ marginBottom: '1rem' }}>
-              Connexion - {controllers.find(c => c.id === selectedControllerId)?.name}
+              Connexion - {controllers.find(c => c.id === selectedControllerId).name}
             </h3>
             <form onSubmit={handleLogin}>
               <div style={{ marginBottom: '1rem' }}>

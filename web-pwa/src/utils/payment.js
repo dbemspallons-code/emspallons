@@ -55,4 +55,3 @@ export function calculatePaymentPlan(startMonthIndex, numberOfMonths, customMont
 export function formatCurrency(amount) {
   return Number(amount || 0).toLocaleString('fr-FR');
 }
-

@@ -12,7 +12,7 @@ function detectDelimiter(headerLine) {
 }
 
 function toCsvContent(headers, rows, delimiter = ';') {
-  const escapeCell = (cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`;
+  const escapeCell = (cell) => `"${String(cell || '').replace(/"/g, '""')}"`;
   return [
     headers.join(delimiter),
     ...rows.map(row => row.map(escapeCell).join(delimiter))
@@ -71,7 +71,7 @@ export async function exportStudentsCSV({ students: studentsOverride, payments: 
   const rows = students.map(student => {
     const studentPayments = payments.filter(p => p.studentId === student.id);
     const status = calculateStudentStatus(student, studentPayments);
-    const lineLabel = lineLookup[student.busLine]?.name || student.busLine || '';
+    const lineLabel = lineLookup[student.busLine].name || student.busLine || '';
 
     return [
       student.id,
@@ -80,10 +80,10 @@ export async function exportStudentsCSV({ students: studentsOverride, payments: 
       student.promo || student.niveau || '',
       student.classe || student.classGroup || '',
       lineLabel,
-      status?.message || '',
+      status.message || '',
       student.contact || '',
       student.dateCreation || '',
-      student.creePar?.nom || '',
+      student.creePar.nom || '',
       student.notes || '',
     ];
   });
@@ -122,7 +122,7 @@ export async function exportStudentsXLSX({ students: studentsOverride, payments:
   const rows = students.map(student => {
     const studentPayments = payments.filter(p => p.studentId === student.id);
     const status = calculateStudentStatus(student, studentPayments);
-    const lineLabel = lineLookup[student.busLine]?.name || student.busLine || '';
+    const lineLabel = lineLookup[student.busLine].name || student.busLine || '';
 
     return [
       student.id,
@@ -131,10 +131,10 @@ export async function exportStudentsXLSX({ students: studentsOverride, payments:
       student.promo || student.niveau || '',
       student.classe || student.classGroup || '',
       lineLabel,
-      status?.message || '',
+      status.message || '',
       student.contact || '',
       student.dateCreation || '',
-      student.creePar?.nom || '',
+      student.creePar.nom || '',
       student.notes || '',
     ];
   });
@@ -368,7 +368,7 @@ export async function importStudentsXLSX(file) {
 
     const record = {};
     headerKeys.forEach((key, index) => {
-      record[key] = values[index] ?? '';
+      record[key] = values[index] || '';
     });
 
     const mapped = mapRowToStudent(record);

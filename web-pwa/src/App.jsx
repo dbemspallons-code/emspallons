@@ -42,7 +42,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AnimatedBackground />
-      {isDriverMode ? (
+      {isDriverMode (
         // Mode chauffeur : pas d'authentification requise
         <div style={{ position: 'relative', zIndex: 1 }}>
           <nav className="app-nav">

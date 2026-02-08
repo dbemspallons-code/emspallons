@@ -170,12 +170,12 @@ export default function PaymentFormModal({ student, onClose, onSave }) {
               <DollarSign className="w-5 h-5 text-blue-600" />
               <span className="font-semibold text-blue-900">Montant total calculé</span>
             </div>
-            <div className="text-2xl font-bold text-blue-700">
-              {plan ? `${formatCurrency(plan.totalAmount)} FCFA` : '—'}
-            </div>
-            <p className="text-sm text-blue-600 mt-1">
-              {plan ? `${plan.numberOfMonths} mois × ${formatCurrency(plan.monthlyFee)} FCFA` : ''}
-            </p>
+              <div className="text-2xl font-bold text-blue-700">
+                {plan ? `${formatCurrency(plan.totalAmount)} FCFA` : '—'}
+              </div>
+              <p className="text-sm text-blue-600 mt-1">
+                {plan ? `${plan.numberOfMonths} mois × ${formatCurrency(plan.monthlyFee)} FCFA` : ''}
+              </p>
           </div>
 
           <div>
@@ -217,21 +217,22 @@ export default function PaymentFormModal({ student, onClose, onSave }) {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Montant mensuel:</span>
-                <span className="font-medium">
-                  {plan ? `${formatCurrency(plan.monthlyFee)} FCFA` : '—'}
-                </span>
+                  <span className="font-medium">
+                    {plan ? `${formatCurrency(plan.monthlyFee)} FCFA` : '—'}
+                  </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Montant total:</span>
-                <span className="font-medium">
-                  {plan ? `${formatCurrency(plan.totalAmount)} FCFA` : '—'}
-                </span>
+                  <span className="font-medium">
+                    {plan ? `${formatCurrency(plan.totalAmount)} FCFA` : '—'}
+                  </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Période:</span>
                 <span className="font-medium text-right">
                   {plan
-                    ? `Du ${plan.periodStart.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    ?
+                    `Du ${plan.periodStart.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     au ${plan.periodEnd.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}`
                     : '—'}
                 </span>

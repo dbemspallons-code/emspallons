@@ -126,7 +126,7 @@ export default function AnimatedBackground() {
             onError={(e) => {
               try {
                 e.target.style.display = 'none';
-                const fallback = e.target.parentElement?.querySelector('.student-icon--fallback');
+                const fallback = e.target.parentElement.querySelector('.student-icon--fallback');
                 if (fallback) {
                   fallback.classList.add('show-fallback');
                 }
@@ -146,7 +146,7 @@ export default function AnimatedBackground() {
             onError={(e) => {
               try {
                 e.target.style.display = 'none';
-                const fallback = e.target.parentElement?.querySelector('.student-icon--fallback');
+                const fallback = e.target.parentElement.querySelector('.student-icon--fallback');
                 if (fallback) {
                   fallback.classList.add('show-fallback');
                 }
@@ -166,7 +166,7 @@ export default function AnimatedBackground() {
             onError={(e) => {
               try {
                 e.target.style.display = 'none';
-                const fallback = e.target.parentElement?.querySelector('.student-icon--fallback');
+                const fallback = e.target.parentElement.querySelector('.student-icon--fallback');
                 if (fallback) {
                   fallback.classList.add('show-fallback');
                 }
@@ -186,7 +186,7 @@ export default function AnimatedBackground() {
             onError={(e) => {
               try {
                 e.target.style.display = 'none';
-                const fallback = e.target.parentElement?.querySelector('.student-icon--fallback');
+                const fallback = e.target.parentElement.querySelector('.student-icon--fallback');
                 if (fallback) {
                   fallback.classList.add('show-fallback');
                 }
@@ -206,7 +206,7 @@ export default function AnimatedBackground() {
             onError={(e) => {
               try {
                 e.target.style.display = 'none';
-                const fallback = e.target.parentElement?.querySelector('.student-icon--fallback');
+                const fallback = e.target.parentElement.querySelector('.student-icon--fallback');
                 if (fallback) {
                   fallback.classList.add('show-fallback');
                 }
@@ -226,7 +226,7 @@ export default function AnimatedBackground() {
             onError={(e) => {
               try {
                 e.target.style.display = 'none';
-                const fallback = e.target.parentElement?.querySelector('.student-icon--fallback');
+                const fallback = e.target.parentElement.querySelector('.student-icon--fallback');
                 if (fallback) {
                   fallback.classList.add('show-fallback');
                 }

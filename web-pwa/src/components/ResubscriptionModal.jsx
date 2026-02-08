@@ -55,7 +55,7 @@ export default function ResubscriptionModal({ student, onClose, onSuccess }) {
   };
 
   const loadHistory = async () => {
-    if (!student?.id) return;
+    if (!student.id) return;
     try {
       const historyData = await fetchSubscriptionHistory(student.id);
       setHistory(historyData);
@@ -104,8 +104,8 @@ export default function ResubscriptionModal({ student, onClose, onSuccess }) {
         previousBusLine: student.busLine,
         notes: formData.notes,
       }, {
-        userId: currentUser?.uid || null,
-        userName: currentUser?.name || currentUser?.email?.split('@')[0] || 'Système',
+        userId: currentUser.uid || null,
+        userName: currentUser.name || currentUser.email.split('@')[0] || 'Système',
       });
 
       if (onSuccess) {
@@ -294,7 +294,7 @@ export default function ResubscriptionModal({ student, onClose, onSuccess }) {
                       <span style={{ fontWeight: 600 }}>{item.amount.toLocaleString('fr-FR')} FCFA</span>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
-                      {item.durationMonths} mois - {PAYMENT_METHODS.find(m => m.value === item.paymentMethod)?.label || item.paymentMethod}
+                      {item.durationMonths} mois - {PAYMENT_METHODS.find(m => m.value === item.paymentMethod).label || item.paymentMethod}
                     </div>
                   </div>
                 ))}

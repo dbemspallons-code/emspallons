@@ -49,4 +49,3 @@ getMoviesByGenreRef.operationName = 'GetMoviesByGenre';
 export function getMoviesByGenre(dcOrVars, vars) {
   return executeQuery(getMoviesByGenreRef(dcOrVars, vars));
 }
-

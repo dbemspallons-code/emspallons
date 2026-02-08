@@ -38,9 +38,9 @@ export function openWhatsAppWithMessage(phone, text) {
   const encodedMessage = encodeURIComponent(text);
   
   // Créer le lien WhatsApp
-  // Format: whatsapp://send?phone=+225123456789&text=message
-  const whatsappUrl = `whatsapp://send?phone=${formattedPhone}&text=${encodedMessage}`;
-  const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodedMessage}`;
+  // Format: whatsapp://sendphone=+225123456789&text=message
+  const whatsappUrl = `whatsapp://sendphone=${formattedPhone}&text=${encodedMessage}`;
+  const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}text=${encodedMessage}`;
   
   // Détecter si on est sur desktop: ouvrir WhatsApp Web directement (évite blocages)
   const isDesktop = typeof navigator !== 'undefined' && !/Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
@@ -96,8 +96,8 @@ export function openWhatsAppWithImage(phone, text, imageDataUrl) {
   }
   
   // Ouvrir WhatsApp avec le message
-  const whatsappUrl = `whatsapp://send?phone=${formattedPhone}&text=${encodedMessage}`;
-  const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodedMessage}`;
+  const whatsappUrl = `whatsapp://sendphone=${formattedPhone}&text=${encodedMessage}`;
+  const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}text=${encodedMessage}`;
 
   // Desktop: ouvrir WhatsApp Web en fallback
   const isDesktop = typeof navigator !== 'undefined' && !/Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
@@ -117,7 +117,7 @@ export function openWhatsAppWithImage(phone, text, imageDataUrl) {
       const instruction = 'L\'image QR code a été téléchargée.\n\nInstructions:\n1. Glissez-déposez l\'image dans WhatsApp\n2. Ou ajoutez-la depuis vos téléchargements\n\nLe message est déjà pré-rempli dans WhatsApp.';
       if (window.confirm(instruction)) {
         // Si l'utilisateur confirme, ouvrir WhatsApp Web comme fallback
-        const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodedMessage}`;
+        const webUrl = `https://wa.me/${formattedPhone.replace('+', '')}text=${encodedMessage}`;
         window.open(webUrl, '_blank');
       }
     }
@@ -139,7 +139,7 @@ export async function sendWhatsAppMessage(phone, text, apiKey='VOTRE_CALLMEBOT_K
   return Promise.resolve('WhatsApp ouvert');
   
   /* Ancien code CallMeBot (désactivé par défaut)
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}&apikey=${encodeURIComponent(apiKey)}`;
+  const url = `https://api.callmebot.com/whatsapp.phpphone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}&apikey=${encodeURIComponent(apiKey)}`;
   try {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error('Erreur envoi WhatsApp');

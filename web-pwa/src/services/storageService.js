@@ -197,4 +197,3 @@ async function clearIndexedDB() {
     request.onerror = () => reject(request.error);
   });
 }
-

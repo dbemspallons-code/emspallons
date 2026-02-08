@@ -72,11 +72,17 @@ export default async (req) => {
     }
 
     let authUser = null;
+    let createdNewUser = false;
     let createRes = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { name, role },
+      user_metadata: {
+        name,
+        role,
+        created_by: adminUserId || null,
+        must_change_password: adminUserId ? true : false,
+      },
     });
 
     if (createRes.error) {
@@ -92,6 +98,7 @@ export default async (req) => {
       }
     } else {
       authUser = createRes.data?.user || null;
+      createdNewUser = Boolean(authUser?.id);
     }
 
     if (!authUser) {
@@ -115,6 +122,13 @@ export default async (req) => {
       .select()
       .maybeSingle();
     if (eduErr) {
+      if (createdNewUser && authUser?.id) {
+        try {
+          await supabase.auth.admin.deleteUser(authUser.id);
+        } catch (cleanupErr) {
+          console.warn('Cleanup auth user failed:', cleanupErr?.message || cleanupErr);
+        }
+      }
       return json(400, { error: eduErr.message || 'Erreur creation profil' });
     }
 

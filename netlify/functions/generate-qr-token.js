@@ -24,14 +24,22 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('❌ Variables Supabase manquantes dans Netlify Dashboard');
+  throw new Error('Variables Supabase manquantes (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).');
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+function getBearer(req) {
+  const auth = req.headers.get('authorization') || req.headers.get('Authorization') || '';
+  if (!auth.startsWith('Bearer ')) return null;
+  return auth.slice(7);
+}
 
 export default async (req, context) => {
   // CORS headers
@@ -39,7 +47,7 @@ export default async (req, context) => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
   // Handle preflight
@@ -55,6 +63,26 @@ export default async (req, context) => {
   }
 
   try {
+    const bearerToken = getBearer(req);
+    if (!bearerToken) {
+      return new Response(JSON.stringify({ error: 'Accès refusé' }), { status: 401, headers });
+    }
+
+    const { data: authData, error: authErr } = await supabase.auth.getUser(bearerToken);
+    if (authErr || !authData?.user) {
+      return new Response(JSON.stringify({ error: 'Accès refusé' }), { status: 401, headers });
+    }
+
+    const { data: profile } = await supabase
+      .from('educators')
+      .select('id, role, active')
+      .eq('id', authData.user.id)
+      .maybeSingle();
+
+    if (!profile || profile.active === false || !['admin', 'educateur'].includes(profile.role)) {
+      return new Response(JSON.stringify({ error: 'Accès refusé' }), { status: 403, headers });
+    }
+
     const { subscriber_id } = JSON.parse(req.body || '{}');
 
     if (!subscriber_id) {
@@ -65,7 +93,7 @@ export default async (req, context) => {
     }
 
     // Générer un token
-    const token = crypto.randomBytes(32).toString('hex');
+    const qrToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
     // Insérer dans Supabase
@@ -73,7 +101,7 @@ export default async (req, context) => {
       .from('qr_codes')
       .insert([{ 
         subscriber_id, 
-        token, 
+        token: qrToken, 
         expires_at: expiresAt,
         status: 'active'
       }])

@@ -26,7 +26,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
     }
 
     if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractÃ¨res');
+      setError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
 
@@ -38,7 +38,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
     setLoading(true);
 
     try {
-      // CrÃ©er le premier compte Admin
+      // Créer le premier compte Admin
       await initializeFirstAdmin({
         nom: nom.trim(),
         email: email.trim(),
@@ -50,7 +50,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
       
       onSetupSuccess();
     } catch (err) {
-      setError(err.message || 'Erreur lors de la crÃ©ation du compte');
+      setError(err.message || 'Erreur lors de la création du compte');
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
               <UserPlus className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2 brand-title">Configuration initiale</h1>
-            <p className="text-gray-600">CrÃ©ez le compte administrateur principal</p>
+            <p className="text-gray-600">Créez le compte administrateur principal</p>
           </div>
 
           {error && (
@@ -126,7 +126,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
                   placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">Minimum 6 caractÃ¨res</p>
+              <p className="mt-1 text-xs text-gray-500">Minimum 6 caractères</p>
             </div>
 
             <div>
@@ -151,7 +151,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
                 <CheckCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-yellow-800">
                   <p className="font-semibold mb-1">Compte Administrateur</p>
-                  <p>Ce compte aura tous les droits, y compris la crÃ©ation d'autres utilisateurs.</p>
+                  <p>Ce compte aura tous les droits, y compris la création d'autres utilisateurs.</p>
                 </div>
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
               disabled={loading}
               className="ui-btn ui-btn--primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'CrÃ©ation en cours...' : 'CrÃ©er le compte administrateur'}
+              {loading ? 'Création en cours...' : 'Créer le compte administrateur'}
             </button>
           </form>
         </div>

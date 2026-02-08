@@ -1,6 +1,15 @@
 /*
   Access-Control-Allow-Origin: *
 
+/*.html
+  Content-Type: text/html; charset=utf-8
+
+/*.js
+  Content-Type: application/javascript; charset=utf-8
+
+/*.css
+  Content-Type: text/css; charset=utf-8
+
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
@@ -10,6 +19,5 @@
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Headers: Content-Type
   Access-Control-Allow-Methods: GET, POST, OPTIONS
-
 
 

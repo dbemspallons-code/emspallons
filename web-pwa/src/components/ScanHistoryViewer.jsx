@@ -79,7 +79,7 @@ export default function ScanHistoryViewer({ onClose }) {
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
       filtered = filtered.filter(s => {
-        const scanDate = s.scannedAt?.toDate ? s.scannedAt.toDate() : new Date(s.scannedAt);
+        const scanDate = s.scannedAt.toDate s.scannedAt.toDate() : new Date(s.scannedAt);
         return scanDate >= fromDate;
       });
     }
@@ -87,7 +87,7 @@ export default function ScanHistoryViewer({ onClose }) {
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999);
       filtered = filtered.filter(s => {
-        const scanDate = s.scannedAt?.toDate ? s.scannedAt.toDate() : new Date(s.scannedAt);
+        const scanDate = s.scannedAt.toDate s.scannedAt.toDate() : new Date(s.scannedAt);
         return scanDate <= toDate;
       });
     }
@@ -96,17 +96,17 @@ export default function ScanHistoryViewer({ onClose }) {
     filtered.sort((a, b) => {
       let aVal, bVal;
       if (sortBy === 'scannedAt') {
-        aVal = a.scannedAt?.toDate ? a.scannedAt.toDate().getTime() : new Date(a.scannedAt || 0).getTime();
-        bVal = b.scannedAt?.toDate ? b.scannedAt.toDate().getTime() : new Date(b.scannedAt || 0).getTime();
+        aVal = a.scannedAt.toDate a.scannedAt.toDate().getTime() : new Date(a.scannedAt || 0).getTime();
+        bVal = b.scannedAt.toDate b.scannedAt.toDate().getTime() : new Date(b.scannedAt || 0).getTime();
       } else {
         aVal = a[sortBy] || '';
         bVal = b[sortBy] || '';
       }
       
       if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
+        return aVal > bVal 1 : -1;
       } else {
-        return aVal < bVal ? 1 : -1;
+        return aVal < bVal 1 : -1;
       }
     });
 
@@ -138,10 +138,10 @@ export default function ScanHistoryViewer({ onClose }) {
     return {
       total,
       approvedCount,
-      refusalRate: total > 0 ? ((total - approvedCount) / total * 100).toFixed(1) : 0,
+      refusalRate: total > 0 ((total - approvedCount) / total * 100).toFixed(1) : 0,
       byStatus,
       byLine,
-      mostActiveController: mostActiveController ? {
+      mostActiveController: mostActiveController {
         id: mostActiveController[0],
         count: mostActiveController[1],
       } : null,
@@ -152,11 +152,11 @@ export default function ScanHistoryViewer({ onClose }) {
     const csv = [
       ['Date', 'Étudiant', 'Ligne', 'Contrôleur', 'Statut', 'Raison'].join(','),
       ...paginatedScans.map(scan => {
-        const date = scan.scannedAt?.toDate ? scan.scannedAt.toDate().toLocaleString('fr-FR') : new Date(scan.scannedAt || 0).toLocaleString('fr-FR');
+        const date = scan.scannedAt.toDate scan.scannedAt.toDate().toLocaleString('fr-FR') : new Date(scan.scannedAt || 0).toLocaleString('fr-FR');
         return [
           date,
           scan.studentName || 'N/A',
-          lines.find(l => l.id === scan.busLine)?.name || scan.busLine || 'N/A',
+          lines.find(l => l.id === scan.busLine).name || scan.busLine || 'N/A',
           scan.controllerName || 'N/A',
           SCAN_STATUS_LABELS[scan.status] || scan.status,
           scan.reason || '',
@@ -254,7 +254,7 @@ export default function ScanHistoryViewer({ onClose }) {
             <div className="card" style={{ padding: '1rem', textAlign: 'center' }}>
               <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Contrôleur actif</p>
               <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem', fontWeight: 600 }}>
-                {controllers.find(c => c.id === statistics.mostActiveController.id)?.name || 'N/A'}
+                {controllers.find(c => c.id === statistics.mostActiveController.id).name || 'N/A'}
               </p>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>
                 {statistics.mostActiveController.count} scans
@@ -393,7 +393,7 @@ export default function ScanHistoryViewer({ onClose }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedScans.length === 0 ? (
+                  {paginatedScans.length === 0 (
                     <tr>
                       <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
                         Aucun scan trouvé
@@ -401,15 +401,14 @@ export default function ScanHistoryViewer({ onClose }) {
                     </tr>
                   ) : (
                     paginatedScans.map((scan, idx) => {
-                      const statusColor = scan.status === 'approved' ? '#10b981' : 
-                                         scan.status === 'expired' || scan.status === 'error' || scan.status === 'WRONG_LINE' ? '#ef4444' : 
-                                         '#f59e0b';
+                      const statusColor = scan.status === 'approved' '#10b981' : 
+                                         scan.status === 'expired' || scan.status === 'error' || scan.status === 'WRONG_LINE' ? '#ef4444' : '#f59e0b';
                       return (
                         <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{formatDate(scan.scannedAt)}</td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{scan.studentName || 'N/A'}</td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>
-                            {lines.find(l => l.id === scan.busLine)?.name || scan.busLine || 'N/A'}
+                            {lines.find(l => l.id === scan.busLine).name || scan.busLine || 'N/A'}
                           </td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{scan.controllerName || scan.driverId || 'N/A'}</td>
                           <td style={{ padding: '0.75rem' }}>

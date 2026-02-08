@@ -55,13 +55,13 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name?.trim()) {
+    if (!formData.name.trim()) {
       newErrors.name = 'Le nom du contrôleur est obligatoire';
     }
-    if (editingController === 'new' && !formData.password?.trim()) {
+    if (editingController === 'new' && !formData.password.trim()) {
       newErrors.password = 'Le mot de passe est obligatoire';
     }
-    if (!formData.assignedLineId?.trim()) {
+    if (!formData.assignedLineId.trim()) {
       newErrors.assignedLineId = 'La ligne assignée est obligatoire';
     }
     setErrors(newErrors);
@@ -82,7 +82,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
       // Si c'est une création, inclure le mot de passe
       if (editingController === 'new') {
         controllerData.password = formData.password.trim();
-      } else if (formData.password?.trim()) {
+      } else if (formData.password.trim()) {
         // Si c'est une modification et qu'un nouveau mot de passe est fourni
         controllerData.password = formData.password.trim();
       }
@@ -100,7 +100,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
   };
 
   const handleDeleteController = async (controller) => {
-    if (!window.confirm(`Supprimer le contrôleur "${controller.name}" ?\n\nAttention : Les scans effectués par ce contrôleur resteront dans l'historique.`)) {
+    if (!window.confirm(`Supprimer le contrôleur "${controller.name}" \n\nAttention : Les scans effectués par ce contrôleur resteront dans l'historique.`)) {
       return;
     }
     try {
@@ -271,7 +271,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {controllers.length === 0 ? (
+          {controllers.length === 0 (
             <div className="card" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
               <p>Aucun contrôleur enregistré.</p>
               <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>Ajoutez un contrôleur pour permettre le scan au portail.</p>
@@ -297,7 +297,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                   </p>
                   {controller.assignedLineId && lines.length > 0 && (
                     <p className="subtitle" style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
-                      Ligne: {lines.find(l => l.id === controller.assignedLineId)?.name || controller.assignedLineId}
+                      Ligne: {lines.find(l => l.id === controller.assignedLineId).name || controller.assignedLineId}
                     </p>
                   )}
                   {controller.password && (
@@ -313,7 +313,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                     onClick={() => handleToggleActive(controller)}
                     title={controller.active ? 'Désactiver' : 'Activer'}
                   >
-                    {controller.active ? <UserX size={16} /> : <UserCheck size={16} />}
+                    {controller.active <UserX size={16} /> : <UserCheck size={16} />}
                   </button>
                   <button
                     className="button button--subtle"

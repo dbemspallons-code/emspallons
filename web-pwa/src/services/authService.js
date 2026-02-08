@@ -111,7 +111,7 @@ export async function login(email, motDePasse) {
   try {
     const res = await signIn({ email, password });
     if (res.error) throw res.error;
-    const user = res.data?.user || res.user || res.data?.session?.user || null;
+    const user = res.data.user || res.user || res.data.session.user || null;
     if (!user) throw new Error('Authentification échouée');
 
     // Récupérer le profil éducator dans Supabase
@@ -137,7 +137,7 @@ export async function login(email, motDePasse) {
     return out;
   } catch (error) {
     // Map common errors
-    if (error?.message && error.message.includes('invalid_password')) {
+    if (error.message && error.message.includes('invalid_password')) {
       throw new Error('Email ou mot de passe incorrect');
     }
     throw error;
@@ -164,7 +164,7 @@ export async function getCurrentUser() {
       id: user.id,
       uid: user.id,
       email: user.email,
-      name: profile.name || profile.nom || user.email?.split('@')[0] || 'Utilisateur',
+      name: profile.name || profile.nom || user.email.split('@')[0] || 'Utilisateur',
       role: profile.role || 'educator',
       ...profile,
     };
@@ -265,7 +265,7 @@ export async function updateUser(userId, updates) {
         targetEmail: user.email,
       },
     }, {
-      userId: currentUser?.id || null,
+      userId: currentUser.id || null,
     });
     
     // ✅ NOUVEAU : Appeler la fonction serverless pour définir les custom claims
@@ -414,7 +414,7 @@ async function getRecentRaw() {
 }
 
 async function addRecentUserEntry(user) {
-  if (!user?.email) return;
+  if (!user.email) return;
   try {
     const current = await getRecentRaw();
     const entry = {
@@ -443,7 +443,7 @@ async function removeRecentUserEntry(email) {
 }
 
 async function touchRecentUserEntry(user) {
-  if (!user?.email) return;
+  if (!user.email) return;
   const current = await getRecentRaw();
   if (!current.some(item => item.email === user.email)) return;
   await addRecentUserEntry(user);
@@ -471,14 +471,14 @@ export async function changeOwnPassword(currentPassword, newPassword) {
   try {
     // Réauthentifier l'utilisateur en vérifiant le mot de passe courant
     const signin = await signIn({ email: currentUser.email, password: currentPassword });
-    if (signin?.error) {
+    if (signin.error) {
       throw new Error('Mot de passe actuel incorrect');
     }
 
     // Mettre à jour le mot de passe via Supabase
     const res = await supabaseUpdatePassword(newPassword);
-    if (res?.error) {
-      if (res?.status === 401) throw new Error('Veuillez vous reconnecter avant de changer votre mot de passe');
+    if (res.error) {
+      if (res.status === 401) throw new Error('Veuillez vous reconnecter avant de changer votre mot de passe');
       throw res.error;
     }
 
@@ -507,7 +507,7 @@ export async function resetUserPassword(userId, newPassword) {
 
   try {
     const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token || null;
+    const token = sessionData.session.access_token || null;
     if (!token) {
       throw new Error('Session invalide, veuillez vous reconnecter');
     }
@@ -545,7 +545,10 @@ export async function requestPasswordReset(email) {
   if (!clean) throw new Error('Email requis');
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const redirectTo = origin ? `${origin}/reset-password` : undefined;
-  const { error } = await supabase.auth.resetPasswordForEmail(clean, redirectTo ? { redirectTo } : undefined);
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    clean,
+    redirectTo ? { redirectTo } : undefined
+  );
   if (error) {
     const msg = String(error.message || '');
     if (msg.toLowerCase().includes('recovery') || msg.toLowerCase().includes('smtp')) {
@@ -564,9 +567,9 @@ export async function completePasswordReset(newPassword) {
     throw new Error('Le nouveau mot de passe doit contenir au moins 6 caracteres');
   }
   const res = await supabaseUpdatePassword(newPassword);
-  if (res?.error) throw res.error;
+  if (res.error) throw res.error;
   const { data } = await supabase.auth.getUser();
-  const userId = data?.user?.id;
+  const userId = data.user.id;
   if (userId) {
     await supabase.from('educators').update({ must_change_password: false }).eq('id', userId);
   }
@@ -581,13 +584,12 @@ export async function forceUpdatePassword(newPassword) {
     throw new Error('Le nouveau mot de passe doit contenir au moins 6 caracteres');
   }
   const res = await supabaseUpdatePassword(newPassword);
-  if (res?.error) throw res.error;
+  if (res.error) throw res.error;
   const { data } = await supabase.auth.getUser();
-  const userId = data?.user?.id;
+  const userId = data.user.id;
   if (userId) {
     await supabase.from('educators').update({ must_change_password: false, last_login_at: new Date().toISOString() }).eq('id', userId);
   }
   return { success: true };
 }
-
 

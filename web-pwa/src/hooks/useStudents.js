@@ -186,8 +186,8 @@ export function useStudents() {
   }, []);
 
   return {
-    students: Array.isArray(students) ? students : [],
-    lines: Array.isArray(lines) ? lines : BUS_LINES,
+    students: Array.isArray(students) students : [],
+    lines: Array.isArray(lines) lines : BUS_LINES,
     loading: Boolean(loading),
     error: error || null,
     synced: Boolean(synced),
@@ -214,4 +214,3 @@ function computeNextStatus(currentStatus, student) {
   }
   return PAYMENT_STATUS.OUT_OF_SERVICE;
 }
-

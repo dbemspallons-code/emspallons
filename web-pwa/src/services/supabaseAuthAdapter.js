@@ -8,10 +8,10 @@ export function initAuth() {
 export function onAuthStateChanged(callback) {
   // Supabase v2 provides onAuthStateChange
   const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-    const user = session?.user || null;
+    const user = session.user || null;
     callback(user);
   });
-  return () => listener?.unsubscribe?.();
+  return () => listener.unsubscribe();
 }
 
 export async function signIn({ email, password }) {

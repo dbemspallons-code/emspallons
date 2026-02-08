@@ -56,7 +56,7 @@ export default function UserManagementModal({ onClose }) {
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (error) {
 
-      const msg = error?.message || 'Erreur lors de la creation';
+      const msg = error.message || 'Erreur lors de la creation';
       if (msg.toLowerCase().includes('failed to fetch')) {
         alert('Impossible de contacter le serveur. Verifiez votre connexion et les fonctions Netlify.');
       } else {
@@ -71,7 +71,7 @@ export default function UserManagementModal({ onClose }) {
       // ✅ NOUVEAU : Confirmation si promotion admin
       if (updates.role === 'admin') {
         const user = users.find(u => u.id === userId);
-        const userName = user?.nom || user?.name || user?.email || 'cet utilisateur';
+        const userName = user.nom || user.name || user.email || 'cet utilisateur';
         
         const confirmMessage = 
           `⚠️ ATTENTION\n\n` +
@@ -80,7 +80,7 @@ export default function UserManagementModal({ onClose }) {
           `- Création/suppression d'utilisateurs\n` +
           `- Réinitialisation de mots de passe\n` +
           `- Gestion complète du système\n\n` +
-          `Confirmer cette promotion ?`;
+          `Confirmer cette promotion `;
         
         if (!window.confirm(confirmMessage)) {
           return;
@@ -108,7 +108,7 @@ export default function UserManagementModal({ onClose }) {
     }
     
     // Suppression normale pour les autres utilisateurs
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ')) {
       return;
     }
     try {
@@ -122,7 +122,7 @@ export default function UserManagementModal({ onClose }) {
   // ✅ NOUVEAU : Gestion de l'auto-suppression avec confirmation renforcée
   async function handleDeleteOwnAccount(userId) {
     const user = users.find(u => u.id === userId);
-    const userName = user?.nom || user?.name || currentUser?.name || 'Vous';
+    const userName = user.nom || user.name || currentUser.name || 'Vous';
     
     // Étape 1 : Saisie de confirmation textuelle
     const confirmation = window.prompt(
@@ -139,7 +139,7 @@ export default function UserManagementModal({ onClose }) {
     // Étape 2 : Double confirmation
     const finalConfirm = window.confirm(
       '🚨 DERNIÈRE CONFIRMATION\n\n' +
-      'Êtes-vous ABSOLUMENT SÛR de vouloir supprimer votre compte administrateur ?\n\n' +
+      'Êtes-vous ABSOLUMENT SÛR de vouloir supprimer votre compte administrateur \n\n' +
       'Cliquez sur OK pour confirmer la suppression définitive.'
     );
     
@@ -255,8 +255,7 @@ export default function UserManagementModal({ onClose }) {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           user.role === 'admin' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-blue-100 text-blue-800'
+                            ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                         }`}>
                           {user.role === 'admin' ? (
                             <>
@@ -302,13 +301,11 @@ export default function UserManagementModal({ onClose }) {
                               onClick={() => handleDeleteUser(user.id)}
                               className={`${
                                 currentUser && currentUser.id === user.id
-                                  ? 'text-red-700 hover:text-red-900 font-semibold'
-                                  : 'text-red-600 hover:text-red-900'
+                                  ? 'text-red-700 hover:text-red-900 font-semibold' : 'text-red-600 hover:text-red-900'
                               }`}
                               title={
                                 currentUser && currentUser.id === user.id
-                                  ? 'Supprimer mon propre compte'
-                                  : 'Supprimer cet utilisateur'
+                                  ? 'Supprimer mon propre compte' : 'Supprimer cet utilisateur'
                               }
                             >
                               {currentUser && currentUser.id === user.id ? (

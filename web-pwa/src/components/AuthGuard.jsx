@@ -94,8 +94,8 @@ export default function AuthGuard({ children }) {
             const eduData = await getEducatorById(uid);
             if (eduData) {
               const role = eduData.role === 'admin' ? 'admin' : 'educator';
-              setUser({ ...authUser, ...eduData, role, name: eduData.name || authUser.email?.split('@')[0] || 'Utilisateur' });
-              const must2FA = !!(eduData?.twoFactor && eduData.twoFactor.enabled === true);
+              setUser({ ...authUser, ...eduData, role, name: eduData.name || authUser.email.split('@')[0] || 'Utilisateur' });
+              const must2FA = !!(eduData.twoFactor && eduData.twoFactor.enabled === true);
               setRequireTwoFactor(must2FA);
               setTwoFactorVerified(!must2FA);
 
@@ -104,7 +104,7 @@ export default function AuthGuard({ children }) {
                   ...eduData,
                   role,
                   lastLogin: new Date().toISOString(),
-                  loginHistory: [...(eduData.loginHistory || []).slice(0, 9), loginEntry],
+                  loginHistory: [..(eduData.loginHistory || []).slice(0, 9), loginEntry],
                 });
               } catch (logError) {
                 console.warn('Erreur enregistrement historique connexion (Supabase):', logError);
@@ -116,13 +116,13 @@ export default function AuthGuard({ children }) {
               await setEducator(id, {
                 id,
                 email: authUser.email,
-                name: authUser.email?.split('@')[0] || 'Utilisateur',
+                name: authUser.email.split('@')[0] || 'Utilisateur',
                 role: defaultRole,
                 created_at: new Date().toISOString(),
                 lastLogin: new Date().toISOString(),
                 loginHistory: [loginEntry],
               });
-              setUser({ ...authUser, role: defaultRole, name: authUser.email?.split('@')[0] || 'Utilisateur' });
+              setUser({ ...authUser, role: defaultRole, name: authUser.email.split('@')[0] || 'Utilisateur' });
               setRequireTwoFactor(false);
               setTwoFactorVerified(true);
             }
@@ -164,10 +164,10 @@ export default function AuthGuard({ children }) {
     setError('');
     try {
       const res = await signIn({ email: formData.email, password: formData.password });
-      if (res?.error) throw res.error;
+      if (res.error) throw res.error;
       setShowLogin(false);
     } catch (err) {
-      const message = err?.message || err?.error_description || 'Email ou mot de passe incorrect';
+      const message = err.message || err.error_description || 'Email ou mot de passe incorrect';
       setError(message);
     }
   };
@@ -183,8 +183,8 @@ export default function AuthGuard({ children }) {
 
     try {
       const res = await createUserWithEmailAndPassword({ email: formData.email, password: formData.password });
-      if (res?.error) throw res.error;
-      const newUser = res.user || res.data?.user || res;
+      if (res.error) throw res.error;
+      const newUser = res.user || res.data.user || res;
 
       const isFirstAccount = !(await anyEducatorExists());
       const defaultRole = isFirstAccount ? 'admin' : 'educator';
@@ -193,7 +193,7 @@ export default function AuthGuard({ children }) {
       await setEducator(id, {
         id,
         email: formData.email,
-        name: formData.email?.split('@')[0] || 'Utilisateur',
+        name: formData.email.split('@')[0] || 'Utilisateur',
         role: defaultRole,
         created_at: new Date().toISOString(),
       });
@@ -201,7 +201,7 @@ export default function AuthGuard({ children }) {
       setAccountExists(true);
       setShowLogin(false);
     } catch (err) {
-      const msg = (err?.message || '').includes('already') || err?.status === 409 ? 'Cet email est déjà utilisé' : (err?.message || 'Erreur création compte');
+      const msg = (err.message || '').includes('already') || err.status === 409 'Cet email est déjà utilisé' : (err.message || 'Erreur création compte');
       setError(msg);
     }
   };
@@ -219,13 +219,13 @@ export default function AuthGuard({ children }) {
     }
     try {
       const res = await updatePassword(formData.newPassword);
-      if (res?.error) throw res.error;
+      if (res.error) throw res.error;
       setError('');
       setShowChangePassword(false);
       setFormData({ ...formData, newPassword: '', confirmPassword: '' });
       alert('Mot de passe modifié avec succès !');
     } catch (err) {
-      setError(err?.message || 'Veuillez vous reconnecter avant de changer votre mot de passe');
+      setError(err.message || 'Veuillez vous reconnecter avant de changer votre mot de passe');
     }
   };
 
@@ -255,7 +255,7 @@ export default function AuthGuard({ children }) {
       if (!user) return;
       const data = await getEducatorById(user.uid);
       if (data) {
-        setUser(prev => (prev ? { ...prev, ...data } : { ...data, uid: user.uid }));
+        setUser(prev => (prev { ...prev, ...data } : { ...data, uid: user.uid }));
       }
     } catch (err) {
       console.warn('Impossible de rafraîchir le profil éducatrice (Supabase):', err);
@@ -321,8 +321,7 @@ export default function AuthGuard({ children }) {
           </h2>
           <p style={{ textAlign: 'center', fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>
             {showLogin 
-              ? 'Accès protégé - Authentification requise pour les éducatrices'
-              : 'Création du compte éducatrice (accès complet)'}
+              ? 'Accès protégé - Authentification requise pour les éducatrices' : 'Création du compte éducatrice (accès complet)'}
           </p>
           <div style={{
             padding: '0.75rem',
@@ -369,7 +368,7 @@ export default function AuthGuard({ children }) {
               {error}
             </div>
           )}
-          <form onSubmit={showLogin ? handleLogin : handleRegister}>
+          <form onSubmit={showLogin handleLogin : handleRegister}>
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: 600 }}>
                 <Mail size={16} />
@@ -463,7 +462,7 @@ export default function AuthGuard({ children }) {
     <AuthProvider value={authContextValue}>
     <div>
       {/* Si 2FA requis et pas encore validé, afficher un écran de validation */}
-      {user && requireTwoFactor && !twoFactorVerified ? (
+      {user && requireTwoFactor && !twoFactorVerified (
         <div style={{ 
           minHeight: '100vh', 
           display: 'flex', 
@@ -503,8 +502,8 @@ export default function AuthGuard({ children }) {
                 }
                 const eduRef = doc(db, 'educators', user.uid);
                 const eduSnap = await getDoc(eduRef);
-                const eduData = eduSnap.exists() ? eduSnap.data() : null;
-                const cfg = eduData?.twoFactor || null;
+                const eduData = eduSnap.exists() eduSnap.data() : null;
+                const cfg = eduData.twoFactor || null;
                 if (!cfg || cfg.enabled !== true) {
                   // Pas de 2FA configuré finalement -> autoriser
                   setTwoFactorVerified(true);

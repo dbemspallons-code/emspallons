@@ -55,6 +55,7 @@ export async function logScan(studentId, payload) {
         paymentStatus: payload.paymentStatus,
         controllerId: payload.controllerId || null,
         controllerName: payload.controllerName || null,
+        controllerCode: payload.controllerCode || null,
         reason: payload.reason || null,
       }),
     });
@@ -71,7 +72,7 @@ export async function logScan(studentId, payload) {
  */
 export async function getScanLogs(limitCount = 100) {
   try {
-    const res = await fetch(`/.netlify/functions/get-scan-logs?limit=${limitCount}`, { method: 'GET' });
+    const res = await fetch(`/.netlify/functions/get-scan-logslimit=${limitCount}`, { method: 'GET' });
     if (!res.ok) {
       console.warn('getScanLogs: server returned', res.status);
       return [];
@@ -83,4 +84,3 @@ export async function getScanLogs(limitCount = 100) {
     return [];
   }
 }
-

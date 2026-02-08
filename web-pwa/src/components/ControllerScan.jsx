@@ -33,12 +33,12 @@ function writeStudentCache(cache) {
 }
 
 function cacheStudent(student) {
-  if (!student?.id) return;
+  if (!student.id) return;
   const cache = readStudentCache();
   cache[student.id] = { ...student, cachedAt: new Date().toISOString() };
   const keys = Object.keys(cache);
   if (keys.length > STUDENT_CACHE_MAX) {
-    keys.sort((a, b) => new Date(cache[a]?.cachedAt || 0) - new Date(cache[b]?.cachedAt || 0));
+    keys.sort((a, b) => new Date(cache[a].cachedAt || 0) - new Date(cache[b].cachedAt || 0));
     const overflow = keys.length - STUDENT_CACHE_MAX;
     for (let i = 0; i < overflow; i += 1) {
       delete cache[keys[i]];
@@ -58,7 +58,7 @@ function cacheStudentsByLine(students = [], lineId) {
   const cache = readStudentCache();
   const nowIso = new Date().toISOString();
   students.forEach(student => {
-    if (!student?.id) return;
+    if (!student.id) return;
     const studentLine = student.busLine || student.bus_line || student.line || null;
     if (studentLine && studentLine === lineId) {
       cache[student.id] = { ...student, cachedAt: nowIso };
@@ -101,7 +101,7 @@ export default function ControllerScan() {
   }, []);
 
   useEffect(() => {
-    if (!authorized || !controllerInfo?.assignedLineId) return;
+    if (!authorized || !controllerInfo.assignedLineId) return;
     (async () => {
       try {
         const students = await fetchStudents();
@@ -185,6 +185,7 @@ export default function ControllerScan() {
           id: controller.id,
           nom: controller.name || controller.nom,
           assignedLineId: controller.assignedLineId || null,
+          code: accessCode.trim().toUpperCase(),
         };
         
         setAuthorized(true);
@@ -254,8 +255,9 @@ export default function ControllerScan() {
       const resInvalid = await logScanEntry(null, {
         status: 'INVALID',
         paymentStatus: 'ERROR',
-        controllerId: controllerInfo?.id || null,
-        controllerName: controllerInfo?.nom || null,
+        controllerId: controllerInfo.id || null,
+        controllerName: controllerInfo.nom || null,
+        controllerCode: controllerInfo.code || controllerInfo.controllerCode || null,
         reason: 'QR Code invalide',
       });
       if (resInvalid && resInvalid.offline) {
@@ -290,8 +292,9 @@ export default function ControllerScan() {
       const resNotFound = await logScanEntry(qrData.id, {
         status: 'NOT_FOUND',
         paymentStatus: 'ERROR',
-        controllerId: controllerInfo?.id || null,
-        controllerName: controllerInfo?.nom || null,
+        controllerId: controllerInfo.id || null,
+        controllerName: controllerInfo.nom || null,
+        controllerCode: controllerInfo.code || controllerInfo.controllerCode || null,
         reason: 'Étudiant introuvable',
       });
       if (resNotFound && resNotFound.offline) {
@@ -333,21 +336,22 @@ export default function ControllerScan() {
     const now = scanTimestamp;
 
     // PRIORITE 4 : Verification LIGNE
-    if (controllerInfo?.assignedLineId) {
+    if (controllerInfo.assignedLineId) {
       const { fetchLines } = await import('../services/firestoreService');
       const lines = await fetchLines();
       const controllerLine = lines.find(l => l.id === controllerInfo.assignedLineId);
       const studentLine = student.busLine;
 
       if (studentLine !== controllerInfo.assignedLineId) {
-        const studentLineName = lines.find(l => l.id === studentLine)?.name || studentLine;
-        const controllerLineName = controllerLine?.name || controllerInfo.assignedLineId;
+        const studentLineName = lines.find(l => l.id === studentLine).name || studentLine;
+        const controllerLineName = controllerLine.name || controllerInfo.assignedLineId;
 
         const resWrongLine = await logScanEntry(student.id, {
           status: 'WRONG_LINE',
           paymentStatus: student.paymentStatus || 'ERROR',
-          controllerId: controllerInfo?.id || null,
-          controllerName: controllerInfo?.nom || null,
+          controllerId: controllerInfo.id || null,
+          controllerName: controllerInfo.nom || null,
+          controllerCode: controllerInfo.code || controllerInfo.controllerCode || null,
           reason: `Tentative de scan d'un etudiant d'une autre ligne (${studentLineName} vs ${controllerLineName})`,
         });
         if (resWrongLine && resWrongLine.offline) {
@@ -373,14 +377,14 @@ export default function ControllerScan() {
 
     if (paymentStatusValue === PAYMENT_STATUS.UP_TO_DATE) {
       paymentStatus = 'PAID';
-      const expiresAt = student.subscription?.expiresAt ? new Date(student.subscription.expiresAt) : null;
+        const expiresAt = student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null;
       displayResult = {
         success: true,
         status: 'PAID',
         student,
         message: 'Acces autorise',
         color: '#10B981',
-        validUntil: expiresAt?.toISOString() || null,
+        validUntil: expiresAt.toISOString() || null,
       };
       await setLastScan(student.id, { timestamp: now, status: paymentStatus });
     } else if (paymentStatusValue === PAYMENT_STATUS.LATE) {
@@ -402,14 +406,14 @@ export default function ControllerScan() {
       await setLastScan(student.id, { timestamp: now, status: paymentStatus });
     } else {
       paymentStatus = 'EXPIRED';
-      const expiresAt = student.subscription?.expiresAt ? new Date(student.subscription.expiresAt) : null;
+      const expiresAt = student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null;
       displayResult = {
         success: false,
         status: 'EXPIRED',
         student,
         message: 'Paiement expire - acces refuse',
         color: '#EF4444',
-        expiredSince: expiresAt?.toISOString() || null,
+        expiredSince: expiresAt.toISOString() || null,
       };
     }
 
@@ -420,9 +424,12 @@ export default function ControllerScan() {
     const resSuccess = await logScanEntry(student.id, {
       status: displayResult.status,
       paymentStatus,
-      controllerId: controllerInfo?.id || null,
-      controllerName: controllerInfo?.nom || null,
-      reason: override ? `Validation manuelle apres doublon (${duplicateInfo?.minutesAgo ?? '?'} min)` : null,
+      controllerId: controllerInfo.id || null,
+      controllerName: controllerInfo.nom || null,
+      controllerCode: controllerInfo.code || controllerInfo.controllerCode || null,
+      reason: override
+        ? `Validation manuelle apres doublon (${duplicateInfo.minutesAgo ?? ''} min)`
+        : null,
     });
     if (resSuccess && resSuccess.offline) {
       setQueuedCount(c => c + 1);
@@ -434,7 +441,7 @@ export default function ControllerScan() {
   }
 
   async function handleOverrideDuplicate() {
-    if (!pendingDuplicate?.student) return;
+    if (!pendingDuplicate.student) return;
     const snapshot = pendingDuplicate;
     setPendingDuplicate(null);
     await finalizeScan(snapshot.student, {
@@ -528,7 +535,7 @@ export default function ControllerScan() {
             <p className="text-indigo-100 text-sm mt-1">
               Scannez le QR code de l&apos;étudiant pour valider l&apos;accès.
             </p>
-            {controllerInfo?.nom && (
+            {controllerInfo.nom && (
               <p className="text-indigo-200 text-xs mt-1">
                 Contrôleur: {controllerInfo.nom}
               </p>

@@ -39,7 +39,7 @@ export default class ErrorBoundary extends React.Component {
                 overflow: 'auto',
                 fontSize: '0.85rem'
               }}>
-                {this.state.error?.toString()}
+                {this.state.error.toString()}
               </pre>
             </details>
             <button

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LogIn, User, Lock, AlertCircle, ShieldCheck, X } from 'lucide-react';
+import { LogIn, User, Lock, AlertCircle, ShieldCheck, X, Eye, EyeOff } from 'lucide-react';
 import { login, isFirstUser, getRecentUsers, requestPasswordReset } from '../services/authService';
 import FirstAdminSetup from './FirstAdminSetup';
 
@@ -17,6 +17,7 @@ export default function Login({ onLoginSuccess }) {
   const [resetEmail, setResetEmail] = useState('');
   const [resetError, setResetError] = useState('');
   const [resetSuccess, setResetSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef(null);
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function Login({ onLoginSuccess }) {
     setEmail(profile.email);
     setPassword('');
     setTimeout(() => {
-      passwordRef.current?.focus();
+      passwordRef.current.focus();
     }, 0);
   }
 
@@ -146,7 +147,7 @@ export default function Login({ onLoginSuccess }) {
                       type="button"
                       onClick={() => handleSelectProfile(profile)}
                       className={`ui-select w-full flex items-center justify-between px-4 py-3 ${
-                        isSelected ? 'ui-select--active' : ''
+                          isSelected ? 'ui-select--active' : ''
                       }`}
                     >
                       <div className="text-left">
@@ -188,14 +189,22 @@ export default function Login({ onLoginSuccess }) {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   ref={passwordRef}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
@@ -217,7 +226,7 @@ export default function Login({ onLoginSuccess }) {
               }}
               className="w-full text-sm font-semibold text-emerald-700 hover:text-emerald-800 underline mt-2"
             >
-              Mot de passe oublie ?
+              Mot de passe oublie 
             </button>
           </form>
 

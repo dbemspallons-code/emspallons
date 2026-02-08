@@ -12,8 +12,8 @@ export class HistoryService {
   async log(entry) {
     const currentUser = await getCurrentUser().catch(() => null);
     const row = {
-      user_id: entry.userId || currentUser?.id || null,
-      user_name: entry.userName || currentUser?.name || currentUser?.nom || null,
+      user_id: entry.userId || currentUser.id || null,
+      user_name: entry.userName || currentUser.name || currentUser.nom || null,
       type: entry.type,
       entity_id: entry.entityId || null,
       entity_type: entry.entityType || null,
@@ -111,10 +111,9 @@ export async function logAction(actionData) {
       targetRole: actionData.targetRole,
       metadata: actionData.metadata || {},
     },
-    userId: actionData.actorId || currentUser?.id || null,
-    userName: actionData.actorName || currentUser?.name || currentUser?.nom || null,
+    userId: actionData.actorId || currentUser.id || null,
+    userName: actionData.actorName || currentUser.name || currentUser.nom || null,
   };
 
   return await historyService.log(entry);
 }
-

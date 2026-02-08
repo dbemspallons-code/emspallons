@@ -58,4 +58,3 @@ export async function getDefaultMonthlyFee() {
   const settings = await getSettings();
   return settings.defaultMonthlyFee || DEFAULT_MONTHLY_FEE;
 }
-

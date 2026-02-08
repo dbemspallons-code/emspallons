@@ -34,7 +34,7 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name?.trim()) {
+    if (!formData.name.trim()) {
       newErrors.name = 'Le nom de la ligne est obligatoire';
     }
     if (!formData.color) {
@@ -69,7 +69,7 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
   };
 
   const handleDeleteLine = async (line) => {
-    if (!window.confirm(`Supprimer la ligne "${line.name}" ?\n\nAttention : Les étudiants assignés à cette ligne devront être réassignés.`)) {
+    if (!window.confirm(`Supprimer la ligne "${line.name}" \n\nAttention : Les étudiants assignés à cette ligne devront être réassignés.`)) {
       return;
     }
     try {
@@ -215,7 +215,7 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
             <div className="card" style={{ padding: '2rem', textAlign: 'center', background: '#f8fafc' }}>
               <p className="subtitle">Aucune ligne créée pour le moment</p>
             </div>
-          ) : (
+            ) : (
             <div style={{ display: 'grid', gap: '0.75rem' }}>
               {lines.map((line) => (
                 <div

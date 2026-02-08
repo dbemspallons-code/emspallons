@@ -62,7 +62,7 @@ export default function ControllerManagementModal({ onClose }) {
   async function loadLines() {
     try {
       const list = await fetchLines();
-      setLines(Array.isArray(list) ? list : []);
+        setLines(Array.isArray(list) ? list : []);
     } catch (err) {
       console.warn('Erreur chargement lignes:', err);
       setLines([]);
@@ -117,7 +117,7 @@ export default function ControllerManagementModal({ onClose }) {
 
   async function handleDeleteController(controllerId) {
     const controller = controllers.find((item) => item.id === controllerId);
-    if (!window.confirm(`Supprimer ${controller?.nom || 'ce contrôleur'} ?`)) {
+    if (!window.confirm(`Supprimer ${controller.nom || 'ce contrôleur'} `)) {
       return;
     }
     try {
@@ -239,7 +239,8 @@ export default function ControllerManagementModal({ onClose }) {
                     const maskedCode = maskControllerCode(controller.code || '');
                     const assignedLine = lines.find((line) => line.id === controller.assignedLineId);
                     const lastConnection = controller.derniereConnexion
-                      ? new Date(controller.derniereConnexion).toLocaleString('fr-FR', {
+                      ?
+                      new Date(controller.derniereConnexion).toLocaleString('fr-FR', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -251,14 +252,14 @@ export default function ControllerManagementModal({ onClose }) {
                       <tr key={controller.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{controller.nom}</div>
-                          {controller.connexions?.length ? (
+                          {controller.connexions.length ? (
                             <div className="text-xs text-gray-500">
                               {controller.connexions.length} connexion{controller.connexions.length > 1 ? 's' : ''} enregistrée{controller.connexions.length > 1 ? 's' : ''}
                             </div>
                           ) : null}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {assignedLine?.name || controller.assignedLineId || 'Non assignée'}
+                          {assignedLine.name || controller.assignedLineId || 'Non assignée'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -285,8 +286,7 @@ export default function ControllerManagementModal({ onClose }) {
                           <span
                             className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                               controller.actif
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
+                                ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                             }`}
                           >
                             {controller.actif ? (
@@ -388,7 +388,7 @@ function ControllerFormModal({ controller, onClose, onSave, loading, lines = [] 
       setNom('');
       setCode('');
       setActif(true);
-      setAssignedLineId(lines[0]?.id || '');
+      setAssignedLineId(lines[0].id || '');
     }
     setError('');
   }, [controller, lines]);

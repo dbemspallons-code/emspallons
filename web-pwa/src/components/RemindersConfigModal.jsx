@@ -34,7 +34,7 @@ export default function RemindersConfigModal({ onClose }) {
       
       const currentUser = await getCurrentUser().catch(() => null);
       await saveRemindersConfig(config, {
-        userId: currentUser?.uid || null,
+        userId: currentUser.uid || null,
       });
       
       setMessage('Configuration enregistrée avec succès');

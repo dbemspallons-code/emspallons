@@ -8,7 +8,7 @@ import { getMonthNameFromSessionId, getMonthNamesFromSessionIds } from '../model
  * Identifie les mois payés en avance pour un étudiant
  */
 function getAdvanceMonths(student) {
-  if (!student?.monthsLedger || !Array.isArray(student.monthsLedger)) {
+  if (!student.monthsLedger || !Array.isArray(student.monthsLedger)) {
     return [];
   }
   
@@ -54,7 +54,7 @@ export default function StudentList({
   const lineLookup = useMemo(() => Object.fromEntries(lines.map(line => [line.id, line])), [lines]);
   const planLookup = useMemo(() => Object.fromEntries(plans.map(plan => [plan.id, plan])), [plans]);
   
-  if (!students?.length) {
+  if (!students.length) {
     return (
       <div className="card list-empty">
         <MessageCircle size={38} strokeWidth={1.4} />
@@ -74,10 +74,10 @@ export default function StudentList({
         const plan = planLookup[student.subscriptionPlan] || { label: student.subscriptionPlan };
         
         // Calculer le statut basé sur subscriptionExpiresAt (nouvelle structure)
-        const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription?.expiresAt ? new Date(student.subscription.expiresAt) : null);
+        const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null);
         const now = new Date();
         const expiration = expirationDate;
-        const formattedExpiration = expiration ? expiration.toLocaleDateString('fr-FR') : 'Non défini';
+        const formattedExpiration = expiration expiration.toLocaleDateString('fr-FR') : 'Non défini';
         
         // Calculer le statut avec badge coloré
         let statusBadge = null;
@@ -98,7 +98,7 @@ export default function StudentList({
           statusBadge = { color: '#64748b', text: 'Aucun abonnement', bg: '#f1f5f9' };
         }
         
-        const isExpired = expiration ? expiration.getTime() < Date.now() : false;
+        const isExpired = expiration expiration.getTime() < Date.now() : false;
 
         return (
           <article key={student.id} className="card stagger-item fade-in" style={{ overflow: 'hidden', animationDelay: `${index * 0.05}s` }}>
@@ -107,11 +107,11 @@ export default function StudentList({
               <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>{student.name}</h3>
-                  <p className="subtitle" style={{ marginTop: '0.2rem' }}>{line?.name || 'Ligne non renseignée'}</p>
+                  <p className="subtitle" style={{ marginTop: '0.2rem' }}>{line.name || 'Ligne non renseignée'}</p>
                 </div>
                 <div className="chips">
-                  {student.niveau ? <span className="chip chip--primary">{student.niveau}</span> : null}
-                  {student.classGroup ? <span className="chip chip--primary">{student.classGroup}</span> : null}
+                  {student.niveau <span className="chip chip--primary">{student.niveau}</span> : null}
+                  {student.classGroup <span className="chip chip--primary">{student.classGroup}</span> : null}
                   {statusBadge ? (
                     <span 
                       className="badge" 
@@ -139,11 +139,11 @@ export default function StudentList({
                 <div>
                   <strong style={{ fontSize: '0.85rem', color: '#475569', textTransform: 'uppercase' }}>Contact</strong>
                   <p style={{ margin: '0.2rem 0', fontWeight: 600 }}>{student.contact || 'N/A'}</p>
-                  {student.guardian ? <p className="subtitle">Parent : {student.guardian}</p> : null}
-                  {student.pickupPoint ? <p className="subtitle">Ramassage : {student.pickupPoint}</p> : null}
+                  {student.guardian <p className="subtitle">Parent : {student.guardian}</p> : null}
+                  {student.pickupPoint <p className="subtitle">Ramassage : {student.pickupPoint}</p> : null}
                 </div>
                 <div className="qr-wrapper" style={{ position: 'relative', minHeight: '112px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {!student.qrCode?.token ? (
+                  {!student.qrCode.token (
                     <div style={{
                       width: '100%',
                       height: '100%',
@@ -162,7 +162,7 @@ export default function StudentList({
                         <button
                           className="button"
                           type="button"
-                          onClick={() => onRefreshPass?.(student)}
+                          onClick={() => onRefreshPass(student)}
                           style={{
                             marginTop: '0.5rem',
                             padding: '0.25rem 0.5rem',
@@ -184,7 +184,7 @@ export default function StudentList({
                       <button
                         className="button button--subtle"
                         type="button"
-                        onClick={() => onDownloadQR?.(student, `qr-container-${student.id}`)}
+                        onClick={() => onDownloadQR(student, `qr-container-${student.id}`)}
                         style={{
                           position: 'absolute',
                           bottom: '0.5rem',
@@ -205,13 +205,13 @@ export default function StudentList({
               <section style={{ marginTop: '1rem', display: 'grid', gap: '0.5rem' }}>
                 <div className="chips">
                   <span className="chip">{plan.label}</span>
-                  {typeof student.monthlyFee === 'number' && student.monthlyFee > 0 ? (
+                  {typeof student.monthlyFee === 'number' && student.monthlyFee > 0 (
                     <span className="chip">{student.monthlyFee.toLocaleString('fr-FR')} FCFA</span>
                   ) : null}
-                  <span className="chip">Payé: {student.subscription?.monthsPaidCount ?? student.monthsPaid?.length ?? 0} mois</span>
+                  <span className="chip">Payé: {student.subscription.monthsPaidCount student.monthsPaid.length 0} mois</span>
                   <span className={`chip ${isExpired ? 'chip--danger' : ''}`}>Expire: {formattedExpiration}</span>
                 </div>
-                {student.notes ? (
+                {student.notes (
                   <p className="subtitle" style={{ fontStyle: 'italic' }}>“{student.notes}”</p>
                 ) : null}
               </section>
@@ -222,33 +222,33 @@ export default function StudentList({
                     <Edit2 size={16} /> Modifier
                   </button>
                 )}
-                <button className="button button--subtle" type="button" onClick={() => onTogglePayment?.(student)}>
+                <button className="button button--subtle" type="button" onClick={() => onTogglePayment(student)}>
                   <CheckCircle2 size={16} /> Mettre à jour le statut
                 </button>
-                <button className="button" type="button" onClick={() => onSendWhatsApp?.(student)}>
+                <button className="button" type="button" onClick={() => onSendWhatsApp(student)}>
                   <PhoneCall size={16} /> WhatsApp
                 </button>
-                <button className="button button--subtle" type="button" onClick={() => onExportPass?.(student)}>
+                <button className="button button--subtle" type="button" onClick={() => onExportPass(student)}>
                   <DownloadCloud size={16} /> Pass
                 </button>
-                <button className="button button--subtle" type="button" onClick={() => onRegisterPayment?.(student)}>
+                <button className="button button--subtle" type="button" onClick={() => onRegisterPayment(student)}>
                   <CreditCard size={16} /> Paiement
                 </button>
-              <button className="button button--subtle" type="button" onClick={() => onReSubscribe?.(student)}>
+              <button className="button button--subtle" type="button" onClick={() => onReSubscribe(student)}>
                 <CreditCard size={16} /> Réabonner
               </button>
                 <button
                   className="button button--subtle"
                   type="button"
                   disabled={processingPassId === student.id}
-                  onClick={() => onRefreshPass?.(student)}
+                  onClick={() => onRefreshPass(student)}
                 >
                   <RefreshCcw size={16} /> {processingPassId === student.id ? 'Génération...' : 'Régénérer QR'}
                 </button>
-                <button className="button button--subtle" type="button" onClick={() => onRevokePass?.(student)}>
+                <button className="button button--subtle" type="button" onClick={() => onRevokePass(student)}>
                   <ShieldX size={16} /> Révoquer
                 </button>
-                <button className="button button--danger" type="button" onClick={() => onDelete?.(student)}>
+                <button className="button button--danger" type="button" onClick={() => onDelete(student)}>
                   <Trash2 size={16} /> Supprimer
                 </button>
                 <details style={{ width: '100%', marginTop: '0.5rem' }}>
@@ -290,11 +290,11 @@ export default function StudentList({
                                   const isAdvance = advanceMonths.some(am => am.sessionId === p.sessionId);
                                   const advanceInfo = advanceMonths.find(am => am.sessionId === p.sessionId);
                                   return (
-                                    <tr key={`${student.id}-p-${idx}`} style={isAdvance ? { background: 'rgba(34, 197, 94, 0.08)' } : {}}>
+                                    <tr key={`${student.id}-p-${idx}`} style={isAdvance { background: 'rgba(34, 197, 94, 0.08)' } : {}}>
                                       <td>{p.monthCount}</td>
-                                      <td>{p.paidAt ? new Date(p.paidAt).toLocaleDateString('fr-FR') : '-'}</td>
+                                      <td>{p.paidAt new Date(p.paidAt).toLocaleDateString('fr-FR') : '-'}</td>
                                       <td>
-                                        {p.sessionId ? (
+                                        {p.sessionId (
                                           <span>
                                             {getMonthNameFromSessionId(p.sessionId)}
                                             {isAdvance && (
@@ -378,7 +378,7 @@ function statusLabel(status) {
 
 function encodeQRCodePayload(student) {
   // Utiliser le token sécurisé s'il existe
-  if (student.qrCode?.token) {
+  if (student.qrCode.token) {
     return student.qrCode.token;
   }
   

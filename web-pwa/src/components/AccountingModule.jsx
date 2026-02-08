@@ -35,15 +35,15 @@ export default function AccountingModule({ students = [], lines = [], onClose })
     
     payments.forEach(payment => {
       const student = students.find(s => s.id === payment.studentId);
-      const lineId = student?.busLine || 'unknown';
+      const lineId = student.busLine || 'unknown';
       byLine[lineId] = (byLine[lineId] || 0) + (payment.montantTotal || 0);
       const method = payment.paymentMethod || payment.method || 'unknown';
       byMethod[method] = (byMethod[method] || 0) + (payment.montantTotal || 0);
     });
 
     // Comparaison avec mois précédent
-    const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
-    const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
+    const prevMonth = selectedMonth === 1 12 : selectedMonth - 1;
+    const prevYear = selectedMonth === 1 selectedYear - 1 : selectedYear;
     // Note: Pour une vraie comparaison, il faudrait charger les paiements du mois précédent
     const prevTotal = 0; // À implémenter si nécessaire
 
@@ -53,7 +53,7 @@ export default function AccountingModule({ students = [], lines = [], onClose })
       byMethod,
       paymentCount: payments.length,
       prevTotal,
-      evolution: prevTotal > 0 ? (((totalCollected - prevTotal) / prevTotal) * 100).toFixed(1) : '0',
+      evolution: prevTotal > 0 (((totalCollected - prevTotal) / prevTotal) * 100).toFixed(1) : '0',
     };
   }, [payments, students, selectedMonth, selectedYear]);
 
@@ -62,7 +62,7 @@ export default function AccountingModule({ students = [], lines = [], onClose })
       .map(student => {
         const status = computeSubscriptionStatus(student);
         if (status.status === 'EXPIRÉ' || status.status === 'EN RETARD') {
-          const monthsOverdue = status.daysRemaining < 0 ? Math.ceil(Math.abs(status.daysRemaining) / 30) : 0;
+          const monthsOverdue = status.daysRemaining < 0 Math.ceil(Math.abs(status.daysRemaining) / 30) : 0;
           return {
             ...student,
             status,
@@ -119,10 +119,10 @@ export default function AccountingModule({ students = [], lines = [], onClose })
       ['Date', 'Étudiant', 'Montant', 'Méthode', 'Mois couverts'].join(','),
       ...payments.map(p => {
         const student = students.find(s => s.id === p.studentId);
-        const date = p.dateEnregistrement ? new Date(p.dateEnregistrement).toLocaleDateString('fr-FR') : 'N/A';
+        const date = p.dateEnregistrement new Date(p.dateEnregistrement).toLocaleDateString('fr-FR') : 'N/A';
         return [
           date,
-          student?.name || 'N/A',
+          student.name || 'N/A',
           p.montantTotal || 0,
           p.paymentMethod || p.method || 'N/A',
           p.nombreMois || 0,
@@ -265,8 +265,8 @@ export default function AccountingModule({ students = [], lines = [], onClose })
                     const line = lines.find(l => l.id === lineId);
                     return (
                       <div key={lineId} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'white', borderRadius: '6px' }}>
-                        <span style={{ fontWeight: 600 }}>{line?.name || lineId}</span>
-                        <span style={{ fontWeight: 600, color: '#10b981' }}>{amount.toLocaleString('fr-FR')} FCFA</span>
+                        <span style={{ fontWeight: 600 }}>{line.name || lineId}</span>
+                        <span style={{ fontWeight: 600, color: '#10b981' }}>{amount.toLocaleString ? ('fr-FR')} FCFA</span>
                       </div>
                     );
                   })}
@@ -279,7 +279,7 @@ export default function AccountingModule({ students = [], lines = [], onClose })
               <h4 style={{ marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}>Paiements du mois</h4>
               {loading ? (
                 <p>Chargement...</p>
-              ) : payments.length === 0 ? (
+              ) : payments.length === 0 (
                 <p style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Aucun paiement pour ce mois</p>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
@@ -299,9 +299,9 @@ export default function AccountingModule({ students = [], lines = [], onClose })
                         return (
                           <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                             <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>
-                              {payment.dateEnregistrement ? new Date(payment.dateEnregistrement).toLocaleDateString('fr-FR') : 'N/A'}
+                              {payment.dateEnregistrement new Date(payment.dateEnregistrement).toLocaleDateString('fr-FR') : 'N/A'}
                             </td>
-                            <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{student?.name || 'N/A'}</td>
+                            <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{student.name || 'N/A'}</td>
                             <td style={{ padding: '0.75rem', fontSize: '0.85rem', fontWeight: 600 }}>
                               {(payment.montantTotal || 0).toLocaleString('fr-FR')} FCFA
                             </td>
@@ -345,7 +345,7 @@ export default function AccountingModule({ students = [], lines = [], onClose })
                     return (
                       <div key={lineId} style={{ padding: '0.75rem', background: 'white', borderRadius: '6px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                          <span style={{ fontWeight: 600 }}>{line?.name || lineId}</span>
+                          <span style={{ fontWeight: 600 }}>{line.name || lineId}</span>
                           <span style={{ fontWeight: 600, color: '#ef4444' }}>{data.total.toLocaleString('fr-FR')} FCFA</span>
                         </div>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{data.count} étudiant(s)</p>
@@ -359,7 +359,7 @@ export default function AccountingModule({ students = [], lines = [], onClose })
             {/* Liste des étudiants en retard */}
             <div>
               <h4 style={{ marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}>Liste des retards</h4>
-              {overdueStudents.length === 0 ? (
+              {overdueStudents.length === 0 (
                 <p style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Aucun retard de paiement</p>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
@@ -377,7 +377,7 @@ export default function AccountingModule({ students = [], lines = [], onClose })
                         <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{student.name}</td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>
-                            {lines.find(l => l.id === student.busLine)?.name || 'N/A'}
+                            {lines.find(l => l.id === student.busLine).name || 'N/A'}
                           </td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{student.monthsOverdue}</td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem', fontWeight: 600, color: '#ef4444' }}>

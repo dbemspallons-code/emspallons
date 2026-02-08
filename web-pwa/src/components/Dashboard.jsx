@@ -102,7 +102,7 @@ export default function Dashboard({ user, onLogout }) {
       setPayments(paymentsData);
       setLatestSubscriptions(subscriptionsData);
     } catch (error) {
-      console.error('Erreur chargement donnÃ©es:', error);
+      console.error('Erreur chargement données:', error);
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function Dashboard({ user, onLogout }) {
   async function loadLines() {
     try {
       const list = await fetchLines();
-      setLines(Array.isArray(list) ? list : []);
+        setLines(Array.isArray(list) ? list : []);
     } catch (error) {
       console.warn('Impossible de charger les lignes:', error);
       setLines([]);
@@ -163,18 +163,18 @@ export default function Dashboard({ user, onLogout }) {
 
   function buildReminderMessage({ studentName, expiresAtLabel, daysRemaining, type }) {
     if (type === 'expiring_today') {
-      return `Bonjour ${studentName},\n\nVotre abonnement expire aujourd'hui (${expiresAtLabel}).\n\nMerci de renouveler pour continuer Ã  bÃ©nÃ©ficier du service.\n\nEMSP - Transport scolaire`;
+      return `Bonjour ${studentName},\n\nVotre abonnement expire aujourd'hui (${expiresAtLabel}).\n\nMerci de renouveler pour continuer à bénéficier du service.\n\nEMSP - Transport scolaire`;
     }
     if (type === 'expiring_soon') {
-      return `Bonjour ${studentName},\n\nVotre abonnement expire dans ${daysRemaining} jour(s) (${expiresAtLabel}).\n\nMerci de renouveler pour Ã©viter toute interruption.\n\nEMSP - Transport scolaire`;
+      return `Bonjour ${studentName},\n\nVotre abonnement expire dans ${daysRemaining} jour(s) (${expiresAtLabel}).\n\nMerci de renouveler pour éviter toute interruption.\n\nEMSP - Transport scolaire`;
     }
-    return `Bonjour ${studentName},\n\nVotre abonnement a expirÃ© le ${expiresAtLabel}.\n\nVeuillez rÃ©gulariser votre situation pour rÃ©activer l'accÃ¨s.\n\nEMSP - Transport scolaire`;
+    return `Bonjour ${studentName},\n\nVotre abonnement a expiré le ${expiresAtLabel}.\n\nVeuillez régulariser votre situation pour réactiver l'accès.\n\nEMSP - Transport scolaire`;
   }
 
   const latestSubscriptionByStudent = useMemo(() => {
     const map = {};
     latestSubscriptions.forEach((entry) => {
-      if (entry?.studentId) {
+      if (entry.studentId) {
         map[entry.studentId] = entry;
       }
     });
@@ -191,7 +191,7 @@ export default function Dashboard({ user, onLogout }) {
     }
     const seen = new Map();
     students.forEach(student => {
-      const value = student?.busLine || '';
+      const value = student.busLine || '';
       if (!value) return;
       if (!seen.has(value)) {
         seen.set(value, { id: value, name: value });
@@ -203,7 +203,7 @@ export default function Dashboard({ user, onLogout }) {
   const promoOptions = useMemo(() => {
     const values = new Set();
     students.forEach(student => {
-      const value = (student?.promo || student?.niveau || '').trim();
+      const value = (student.promo || student.niveau || '').trim();
       if (value) values.add(value);
     });
     return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
@@ -212,7 +212,7 @@ export default function Dashboard({ user, onLogout }) {
   const classOptions = useMemo(() => {
     const values = new Set();
     students.forEach(student => {
-      const value = (student?.classe || student?.classGroup || '').trim();
+      const value = (student.classe || student.classGroup || '').trim();
       if (value) values.add(value);
     });
     return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
@@ -225,7 +225,7 @@ export default function Dashboard({ user, onLogout }) {
     return students
       .map((student) => {
         const subscription = latestSubscriptionByStudent[student.id];
-        if (!subscription?.expiresAt) return null;
+        if (!subscription.expiresAt) return null;
 
         const phone = normalizeWhatsAppPhone(student.contact);
         if (!phone) return null;
@@ -240,14 +240,14 @@ export default function Dashboard({ user, onLogout }) {
         else if (daysRemaining <= 7) type = 'expiring_soon';
         else return null;
 
-        const studentName = `${student.nom || ''} ${student.prenom || ''}`.trim() || student.nom || 'Ã‰tudiant';
+        const studentName = `${student.nom || ''} ${student.prenom || ''}`.trim() || student.nom || 'Étudiant';
         const expiresAtLabel = expiresAt.toLocaleDateString('fr-FR');
 
         const statusLabel = type === 'expiring_today'
           ? 'Expire aujourd\'hui'
           : type === 'expiring_soon'
-          ? `Expire dans ${daysRemaining} jour(s)`
-          : `ExpirÃ© depuis ${Math.abs(daysRemaining)} jour(s)`;
+            ? `Expire dans ${daysRemaining} jour(s)`
+            : `Expiré depuis ${Math.abs(daysRemaining)} jour(s)`;
 
         const message = buildReminderMessage({
           student,
@@ -299,7 +299,7 @@ export default function Dashboard({ user, onLogout }) {
     };
   }, [students, payments]);
 
-  // Filtrer les Ã©tudiants
+  // Filtrer les étudiants
   const filteredStudents = useMemo(() => {
     let filtered = students;
 
@@ -312,7 +312,7 @@ export default function Dashboard({ user, onLogout }) {
         const classe = (s.classe || s.classGroup || '').toLowerCase();
         const promo = (s.promo || s.niveau || '').toLowerCase();
         const lineId = (s.busLine || '').toLowerCase();
-        const lineName = (lineLookup[s.busLine]?.name || '').toLowerCase();
+        const lineName = (lineLookup[s.busLine].name || '').toLowerCase();
         const contact = (s.contact || '').toLowerCase();
         return (
           nom.includes(term) ||
@@ -361,17 +361,17 @@ export default function Dashboard({ user, onLogout }) {
   async function handleSaveStudent(studentData) {
     try {
       if (selectedStudent && selectedStudent.id) {
-        // Mise Ã  jour
+        // Mise à jour
         await updateStudent(selectedStudent.id, studentData);
       } else {
-        // CrÃ©ation
+        // Création
         await createStudent(studentData);
       }
       await loadData();
       setShowStudentForm(false);
       setSelectedStudent(null);
     } catch (error) {
-      console.error('Erreur sauvegarde Ã©tudiant:', error);
+      console.error('Erreur sauvegarde étudiant:', error);
       throw error;
     }
   }
@@ -380,27 +380,27 @@ export default function Dashboard({ user, onLogout }) {
     try {
       const newPayment = await createPayment({
         ...paymentData,
-        busLine: selectedStudent?.busLine || null,
+        busLine: selectedStudent.busLine || null,
       });
       await loadData();
       setShowPaymentForm(false);
       setSelectedStudent(null);
       return newPayment;
     } catch (error) {
-      console.error('Erreur crÃ©ation paiement:', error);
+      console.error('Erreur création paiement:', error);
       throw error;
     }
   }
 
   async function handleDeleteStudent(studentId) {
-    if (!window.confirm('ÃŠtes-vous sÃ»r de vouloir supprimer cet Ã©tudiant ?')) {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ')) {
       return;
     }
     try {
       await deleteStudent(studentId);
       await loadData();
     } catch (error) {
-      console.error('Erreur suppression Ã©tudiant:', error);
+      console.error('Erreur suppression étudiant:', error);
       alert('Erreur lors de la suppression');
     }
   }
@@ -440,19 +440,19 @@ export default function Dashboard({ user, onLogout }) {
       link.click();
       document.body.removeChild(link);
 
-      setMessage('Carte QR tÃ©lÃ©chargÃ©e avec succÃ¨s');
+      setMessage('Carte QR téléchargée avec succès');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      console.error('Erreur tÃ©lÃ©chargement carte QR:', error);
-      setMessage(`Erreur tÃ©lÃ©chargement carte QR: ${error.message || 'Action impossible'}`);
+      console.error('Erreur téléchargement carte QR:', error);
+      setMessage(`Erreur téléchargement carte QR: ${error.message || 'Action impossible'}`);
       setTimeout(() => setMessage(''), 5000);
     }
   }
 
   async function handleRegenerateQR(student) {
-    if (!student?.id) return;
+    if (!student.id) return;
     const fullName = `${student.nom || ''} ${student.prenom || ''}`.trim() || 'cet etudiant';
-    if (!window.confirm(`Regenerer le QR code pour ${fullName} ?`)) return;
+    if (!window.confirm(`Regenerer le QR code pour ${fullName} `)) return;
     try {
       const payloadStudent = { ...student, qrToken: null };
       const { qrImage, payload } = await qrCodeService.generateStudentQR(payloadStudent);
@@ -460,8 +460,8 @@ export default function Dashboard({ user, onLogout }) {
       await updateStudent(student.id, {
         qrCode: qrImage,
         qrCard,
-        qrToken: payload?.token || null,
-        qrGeneratedAt: payload?.generatedAt || null,
+        qrToken: payload.token || null,
+        qrGeneratedAt: payload.generatedAt || null,
       });
       await loadData();
       setMessage('QR code regenere avec succes');
@@ -476,13 +476,13 @@ export default function Dashboard({ user, onLogout }) {
   async function handleSendQrWhatsApp(student) {
     const phone = normalizeWhatsAppPhone(student.contact);
     if (!phone) {
-      setMessage('NumÃ©ro WhatsApp manquant ou invalide.');
+      setMessage('Numéro WhatsApp manquant ou invalide.');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
     try {
-      const studentName = `${student.nom || ''} ${student.prenom || ''}`.trim() || student.nom || 'Ã‰tudiant';
+      const studentName = `${student.nom || ''} ${student.prenom || ''}`.trim() || student.nom || 'Étudiant';
       const temp = { id: student.id, nom: student.nom, prenom: student.prenom, classe: student.classe, contact: student.contact };
       const { qrImage } = await qrCodeService.generateStudentQR(temp);
       const qrCard = await qrCodeService.generatePrintableCard(temp, qrImage);
@@ -501,7 +501,7 @@ export default function Dashboard({ user, onLogout }) {
         message,
         status: 'sent',
         sendResult: 'whatsapp_opened',
-        createdBy: user?.id || null,
+        createdBy: user.id || null,
       });
     } catch (error) {
       console.error('Erreur envoi QR WhatsApp:', error);
@@ -521,7 +521,7 @@ export default function Dashboard({ user, onLogout }) {
         message: reminder.message,
         status: 'sent',
         sendResult: 'whatsapp_opened',
-        createdBy: user?.id || null,
+        createdBy: user.id || null,
       });
     } catch (error) {
       console.warn('Erreur envoi rappel WhatsApp:', error);
@@ -555,7 +555,7 @@ export default function Dashboard({ user, onLogout }) {
   async function handleExportStudents() {
     try {
       await exportStudentsCSV({ students: filteredStudents, payments, lines });
-      setMessage('Export CSV des Ã©tudiants rÃ©ussi (Excel)');
+      setMessage('Export CSV des étudiants réussi (Excel)');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(`Erreur export: ${error.message}`);
@@ -566,7 +566,7 @@ export default function Dashboard({ user, onLogout }) {
   async function handleExportStudentsXLSX() {
     try {
       await exportStudentsXLSX({ students: filteredStudents, payments, lines });
-      setMessage('Export Excel des Ã©tudiants rÃ©ussi');
+      setMessage('Export Excel des étudiants réussi');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(`Erreur export: ${error.message}`);
@@ -577,7 +577,7 @@ export default function Dashboard({ user, onLogout }) {
   async function handleExportPayments() {
     try {
       await exportPaymentsCSV();
-      setMessage('Export CSV des paiements rÃ©ussi');
+      setMessage('Export CSV des paiements réussi');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(`Erreur export: ${error.message}`);
@@ -588,7 +588,7 @@ export default function Dashboard({ user, onLogout }) {
   async function handleExportPaymentsXLSX() {
     try {
       await exportPaymentsXLSX();
-      setMessage('Export Excel des paiements rÃ©ussi');
+      setMessage('Export Excel des paiements réussi');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(`Erreur export: ${error.message}`);
@@ -599,7 +599,7 @@ export default function Dashboard({ user, onLogout }) {
   async function handleExportAll() {
     try {
       await exportAllJSON();
-      setMessage('Export JSON complet rÃ©ussi');
+      setMessage('Export JSON complet réussi');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(`Erreur export: ${error.message}`);
@@ -608,7 +608,7 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   async function handleAnnualArchive() {
-    if (!window.confirm('Archiver l\'annee en cours ? Un export complet sera telecharge puis les etudiants et paiements seront supprimes.')) {
+    if (!window.confirm('Archiver l\'annee en cours Un export complet sera telecharge puis les etudiants et paiements seront supprimes.')) {
       return;
     }
 
@@ -626,7 +626,7 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   async function handleImportJSON(event) {
-    const file = event.target.files?.[0];
+    const file = event.target.files[0];
     if (!file) return;
 
     try {
@@ -635,19 +635,19 @@ export default function Dashboard({ user, onLogout }) {
       
       // Demander confirmation avant d'importer
       if (!window.confirm(
-        `Importer ${data.students.length} Ã©tudiant(s) et ${data.payments.length} paiement(s) ?\n\n` +
-        `âš ï¸ ATTENTION: Cela remplacera toutes les donnÃ©es existantes !`
+        `Importer ${data.students.length} étudiant(s) et ${data.payments.length} paiement(s) \n\n` +
+        `âš ï¸ ATTENTION: Cela remplacera toutes les données existantes !`
       )) {
         return;
       }
 
-      // Importer les donnÃ©es
+      // Importer les données
       setMessage('Import en cours...');
       await replaceAllData({
         students: data.students || [],
         payments: data.payments || [],
       });
-      setMessage(`Import rÃ©ussi: ${data.students.length} Ã©tudiant(s) et ${data.payments.length} paiement(s)`);
+      setMessage(`Import réussi: ${data.students.length} étudiant(s) et ${data.payments.length} paiement(s)`);
       await loadData();
       setTimeout(() => setMessage(''), 5000);
     } catch (error) {
@@ -655,12 +655,12 @@ export default function Dashboard({ user, onLogout }) {
       setTimeout(() => setMessage(''), 5000);
     } finally {
       setLoading(false);
-      event.target.value = ''; // RÃ©initialiser l'input
+      event.target.value = ''; // Réinitialiser l'input
     }
   }
 
   async function handleImportCSV(event) {
-    const file = event.target.files?.[0];
+    const file = event.target.files[0];
     if (!file) return;
 
     try {
@@ -668,21 +668,21 @@ export default function Dashboard({ user, onLogout }) {
       const studentsData = await importStudentsCSV(file);
       
       if (!window.confirm(
-        `Importer ${studentsData.length} Ã©tudiant(s) ?`
+        `Importer ${studentsData.length} étudiant(s) `
       )) {
         return;
       }
 
-      // CrÃ©er les Ã©tudiants
+      // Créer les étudiants
       for (const studentData of studentsData) {
         try {
           await createStudent(studentData);
         } catch (error) {
-          console.error('Erreur crÃ©ation Ã©tudiant:', error);
+          console.error('Erreur création étudiant:', error);
         }
       }
 
-      setMessage(`${studentsData.length} Ã©tudiant(s) importÃ©(s) avec succÃ¨s`);
+      setMessage(`${studentsData.length} étudiant(s) importé(s) avec succès`);
       await loadData();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
@@ -695,7 +695,7 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   async function handleImportXLSX(event) {
-    const file = event.target.files?.[0];
+    const file = event.target.files[0];
     if (!file) return;
 
     try {
@@ -703,7 +703,7 @@ export default function Dashboard({ user, onLogout }) {
       const studentsData = await importStudentsXLSX(file);
 
       if (!window.confirm(
-        `Importer ${studentsData.length} Ã©tudiant(s) ?`
+        `Importer ${studentsData.length} étudiant(s) `
       )) {
         return;
       }
@@ -712,11 +712,11 @@ export default function Dashboard({ user, onLogout }) {
         try {
           await createStudent(studentData);
         } catch (error) {
-          console.error('Erreur crÃ©ation Ã©tudiant:', error);
+          console.error('Erreur création étudiant:', error);
         }
       }
 
-      setMessage(`${studentsData.length} Ã©tudiant(s) importÃ©(s) avec succÃ¨s`);
+      setMessage(`${studentsData.length} étudiant(s) importé(s) avec succès`);
       await loadData();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
@@ -737,17 +737,17 @@ export default function Dashboard({ user, onLogout }) {
     // Double confirmation
     const confirmText = 'EFFACER TOUT';
     const userInput = window.prompt(
-      `âš ï¸ ATTENTION: Cette action est IRRÃ‰VERSIBLE !\n\n` +
-      `Toutes les donnÃ©es seront supprimÃ©es :\n` +
-      `- Tous les Ã©tudiants\n` +
+      `âš ï¸ ATTENTION: Cette action est IRRÉVERSIBLE !\n\n` +
+      `Toutes les données seront supprimées :\n` +
+      `- Tous les étudiants\n` +
       `- Tous les paiements\n\n` +
-      `Les utilisateurs ne seront PAS supprimÃ©s.\n\n` +
+      `Les utilisateurs ne seront PAS supprimés.\n\n` +
       `Tapez "${confirmText}" pour confirmer :`
     );
 
     if (userInput !== confirmText) {
       setShowResetConfirm(false);
-      setMessage('RÃ©initialisation annulÃ©e');
+      setMessage('Réinitialisation annulée');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
@@ -755,13 +755,13 @@ export default function Dashboard({ user, onLogout }) {
     try {
       setLoading(true);
       await clearStudentsAndPayments();
-      setMessage('Toutes les donnÃ©es ont Ã©tÃ© supprimÃ©es. Rechargement...');
+      setMessage('Toutes les données ont été supprimées. Rechargement...');
       await loadData();
       setTimeout(() => {
         setMessage('');
       }, 3000);
     } catch (error) {
-      setMessage(`Erreur rÃ©initialisation: ${error.message}`);
+      setMessage(`Erreur réinitialisation: ${error.message}`);
       setTimeout(() => setMessage(''), 5000);
     } finally {
       setLoading(false);
@@ -807,7 +807,7 @@ export default function Dashboard({ user, onLogout }) {
                   className="nav-action nav-action--danger text-sm font-medium"
                 >
                   <LogOut className="w-4 h-4 inline mr-2" />
-                  DÃ©connexion
+                  Déconnexion
                 </button>
               </div>
             </div>
@@ -816,15 +816,15 @@ export default function Dashboard({ user, onLogout }) {
               <button
                 onClick={() => setShowControllerManagement(true)}
                 className="nav-action text-sm font-medium"
-                title="GÃ©rer les contrÃ´leurs"
+                title="Gérer les contrôleurs"
               >
                 <ShieldCheck className="w-4 h-4 inline mr-2" />
-                ContrÃ´leurs
+                Contrôleurs
               </button>
               <button
                 onClick={() => setShowLineManager(true)}
                 className="nav-action text-sm font-medium"
-                title="GÃ©rer les lignes"
+                title="Gérer les lignes"
               >
                 <Bus className="w-4 h-4 inline mr-2" />
                 Lignes
@@ -832,7 +832,7 @@ export default function Dashboard({ user, onLogout }) {
               <button
                 onClick={() => setShowClassPromoManager(true)}
                 className="nav-action text-sm font-medium"
-                title="GÃ©rer classes et promos"
+                title="Gérer classes et promos"
               >
                 <GraduationCap className="w-4 h-4 inline mr-2" />
                 Classes & Promos
@@ -858,16 +858,16 @@ export default function Dashboard({ user, onLogout }) {
                   <button
                     onClick={() => setShowSettings(true)}
                     className="nav-action text-sm font-medium"
-                    title="ParamÃ¨tres"
+                    title="Paramètres"
                   >
                     <Settings className="w-4 h-4 inline mr-2" />
-                    ParamÃ¨tres
+                    Paramètres
                   </button>
                   <div className="relative">
                     <button
                       onClick={handleExportAll}
                       className="nav-action text-sm font-medium"
-                      title="Exporter toutes les donnÃ©es"
+                      title="Exporter toutes les données"
                     >
                       <Download className="w-4 h-4 inline mr-2" />
                       Export
@@ -880,7 +880,7 @@ export default function Dashboard({ user, onLogout }) {
                       type="file"
                       accept=".json,.csv,.xlsx"
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
+                        const file = e.target.files[0];
                         if (!file) return;
                         if (file.name.endsWith('.json')) {
                           handleImportJSON(e);
@@ -905,13 +905,12 @@ export default function Dashboard({ user, onLogout }) {
                     onClick={handleReset}
                     className={`nav-action text-sm font-medium ${
                       showResetConfirm
-                        ? 'nav-action--danger-strong'
-                        : 'nav-action--danger'
+                        ? 'nav-action--danger-strong' : 'nav-action--danger'
                     }`}
-                    title="RÃ©initialiser toutes les donnÃ©es"
+                    title="Réinitialiser toutes les données"
                   >
                     <Trash2 className="w-4 h-4 inline mr-2" />
-                    {showResetConfirm ? 'Confirmer' : 'RÃ©initialiser'}
+                    {showResetConfirm ? 'Confirmer' : 'Réinitialiser'}
                   </button>
                   <button
                     onClick={() => setShowUserManagement(true)}
@@ -931,7 +930,7 @@ export default function Dashboard({ user, onLogout }) {
                     setTimeout(() => setShowQueuedToast(false), 3000);
                   }}
                   className="nav-pill inline-flex items-center gap-2"
-                  title="OpÃ©rations en file (cliquer pour synchroniser)"
+                  title="Opérations en file (cliquer pour synchroniser)"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 10v6a2 2 0 0 1-2 2H7" />
@@ -943,7 +942,7 @@ export default function Dashboard({ user, onLogout }) {
 
               {showQueuedToast && (
                 <div className="ui-toast fixed top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-                  ðŸ” Synchronisation demandÃ©e
+                  ðŸ” Synchronisation demandée
                 </div>
               )}
             </div>
@@ -960,14 +959,14 @@ export default function Dashboard({ user, onLogout }) {
               className={`nav-tab ${activeTab === 'dashboard' ? 'nav-tab--active' : ''}`}
             >
               <BarChart3 className="w-4 h-4 inline mr-2" />
-              AperÃ§u
+              Aperçu
             </button>
             <button
               onClick={() => setActiveTab('students')}
               className={`nav-tab ${activeTab === 'students' ? 'nav-tab--active' : ''}`}
             >
               <Users className="w-4 h-4 inline mr-2" />
-              Ã‰tudiants
+              Étudiants
             </button>
             <button
               onClick={() => setActiveTab('monthly')}
@@ -992,13 +991,13 @@ export default function Dashboard({ user, onLogout }) {
       {/* Message */}
       {message && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-          <div className={`p-4 rounded-lg ${
-            message.includes('rÃ©ussi') || message.includes('succÃ¨s')
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : message.includes('Erreur') || message.includes('annulÃ©e')
-              ? 'bg-red-50 text-red-800 border border-red-200'
-              : 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-          }`}>
+            <div className={`p-4 rounded-lg ${
+              message.includes('réussi') || message.includes('succès')
+                ? 'bg-green-50 text-green-800 border border-green-200'
+                : message.includes('Erreur') || message.includes('annulée')
+                  ? 'bg-red-50 text-red-800 border border-red-200'
+                  : 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+            }`}>
             {message}
           </div>
         </div>
@@ -1048,10 +1047,10 @@ export default function Dashboard({ user, onLogout }) {
               setSelectedStudent(student);
               setShowPaymentForm(true);
             }}
-            onExportStudents={isAdminUser ? handleExportStudents : undefined}
-            onExportStudentsXLSX={isAdminUser ? handleExportStudentsXLSX : undefined}
-            onExportPayments={isAdminUser ? handleExportPayments : undefined}
-            onExportPaymentsXLSX={isAdminUser ? handleExportPaymentsXLSX : undefined}
+              onExportStudents={isAdminUser ? handleExportStudents : undefined}
+              onExportStudentsXLSX={isAdminUser ? handleExportStudentsXLSX : undefined}
+              onExportPayments={isAdminUser ? handleExportPayments : undefined}
+              onExportPaymentsXLSX={isAdminUser ? handleExportPaymentsXLSX : undefined}
             onDownloadQR={handleDownloadQRCard}
             onRegenerateQR={handleRegenerateQR}
             onSendQrWhatsApp={handleSendQrWhatsApp}
@@ -1160,7 +1159,7 @@ function DashboardView({ stats, students, payments, onAddStudent, onAddPayment }
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard
-          title="Total Ã©tudiants"
+          title="Total étudiants"
           value={stats.total}
           icon={Users}
           color="blue"
@@ -1172,7 +1171,7 @@ function DashboardView({ stats, students, payments, onAddStudent, onAddPayment }
           color="green"
         />
         <KPICard
-          title="Expire bientÃ´t"
+          title="Expire bientôt"
           value={stats.expireBientot}
           icon={Clock}
           color="yellow"
@@ -1184,7 +1183,7 @@ function DashboardView({ stats, students, payments, onAddStudent, onAddPayment }
           color="orange"
         />
         <KPICard
-          title="ExpirÃ©s"
+          title="Expirés"
           value={stats.expire}
           icon={XCircle}
           color="red"
@@ -1200,7 +1199,7 @@ function DashboardView({ stats, students, payments, onAddStudent, onAddPayment }
             className="ui-btn ui-btn--primary px-4 py-2"
           >
             <UserPlus className="w-4 h-4 inline mr-2" />
-            Ajouter un Ã©tudiant
+            Ajouter un étudiant
           </button>
         </div>
       </div>
@@ -1270,11 +1269,13 @@ function AlertsView({ students, payments, onAddPayment }) {
         {alerts.map(({ student, status }) => (
           <div
             key={student.id}
-            className={`p-4 rounded-lg border-l-4 ${
-              status.statut === 'EXPIRE' ? 'bg-red-50 border-red-500' :
-              status.statut === 'RETARD' ? 'bg-orange-50 border-orange-500' :
-              'bg-yellow-50 border-yellow-500'
-            }`}
+              className={`p-4 rounded-lg border-l-4 ${
+                status.statut === 'EXPIRE'
+                  ? 'bg-red-50 border-red-500'
+                  : status.statut === 'RETARD'
+                    ? 'bg-orange-50 border-orange-500'
+                    : 'bg-yellow-50 border-yellow-500'
+              }`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -1358,14 +1359,14 @@ function StudentsView({
           >
             <option value="all">Tous les statuts</option>
             <option value="ACTIF">Actifs</option>
-            <option value="EXPIRE_BIENTOT">Expire bientÃ´t</option>
+            <option value="EXPIRE_BIENTOT">Expire bientôt</option>
             <option value="RETARD">En retard</option>
-            <option value="EXPIRE">ExpirÃ©s</option>
+            <option value="EXPIRE">Expirés</option>
             <option value="AUCUN">Aucun abonnement</option>
           </select>
           <select
             value={lineFilter}
-            onChange={(e) => onLineFilterChange?.(e.target.value)}
+            onChange={(e) => onLineFilterChange(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les lignes</option>
@@ -1377,7 +1378,7 @@ function StudentsView({
           </select>
           <select
             value={promoFilter}
-            onChange={(e) => onPromoFilterChange?.(e.target.value)}
+            onChange={(e) => onPromoFilterChange(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les promos</option>
@@ -1389,7 +1390,7 @@ function StudentsView({
           </select>
           <select
             value={classFilter}
-            onChange={(e) => onClassFilterChange?.(e.target.value)}
+            onChange={(e) => onClassFilterChange(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les classes</option>
@@ -1418,7 +1419,7 @@ function StudentsView({
             <button
               onClick={onExportStudents}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
-              title="Exporter les Ã©tudiants en CSV"
+              title="Exporter les étudiants en CSV"
             >
               <Download className="w-4 h-4 inline mr-2" />
               Export CSV
@@ -1428,7 +1429,7 @@ function StudentsView({
             <button
               onClick={onExportStudentsXLSX}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
-              title="Exporter les Ã©tudiants en Excel"
+              title="Exporter les étudiants en Excel"
             >
               <Download className="w-4 h-4 inline mr-2" />
               Export Excel
@@ -1457,13 +1458,13 @@ function StudentsView({
         </div>
       </div>
 
-      {/* Liste des Ã©tudiants */}
+      {/* Liste des étudiants */}
       <div className="ui-card table-card overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ã‰tudiant
+                Étudiant
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Classe
@@ -1495,7 +1496,7 @@ function StudentsView({
                   onDownloadQR={onDownloadQR}
                   onRegenerateQR={onRegenerateQR}
                   onSendQrWhatsApp={onSendQrWhatsApp}
-                  lineName={lineLookup[student.busLine]?.name || student.busLine}
+                  lineName={lineLookup[student.busLine].name || student.busLine}
                 />
               );
             })}
@@ -1576,7 +1577,7 @@ function StudentRow({
             <button
               onClick={() => onDownloadQR(student)}
               className="text-purple-600 hover:text-purple-900"
-              title="TÃ©lÃ©charger la carte QR"
+              title="Télécharger la carte QR"
             >
               <QrCode className="w-4 h-4" />
             </button>

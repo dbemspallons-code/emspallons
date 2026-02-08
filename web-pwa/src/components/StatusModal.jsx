@@ -30,7 +30,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function StatusModal({ open, student, onClose, onSubmit }) {
-  const [selectedStatus, setSelectedStatus] = useState(student?.paymentStatus || PAYMENT_STATUS.UP_TO_DATE);
+  const [selectedStatus, setSelectedStatus] = useState(student.paymentStatus || PAYMENT_STATUS.UP_TO_DATE);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState(null);
 
@@ -97,8 +97,8 @@ export default function StatusModal({ open, student, onClose, onSubmit }) {
                   style={{
                     padding: '1rem',
                     borderRadius: '12px',
-                    border: `2px solid ${isSelected ? option.color : '#e2e8f0'}`,
-                    background: isSelected ? `${option.color}15` : '#ffffff',
+                    border: `2px solid ${isSelected option.color : '#e2e8f0'}`,
+                    background: isSelected `${option.color}15` : '#ffffff',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -107,7 +107,7 @@ export default function StatusModal({ open, student, onClose, onSubmit }) {
                   }}
                 >
                   <Icon size={20} color={option.color} />
-                  <span style={{ fontWeight: isSelected ? 600 : 400, color: isSelected ? option.color : '#334155' }}>
+                  <span style={{ fontWeight: isSelected 600 : 400, color: isSelected option.color : '#334155' }}>
                     {option.label}
                   </span>
                 </button>
@@ -115,7 +115,7 @@ export default function StatusModal({ open, student, onClose, onSubmit }) {
             })}
           </div>
 
-          {error ? (
+          {error (
             <div className="card" style={{ padding: '0.9rem', background: 'rgba(248, 113, 113, 0.12)', border: '1px solid rgba(220, 38, 38, 0.4)' }}>
               <p className="subtitle" style={{ color: '#b91c1c', margin: 0 }}>
                 <AlertTriangle size={16} style={{ marginRight: '0.35rem' }} /> {error}

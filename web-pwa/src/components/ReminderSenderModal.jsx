@@ -75,17 +75,17 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
 
   const replaceTemplateVariables = (template, student, reminderType) => {
     const now = new Date();
-    const expirationDate = student.subscription?.expiresAt ? new Date(student.subscription.expiresAt) : null;
+    const expirationDate = student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null;
     
     const variables = {
-      nom: student.name?.split(' ')[0] || '',
-      prenom: student.name?.split(' ').slice(1).join(' ') || '',
+      nom: student.name.split(' ')[0] || '',
+      prenom: student.name.split(' ').slice(1).join(' ') || '',
       nom_complet: student.name || '',
       contact: student.contact || '',
-      ligne: lines.find(l => l.id === student.busLine)?.name || student.busLine || '',
-      date_expiration: expirationDate ? expirationDate.toLocaleDateString('fr-FR') : '',
-      jours_restants: expirationDate ? Math.max(0, Math.ceil((expirationDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0,
-      jours_retard: expirationDate ? Math.max(0, Math.ceil((now.getTime() - expirationDate.getTime()) / (24 * 60 * 60 * 1000))) : 0,
+      ligne: lines.find(l => l.id === student.busLine).name || student.busLine || '',
+      date_expiration: expirationDate expirationDate.toLocaleDateString('fr-FR') : '',
+      jours_restants: expirationDate Math.max(0, Math.ceil((expirationDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0,
+      jours_retard: expirationDate Math.max(0, Math.ceil((now.getTime() - expirationDate.getTime()) / (24 * 60 * 60 * 1000))) : 0,
       montant: student.monthlyFee || 0,
     };
     
@@ -137,7 +137,7 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
       return;
     }
 
-    if (!window.confirm(`Envoyer ${selectedStudents.size} rappel(s) de type "${REMINDER_TYPE_LABELS[reminderType]}" ?`)) {
+    if (!window.confirm(`Envoyer ${selectedStudents.size} rappel(s) de type "${REMINDER_TYPE_LABELS[reminderType]}" `)) {
       return;
     }
 
@@ -149,8 +149,8 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
       const studentIds = Array.from(selectedStudents);
       
       const results = await sendBulkReminders(studentIds, reminderType, {
-        userId: currentUser?.uid || null,
-        userName: currentUser?.name || currentUser?.email?.split('@')[0] || 'Système',
+        userId: currentUser.uid || null,
+        userName: currentUser.name || currentUser.email.split('@')[0] || 'Système',
       });
 
       const successCount = results.filter(r => r.success).length;
@@ -160,7 +160,7 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
         await onSuccess({ successCount, errorCount, total: results.length });
       }
 
-      alert(`${successCount} rappel(s) envoyé(s) avec succès.${errorCount > 0 ? ` ${errorCount} erreur(s).` : ''}`);
+      alert(`${successCount} rappel(s) envoyé(s) avec succès.${errorCount > 0 ` ${errorCount} erreur(s).` : ''}`);
       onClose();
     } catch (error) {
       alert('Erreur lors de l\'envoi : ' + error.message);
@@ -280,7 +280,7 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
                 disabled={sending || filteredStudents.length === 0}
                 style={{ fontSize: '0.85rem' }}
               >
-                {selectedStudents.size === filteredStudents.length ? (
+                {selectedStudents.size === filteredStudents.length (
                   <><CheckSquare size={14} /> Tout désélectionner</>
                 ) : (
                   <><Square size={14} /> Tout sélectionner</>
@@ -295,7 +295,7 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
               borderRadius: '8px',
               padding: '0.5rem'
             }}>
-              {filteredStudents.length === 0 ? (
+              {filteredStudents.length === 0 (
                 <p style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                   Aucun étudiant ne correspond aux filtres
                 </p>
@@ -327,10 +327,10 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
                       <div style={{ flex: 1 }}>
                         <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>{student.name}</p>
                         <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                          {lines.find(l => l.id === student.busLine)?.name || 'N/A'} • {student.contact || 'Pas de contact'}
+                          {lines.find(l => l.id === student.busLine).name || 'N/A'} • {student.contact || 'Pas de contact'}
                         </p>
                       </div>
-                      <span className={`chip ${status.status === 'ACTIF' ? 'chip--success' : status.status === 'EXPIRÉ' ? 'chip--danger' : ''}`} style={{ fontSize: '0.75rem' }}>
+                      <span className={`chip ${status.status === 'ACTIF' 'chip--success' : status.status === 'EXPIRÉ' ? 'chip--danger' : ''}`} style={{ fontSize: '0.75rem' }}>
                         {status.status}
                       </span>
                     </div>
