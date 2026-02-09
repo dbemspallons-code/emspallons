@@ -69,7 +69,12 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
   };
 
   const handleDeleteLine = async (line) => {
-    if (!window.confirm(`Supprimer la ligne "${line.name}" \n\nAttention : Les étudiants assignés à cette ligne devront être réassignés.`)) {
+    if (!line) {
+      alert('Ligne introuvable.');
+      return;
+    }
+    const lineName = line.name || 'cette ligne';
+    if (!window.confirm(`Supprimer la ligne "${lineName}" \n\nAttention : Les Ã©tudiants assignÃ©s Ã  cette ligne devront Ãªtre rÃ©assignÃ©s.`)) {
       return;
     }
     try {
@@ -182,7 +187,7 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
 
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
-                  Capacité (optionnel)
+                  CapacitÃ© (optionnel)
                 </label>
                 <input
                   className="input-field"
@@ -197,7 +202,7 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
 
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
               <button className="button" type="submit">
-                <Save size={16} /> {editingLine === 'new' ? 'Créer' : 'Enregistrer'}
+                <Save size={16} /> {editingLine === 'new' ? 'CrÃ©er' : 'Enregistrer'}
               </button>
               <button className="button button--subtle" type="button" onClick={handleCancel}>
                 Annuler
@@ -213,7 +218,7 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
           
           {lines.length === 0 ? (
             <div className="card" style={{ padding: '2rem', textAlign: 'center', background: '#f8fafc' }}>
-              <p className="subtitle">Aucune ligne créée pour le moment</p>
+              <p className="subtitle">Aucune ligne crÃ©Ã©e pour le moment</p>
             </div>
             ) : (
             <div style={{ display: 'grid', gap: '0.75rem' }}>
@@ -236,7 +241,7 @@ export default function LineManager({ lines = [], onSave, onDelete, onClose }) {
                         {line.color || '#2563eb'}
                       </span>
                       {line.capacity && (
-                        <span className="chip">Capacité: {line.capacity} places</span>
+                        <span className="chip">CapacitÃ©: {line.capacity} places</span>
                       )}
                     </div>
                   </div>

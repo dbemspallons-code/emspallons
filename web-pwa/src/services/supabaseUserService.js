@@ -23,7 +23,7 @@ export async function createUser(userData, options = {}) {
   if (!password || password.length < 6) throw new Error('Mot de passe invalide');
 
   const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session.access_token || null;
+  const token = sessionData?.session?.access_token || null;
 
   let res;
   try {
@@ -38,9 +38,11 @@ export async function createUser(userData, options = {}) {
   } catch (err) {
     throw new Error('Impossible de contacter le serveur. Verifiez votre connexion et les fonctions Netlify.');
   }
-  const data = await res.json().catch(() => ({}));
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch {}
   if (!res.ok) {
-    const message = data.error || 'Erreur creation utilisateur';
+    const message = data.error || text || `Erreur creation utilisateur (${res.status})`;
     if (message.includes('Configuration Supabase manquante')) {
       throw new Error('Configuration serveur manquante. Verifiez les variables Netlify (SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY).');
     }

@@ -129,6 +129,11 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   async function handleDeleteLine(lineId) {
+    const assignedCount = students.filter(s => (s.busLine || '') === lineId).length;
+    if (assignedCount > 0) {
+      alert(`Impossible de supprimer la ligne : ${assignedCount} étudiant(s) y sont encore rattachés.`);
+      return;
+    }
     await deleteLine(lineId);
     await loadLines();
   }
@@ -312,7 +317,7 @@ export default function Dashboard({ user, onLogout }) {
         const classe = (s.classe || s.classGroup || '').toLowerCase();
         const promo = (s.promo || s.niveau || '').toLowerCase();
         const lineId = (s.busLine || '').toLowerCase();
-        const lineName = (lineLookup[s.busLine].name || '').toLowerCase();
+        const lineName = ((lineLookup[s.busLine] || {}).name || '').toLowerCase();
         const contact = (s.contact || '').toLowerCase();
         return (
           nom.includes(term) ||
@@ -1619,5 +1624,6 @@ function StudentRow({
     </tr>
   );
 }
+
 
 

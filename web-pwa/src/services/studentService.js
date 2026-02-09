@@ -11,6 +11,7 @@ import { PAYMENT_CONFIG } from '../constants/payment';
 import { calculatePaymentPlan } from '../utils/payment';
 import { clearLastScan } from './scanService';
 import { recordResubscription } from './subscriptionService';
+import { setStorage } from './storageService';
 
 const STUDENTS_KEY = 'students';
 const PAYMENTS_KEY = 'payments';

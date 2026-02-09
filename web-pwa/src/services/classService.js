@@ -1,11 +1,8 @@
-/**
- * Service de gestion des classes et promotions d'étudiants
+﻿/**
+ * Service de gestion des classes et promotions d'étudiants (Supabase)
  */
 
 import { supabase } from '../supabase/supabaseClient';
-
-const CLASSES_COLLECTION = 'classes';
-const PROMOS_COLLECTION = 'promos';
 
 /**
  * Récupère toutes les promotions
@@ -26,7 +23,12 @@ export async function fetchPromos() {
  */
 export async function createPromo(promoData, options = {}) {
   try {
-    const row = { name: promoData.name.trim(), order_num: promoData.order || 0, active: promoData.active !== false, created_by: options.userId || null };
+    const row = {
+      name: promoData.name.trim(),
+      order_num: promoData.order || 0,
+      active: promoData.active !== false,
+      created_by: options.userId || null,
+    };
     const { data, error } = await supabase.from('promos').insert([row]).select().maybeSingle();
     if (error) throw error;
     return { id: data.id, name: data.name, order: data.order_num, active: data.active };
@@ -46,6 +48,7 @@ export async function updatePromo(promoId, updates, options = {}) {
     if (updates.order !== undefined) updateData.order_num = updates.order;
     if (updates.active !== undefined) updateData.active = updates.active;
     updateData.updated_by = options.userId || null;
+    updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase.from('promos').update(updateData).eq('id', promoId).select().maybeSingle();
     if (error) throw error;
@@ -89,7 +92,12 @@ export async function fetchClasses() {
  */
 export async function createClass(classData, options = {}) {
   try {
-    const row = { name: classData.name.trim(), promo_id: classData.promoId || null, active: classData.active !== false, created_by: options.userId || null };
+    const row = {
+      name: classData.name.trim(),
+      promo_id: classData.promoId || null,
+      active: classData.active !== false,
+      created_by: options.userId || null,
+    };
     const { data, error } = await supabase.from('classes').insert([row]).select().maybeSingle();
     if (error) throw error;
     return { id: data.id, name: data.name, promoId: data.promo_id, active: data.active };
@@ -109,6 +117,7 @@ export async function updateClass(classId, updates, options = {}) {
     if (updates.promoId !== undefined) updateData.promo_id = updates.promoId || null;
     if (updates.active !== undefined) updateData.active = updates.active;
     updateData.updated_by = options.userId || null;
+    updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase.from('classes').update(updateData).eq('id', classId).select().maybeSingle();
     if (error) throw error;
@@ -137,9 +146,6 @@ export async function deleteClass(classId) {
  * Initialise les promotions par défaut (Licence 1, 2, 3, Master 1, 2)
  */
 export async function initDefaultPromos(options = {}) {
-  const db = ensureFirestore();
-  if (!db) throw new Error('Firestore non disponible');
-  
   const defaultPromos = [
     { name: 'Licence 1', order: 1 },
     { name: 'Licence 2', order: 2 },
@@ -147,28 +153,16 @@ export async function initDefaultPromos(options = {}) {
     { name: 'Master 1', order: 4 },
     { name: 'Master 2', order: 5 },
   ];
-  
+
   try {
-    // Vérifier si des promos existent déjà
     const existingPromos = await fetchPromos();
-    if (existingPromos.length > 0) {
-      return; // Ne pas créer si des promos existent déjà
-    }
-    
-    // Créer les promos par défaut
-    const ref = collection(db, PROMOS_COLLECTION);
+    if (existingPromos.length > 0) return;
+
     for (const promo of defaultPromos) {
-      await addDoc(ref, {
-        name: promo.name,
-        order: promo.order,
-        active: true,
-        createdAt: serverTimestamp(),
-        createdBy: options.userId || null,
-      });
+      await createPromo({ name: promo.name, order: promo.order, active: true }, options);
     }
   } catch (error) {
     console.error('Erreur initialisation promos par défaut:', error);
     throw error;
   }
 }
-
