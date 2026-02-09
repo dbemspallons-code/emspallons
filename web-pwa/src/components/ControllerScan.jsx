@@ -377,7 +377,7 @@ export default function ControllerScan() {
 
     if (paymentStatusValue === PAYMENT_STATUS.UP_TO_DATE) {
       paymentStatus = 'PAID';
-        const expiresAt = student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null;
+        const expiresAt = student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null;
       displayResult = {
         success: true,
         status: 'PAID',
@@ -406,7 +406,7 @@ export default function ControllerScan() {
       await setLastScan(student.id, { timestamp: now, status: paymentStatus });
     } else {
       paymentStatus = 'EXPIRED';
-      const expiresAt = student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null;
+      const expiresAt = student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null;
       displayResult = {
         success: false,
         status: 'EXPIRED',

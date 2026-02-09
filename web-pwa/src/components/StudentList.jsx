@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { PhoneCall, Trash2, DownloadCloud, MessageCircle, CheckCircle2, ShieldX, RefreshCcw, CreditCard, Download, Edit2 } from 'lucide-react';
 import { PAYMENT_STATUS, SUBSCRIPTION_PLANS } from '../models/entities';
@@ -74,7 +74,7 @@ export default function StudentList({
         const plan = planLookup[student.subscriptionPlan] || { label: student.subscriptionPlan };
         
         // Calculer le statut basé sur subscriptionExpiresAt (nouvelle structure)
-        const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null);
+        const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null);
         const now = new Date();
         const expiration = expirationDate;
         const formattedExpiration = expiration expiration.toLocaleDateString('fr-FR') : 'Non défini';
@@ -399,3 +399,4 @@ function encodeQRCodePayload(student) {
     return 'N/A';
   }
 }
+

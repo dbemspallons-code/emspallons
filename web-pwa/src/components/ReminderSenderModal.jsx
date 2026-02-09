@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { X, Send, Filter, CheckSquare, Square, Loader } from 'lucide-react';
 import { sendBulkReminders, REMINDER_TYPES, fetchRemindersConfig } from '../services/reminderService';
 import { fetchStudents } from '../services/firestoreService';
@@ -75,7 +75,7 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
 
   const replaceTemplateVariables = (template, student, reminderType) => {
     const now = new Date();
-    const expirationDate = student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null;
+    const expirationDate = student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null;
     
     const variables = {
       nom: student.name.split(' ')[0] || '',
@@ -390,4 +390,5 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
     </div>
   );
 }
+
 

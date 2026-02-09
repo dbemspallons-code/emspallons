@@ -271,7 +271,7 @@ export function computeExpirationDate(startDateIso, planId, customMonthsPaid) {
 export function isSubscriptionActive(student) {
 
 
-  const expiration = student.subscription.expiresAt;
+  const expiration = student.subscription?.expiresAt;
 
 
   if (!expiration) return false;
@@ -298,7 +298,7 @@ export function isSubscriptionActive(student) {
 export function isInGracePeriod(student) {
 
 
-  const expiration = student.subscription.expiresAt;
+  const expiration = student.subscription?.expiresAt;
 
 
   if (!expiration) return false;

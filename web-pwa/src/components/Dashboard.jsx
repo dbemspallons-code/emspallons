@@ -225,7 +225,7 @@ export default function Dashboard({ user, onLogout }) {
     return students
       .map((student) => {
         const subscription = latestSubscriptionByStudent[student.id];
-        if (!subscription.expiresAt) return null;
+        if (!subscription || !subscription.expiresAt) return null;
 
         const phone = normalizeWhatsAppPhone(student.contact);
         if (!phone) return null;

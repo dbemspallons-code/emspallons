@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { Users, Bus, Wallet, Clock, AlertTriangle } from 'lucide-react';
 
 export default function SummaryCards({ stats, students = [] }) {
@@ -18,7 +18,7 @@ export default function SummaryCards({ stats, students = [] }) {
     const now = new Date();
     const in15Days = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
     return students.filter(student => {
-      const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null);
+      const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null);
       if (!expirationDate) return false;
       return expirationDate > now && expirationDate <= in15Days;
     }).length;
@@ -54,4 +54,5 @@ function SummaryCard({ icon: Icon, accent, children }) {
     </article>
   );
 }
+
 

@@ -1696,10 +1696,10 @@ export default function BusManagementCore() {
       const line = lineOptions.find(item => item.id === student.busLine).name || 'N/A';
 
 
-      const expiresAt = student.subscription.expiresAt
+      const expiresAt = student.subscription?.expiresAt
 
 
-        new Date(student.subscription.expiresAt).toLocaleDateString('fr-FR')
+        new Date(student.subscription?.expiresAt).toLocaleDateString('fr-FR')
 
 
         : 'date inconnue';
@@ -2524,10 +2524,10 @@ export default function BusManagementCore() {
       const line = lineOptions.find(item => item.id === student.busLine).name || 'N/A';
 
 
-      const expiresAt = student.subscription.expiresAt
+      const expiresAt = student.subscription?.expiresAt
 
 
-        new Date(student.subscription.expiresAt).toLocaleDateString('fr-FR')
+        new Date(student.subscription?.expiresAt).toLocaleDateString('fr-FR')
 
 
         : 'date inconnue';
@@ -2794,10 +2794,10 @@ export default function BusManagementCore() {
     const line = lineOptions.find(item => item.id === student.busLine).name || student.busLine || 'N/A';
 
 
-    const expiresAt = student.subscription.expiresAt
+    const expiresAt = student.subscription?.expiresAt
 
 
-      new Date(student.subscription.expiresAt).toLocaleDateString('fr-FR')
+      new Date(student.subscription?.expiresAt).toLocaleDateString('fr-FR')
 
 
       : 'date inconnue';
@@ -3874,7 +3874,7 @@ export default function BusManagementCore() {
         const expiringStudents = students.filter(student => {
 
 
-          const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null);
+          const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null);
 
 
           if (!expirationDate) return false;
@@ -3919,7 +3919,7 @@ export default function BusManagementCore() {
               {expiringStudents.slice(0, 5).map(student => {
 
 
-                const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null);
+                const expirationDate = student.subscriptionExpiresAt ? new Date(student.subscriptionExpiresAt) : (student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null);
 
 
                 const daysLeft = expirationDate Math.ceil((expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;

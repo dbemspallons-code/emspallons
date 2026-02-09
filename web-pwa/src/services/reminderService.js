@@ -179,7 +179,7 @@ export async function sendBulkReminders(studentIds, reminderType, options = {}) 
  */
 function replaceTemplateVariables(template, student, reminderType) {
   const now = new Date();
-  const expirationDate = student.subscription.expiresAt ? new Date(student.subscription.expiresAt) : null;
+  const expirationDate = student.subscription?.expiresAt ? new Date(student.subscription?.expiresAt) : null;
   
   const variables = {
     nom: student.name.split(' ')[0] || '',
