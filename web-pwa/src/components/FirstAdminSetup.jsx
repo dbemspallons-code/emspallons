@@ -123,7 +123,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
                   required
                   minLength={6}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="••••••••"
                 />
               </div>
               <p className="mt-1 text-xs text-gray-500">Minimum 6 caractères</p>
@@ -141,7 +141,7 @@ export default function FirstAdminSetup({ onSetupSuccess }) {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none transition"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="••••••••"
                 />
               </div>
             </div>

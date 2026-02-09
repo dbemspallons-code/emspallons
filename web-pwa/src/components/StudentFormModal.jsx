@@ -147,7 +147,7 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[92vh] overflow-y-auto modal-enter">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
-            {isEditing ? 'Modifier lâ€™étudiant' : 'Nouvel étudiant'}
+            {isEditing ? 'Modifier l’étudiant' : 'Nouvel étudiant'}
           </h2>
           <button
             onClick={onClose}

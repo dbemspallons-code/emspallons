@@ -15,14 +15,14 @@
   `;
   const head = `
     <h1>${escapeHtml(title)}</h1>
-    <div class="meta">Session: ${escapeHtml(summary.sessionId || '')} â€” Généré le ${new Date().toLocaleString('fr-FR')}</div>
+    <div class="meta">Session: ${escapeHtml(summary.sessionId || '')} — Généré le ${new Date().toLocaleString('fr-FR')}</div>
     <div class="summary">
-      <div>Total étudiants: ${summary.totalStudents 0}</div>
-      <div>Payés dans délai: ${summary.paidOnTime 0}</div>
-      <div>Payés en grâce: ${summary.paidInGrace 0}</div>
-      <div>Grâce active (impayés fin mois): ${summary.unpaid 0}</div>
-      <div>Défaillants: ${summary.defaulters 0}</div>
-      <div>Payés hors délai: ${summary.paidOutOfGrace 0}</div>
+      <div>Total étudiants: ${summary.totalStudents || 0}</div>
+      <div>Payés dans délai: ${summary.paidOnTime || 0}</div>
+      <div>Payés en grâce: ${summary.paidInGrace || 0}</div>
+      <div>Grâce active (impayés fin mois): ${summary.unpaid || 0}</div>
+      <div>Défaillants: ${summary.defaulters || 0}</div>
+      <div>Payés hors délai: ${summary.paidOutOfGrace || 0}</div>
     </div>
   `;
   const table = `
@@ -46,7 +46,7 @@
             <td>${escapeHtml(r.classGroup || '')}</td>
             <td>${escapeHtml(r.busLineLabel || r.busLine || '')}</td>
             <td>${escapeHtml(r.status || '')}</td>
-            <td>${r.paidAt new Date(r.paidAt).toLocaleDateString('fr-FR') : '-'}</td>
+            <td>${r.paidAt ? new Date(r.paidAt).toLocaleDateString('fr-FR') : '-'}</td>
             <td>${Number(r.amount || 0).toLocaleString('fr-FR')}</td>
           </tr>
         `).join('')}

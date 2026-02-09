@@ -257,7 +257,7 @@ export default function Dashboard({ user, onLogout }) {
           type,
         });
 
-        const messagePreview = message.replace(/\n/g, ' ').slice(0, 180) + (message.length > 180 ? 'â€¦' : '');
+        const messagePreview = message.replace(/\n/g, ' ').slice(0, 180) + (message.length > 180 ? '…' : '');
 
         return {
           id: `${student.id}-${type}`,
@@ -636,7 +636,7 @@ export default function Dashboard({ user, onLogout }) {
       // Demander confirmation avant d'importer
       if (!window.confirm(
         `Importer ${data.students.length} étudiant(s) et ${data.payments.length} paiement(s) \n\n` +
-        `âš ï¸ ATTENTION: Cela remplacera toutes les données existantes !`
+        `⚠️ ATTENTION: Cela remplacera toutes les données existantes !`
       )) {
         return;
       }
@@ -737,7 +737,7 @@ export default function Dashboard({ user, onLogout }) {
     // Double confirmation
     const confirmText = 'EFFACER TOUT';
     const userInput = window.prompt(
-      `âš ï¸ ATTENTION: Cette action est IRRÉVERSIBLE !\n\n` +
+      `⚠️ ATTENTION: Cette action est IRRÉVERSIBLE !\n\n` +
       `Toutes les données seront supprimées :\n` +
       `- Tous les étudiants\n` +
       `- Tous les paiements\n\n` +
