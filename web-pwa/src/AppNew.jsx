@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import ControllerScan from './components/ControllerScan';
 import ResetPassword from './components/ResetPassword';
 import AuthCallback from './components/AuthCallback';
 import ForcePasswordChange from './components/ForcePasswordChange';
+import ErrorBoundary from './components/ErrorBoundary';
 import { triggerSync, getOutboxLength } from './services/offlineService';
 import { getCurrentUser, logout } from './services/authService';
 
@@ -142,6 +143,9 @@ export default function AppNew() {
     );
   }
 
-  return <Dashboard user={user} onLogout={handleLogout} />;
+  return (
+    <ErrorBoundary>
+      <Dashboard user={user} onLogout={handleLogout} />
+    </ErrorBoundary>
+  );
 }
-

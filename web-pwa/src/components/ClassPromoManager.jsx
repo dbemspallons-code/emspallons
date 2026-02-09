@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Save, GraduationCap, BookOpen } from 'lucide-react';
 import { fetchClasses, createClass, updateClass, deleteClass, fetchPromos, createPromo, updatePromo, deletePromo, initDefaultPromos } from '../services/classService';
 import { getCurrentUser } from '../services/authService';
@@ -23,11 +23,13 @@ export default function ClassPromoManager({ onClose }) {
         fetchClasses(),
         fetchPromos(),
       ]);
-      setClasses(classesData);
-      setPromos(promosData);
+      const safeClasses = Array.isArray(classesData) ? classesData : [];
+      const safePromos = Array.isArray(promosData) ? promosData : [];
+      setClasses(safeClasses);
+      setPromos(safePromos);
       
       // Initialiser les promos par défaut si aucune n'existe
-      if (promosData.length === 0) {
+      if (safePromos.length === 0) {
         const currentUser = await getCurrentUser().catch(() => null);
         await initDefaultPromos({ userId: currentUser.uid || null });
         const updatedPromos = await fetchPromos();
@@ -338,4 +340,5 @@ export default function ClassPromoManager({ onClose }) {
     </div>
   );
 }
+
 

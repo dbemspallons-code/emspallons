@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Edit2, Trash2, UserPlus, Mail, Lock, Crown, User, AlertTriangle, Key } from 'lucide-react';
 import { getAllUsers, createUser, updateUser, deleteUser, canCreateUsers, getCurrentUser, resetUserPassword } from '../services/authService';
 
@@ -32,8 +32,9 @@ export default function UserManagementModal({ onClose }) {
     setLoading(true);
     try {
       const allUsers = await getAllUsers();
+      const safeUsers = Array.isArray(allUsers) ? allUsers : [];
       // Ne pas afficher les mots de passe
-      const usersWithoutPasswords = allUsers.map(({ motDePasse, ...user }) => user);
+      const usersWithoutPasswords = safeUsers.map(({ motDePasse, ...user }) => user);
       setUsers(usersWithoutPasswords);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
@@ -154,8 +155,7 @@ export default function UserManagementModal({ onClose }) {
       
       // Redirection vers login (la déconnexion est déjà faite dans deleteUser)
       alert('✅ Votre compte a été supprimé. Vous allez être redirigé vers la page de connexion.');
-      navigate('/login');
-      window.location.reload(); // Forcer le rechargement pour nettoyer l'état
+      window.location.href = '/'; // Forcer le rechargement pour nettoyer l'état
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
       alert(error.message || '❌ Erreur lors de la suppression du compte.');
@@ -603,4 +603,5 @@ function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
     </div>
   );
 }
+
 

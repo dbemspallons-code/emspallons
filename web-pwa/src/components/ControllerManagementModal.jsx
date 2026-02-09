@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import {
   ShieldCheck,
   Plus,
@@ -238,6 +238,7 @@ export default function ControllerManagementModal({ onClose }) {
                     const isVisible = visibleCodes.includes(controller.id);
                     const maskedCode = maskControllerCode(controller.code || '');
                     const assignedLine = lines.find((line) => line.id === controller.assignedLineId);
+                    const connectionsCount = Array.isArray(controller.connexions) ? connectionsCount : 0;
                     const lastConnection = controller.derniereConnexion
                       ?
                       new Date(controller.derniereConnexion).toLocaleString('fr-FR', {
@@ -252,14 +253,14 @@ export default function ControllerManagementModal({ onClose }) {
                       <tr key={controller.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">{controller.nom}</div>
-                          {controller.connexions.length ? (
+                          {connectionsCount ? (
                             <div className="text-xs text-gray-500">
-                              {controller.connexions.length} connexion{controller.connexions.length > 1 ? 's' : ''} enregistrée{controller.connexions.length > 1 ? 's' : ''}
+                              {connectionsCount} connexion{connectionsCount > 1 ? 's' : ''} enregistrée{connectionsCount > 1 ? 's' : ''}
                             </div>
                           ) : null}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {assignedLine.name || controller.assignedLineId || 'Non assignée'}
+                          {assignedLine?.name || controller.assignedLineId || 'Non assignée'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -520,3 +521,4 @@ function ControllerFormModal({ controller, onClose, onSave, loading, lines = [] 
     </div>
   );
 }
+

@@ -10,53 +10,36 @@ export default class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  componentDidCatch(error, info) {
+    console.error('Erreur UI:', error, info);
   }
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #facc15 0%, #22c55e 100%)',
-          padding: '2rem'
-        }}>
-          <div className="card" style={{ maxWidth: '600px', width: '100%', padding: '2rem' }}>
-            <h2 style={{ color: '#b91c1c', marginBottom: '1rem' }}>Erreur de chargement</h2>
-            <p style={{ marginBottom: '1rem' }}>
-              Une erreur s'est produite lors du chargement de l'application.
-            </p>
-            <details style={{ marginBottom: '1rem' }}>
-              <summary style={{ cursor: 'pointer', marginBottom: '0.5rem' }}>Détails techniques</summary>
-              <pre style={{
-                background: '#f1f5f9',
-                padding: '1rem',
-                borderRadius: '8px',
-                overflow: 'auto',
-                fontSize: '0.85rem'
-              }}>
-                {this.state.error.toString()}
-              </pre>
-            </details>
-            <button
-              className="button"
-              onClick={() => {
-                this.setState({ hasError: false, error: null });
-                window.location.reload();
-              }}
-            >
-              Recharger la page
-            </button>
-          </div>
-        </div>
-      );
+    const { hasError, error } = this.state;
+    if (!hasError) {
+      return this.props.children;
     }
 
-    return this.props.children;
+    return (
+      <div className="min-h-screen app-bg flex items-center justify-center px-4">
+        <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-6 border border-red-200">
+          <h1 className="text-xl font-semibold text-red-700 mb-3">Une erreur est survenue</h1>
+          <p className="text-sm text-gray-700">
+            Une action a provoqué un blocage. Vous pouvez recharger la page.
+          </p>
+          {error && (
+            <pre className="mt-4 text-xs text-red-600 whitespace-pre-wrap">
+              {error.message || String(error)}
+            </pre>
+          )}
+          <button
+            className="mt-5 px-4 py-2 bg-gradient-to-r from-yellow-400 to-green-500 text-white rounded-lg"
+            onClick={() => window.location.reload()}
+          >
+            Recharger
+          </button>
+        </div>
+      </div>
+    );
   }
 }
-
