@@ -60,9 +60,9 @@ export default function StudentFormModal({ student, onClose, onSave }) {
       setNom('');
       setPrenom('');
       setPromo('');
-      setClasse(classes[0].name || '');
+      setClasse(classes[0]?.name || '');
       setContact('+225');
-      setBusLine(lines[0].id || '');
+      setBusLine(lines[0]?.id || '');
       setPickupPoint('');
       setGuardian('');
       setNotes('');

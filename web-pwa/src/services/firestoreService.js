@@ -27,6 +27,38 @@ import { historyService } from './historyService';
 
 const LINES_STORAGE_KEY = 'custom_bus_lines';
 
+function loadLineOverrides() {
+  try {
+    const raw = localStorage.getItem(LINES_STORAGE_KEY);
+    const parsed = JSON.parse(raw || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveLineOverrides(lines) {
+  localStorage.setItem(LINES_STORAGE_KEY, JSON.stringify(lines || []));
+}
+
+function mergeLines(baseLines, overrides) {
+  const map = new Map();
+  (overrides || []).forEach((line) => {
+    if (line && line.id) map.set(line.id, line);
+  });
+
+  const merged = (baseLines || [])
+    .map((line) => {
+      const override = map.get(line.id);
+      if (override && override.deleted) return null;
+      return { ...line, ...(override || {}) };
+    })
+    .filter(Boolean);
+
+  const extras = (overrides || []).filter(l => l && l.id && !map.has(l.id));
+  return [...merged, ...extras.filter(l => !l.deleted)];
+}
+
 // GESTION DES UTILISATEURS
 
 export async function fetchUsers() {
@@ -186,8 +218,8 @@ export async function deleteController(controllerId, options = {}) {
 
 export async function fetchLines() {
   try {
-    const custom = JSON.parse(localStorage.getItem(LINES_STORAGE_KEY) || '[]');
-    return [...BUS_LINES, ...custom];
+    const overrides = loadLineOverrides();
+    return mergeLines(BUS_LINES, overrides);
   } catch (error) {
     console.warn('fetchLines fallback to BUS_LINES:', error);
     return BUS_LINES;
@@ -196,16 +228,19 @@ export async function fetchLines() {
 
 export async function saveLine(lineData, options = {}) {
   try {
-    const custom = JSON.parse(localStorage.getItem(LINES_STORAGE_KEY) || '[]');
+    const custom = loadLineOverrides();
     if (lineData.id) {
       const idx = custom.findIndex(c => c.id === lineData.id);
-      if (idx !== -1) custom[idx] = { ...custom[idx], ...lineData };
-      else custom.push({ ...lineData });
+      if (idx !== -1) {
+        custom[idx] = { ...custom[idx], ...lineData, deleted: false };
+      } else {
+        custom.push({ ...lineData, deleted: false });
+      }
     } else {
       const id = `line_${Date.now()}`;
-      custom.push({ id, name: lineData.name, color: lineData.color || '#888888' });
+      custom.push({ id, name: lineData.name, color: lineData.color || '#888888', deleted: false });
     }
-    localStorage.setItem(LINES_STORAGE_KEY, JSON.stringify(custom));
+    saveLineOverrides(custom);
     return { success: true };
   } catch (error) {
     console.error('saveLine error:', error);
@@ -215,8 +250,21 @@ export async function saveLine(lineData, options = {}) {
 
 export async function deleteLine(lineId, options = {}) {
   try {
-    const custom = JSON.parse(localStorage.getItem(LINES_STORAGE_KEY) || '[]').filter(l => l.id !== lineId);
-    localStorage.setItem(LINES_STORAGE_KEY, JSON.stringify(custom));
+    const custom = loadLineOverrides();
+    const idx = custom.findIndex(l => l.id === lineId);
+    const baseExists = BUS_LINES.some(l => l.id === lineId);
+    if (baseExists) {
+      if (idx !== -1) {
+        custom[idx] = { ...custom[idx], deleted: true };
+      } else {
+        custom.push({ id: lineId, deleted: true });
+      }
+    } else {
+      const next = custom.filter(l => l.id !== lineId);
+      saveLineOverrides(next);
+      return { success: true };
+    }
+    saveLineOverrides(custom);
     return { success: true };
   } catch (error) {
     console.error('deleteLine error:', error);
