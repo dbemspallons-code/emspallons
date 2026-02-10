@@ -14,10 +14,40 @@ function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers });
 }
 
+function getHeader(req, name) {
+  if (!req) return '';
+  if (req.headers?.get) {
+    return req.headers.get(name) || req.headers.get(name.toLowerCase()) || '';
+  }
+  if (req.headers) {
+    return req.headers[name] || req.headers[name.toLowerCase()] || '';
+  }
+  return '';
+}
+
 function getBearer(req) {
-  const auth = req.headers.get('authorization') || req.headers.get('Authorization') || '';
+  const auth = getHeader(req, 'authorization') || getHeader(req, 'Authorization') || '';
   if (!auth.startsWith('Bearer ')) return null;
   return auth.slice(7);
+}
+
+async function readJson(req) {
+  try {
+    if (req?.json) {
+      return await req.json();
+    }
+  } catch (err) {
+    // fallthrough
+  }
+  const raw = req?.body ?? req?.rawBody;
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return {}; }
+  }
+  if (raw instanceof Uint8Array) {
+    try { return JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return {}; }
+  }
+  return raw || {};
 }
 
 export default async (req) => {
@@ -38,7 +68,7 @@ export default async (req) => {
   });
 
   try {
-    const payload = JSON.parse(req.body || '{}');
+    const payload = await readJson(req);
     const email = (payload.email || '').trim().toLowerCase();
     const password = (payload.password || '').trim();
     const name = (payload.name || payload.nom || '').trim();
@@ -55,17 +85,23 @@ export default async (req) => {
       if (authErr || !authData?.user) {
         return json(401, { error: 'Acces refuse' });
       }
-      const { data: profile } = await supabase
+      const { data: profile, error: profileErr } = await supabase
         .from('educators')
         .select('id, role')
         .eq('id', authData.user.id)
         .maybeSingle();
+      if (profileErr) {
+        return json(500, { error: `Erreur profil admin: ${profileErr.message}` });
+      }
       if (!profile || profile.role !== 'admin') {
         return json(403, { error: 'Admin requis' });
       }
       adminUserId = profile.id;
     } else {
-      const { data: existing } = await supabase.from('educators').select('id').limit(1);
+      const { data: existing, error: existingErr } = await supabase.from('educators').select('id').limit(1);
+      if (existingErr) {
+        return json(500, { error: `Erreur lecture educators: ${existingErr.message}` });
+      }
       if (existing && existing.length > 0) {
         return json(401, { error: 'Acces refuse' });
       }
@@ -88,7 +124,10 @@ export default async (req) => {
     if (createRes.error) {
       const msg = String(createRes.error.message || '').toLowerCase();
       if (msg.includes('already registered') || msg.includes('already') || msg.includes('exists')) {
-        const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const { data: list, error: listErr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
+        if (listErr) {
+          return json(500, { error: `Erreur list users: ${listErr.message}` });
+        }
         authUser = (list?.users || []).find(u => (u.email || '').toLowerCase() === email) || null;
         if (!authUser) {
           return json(409, { error: 'Email deja utilise' });
@@ -129,7 +168,7 @@ export default async (req) => {
           console.warn('Cleanup auth user failed:', cleanupErr?.message || cleanupErr);
         }
       }
-      return json(400, { error: eduErr.message || 'Erreur creation profil' });
+      return json(400, { error: `Erreur creation profil: ${eduErr.message}` });
     }
 
     return json(200, { ok: true, user: edu });

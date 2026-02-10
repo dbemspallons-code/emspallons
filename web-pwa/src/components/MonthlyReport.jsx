@@ -3,7 +3,17 @@ import { Calendar, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { getRevenusEncaisses, getRevenusComptabilises, calculateStudentStatus } from '../services/studentService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChange, onYearChange, students, payments, lines = [] }) {
+export default function MonthlyReport({
+  selectedMonth,
+  selectedYear,
+  onMonthChange,
+  onYearChange,
+  students,
+  payments,
+  lines = [],
+  promoOptions: promoOptionsProp = [],
+  classOptions: classOptionsProp = [],
+}) {
   const [revenusEncaisses, setRevenusEncaisses] = useState({ total: 0, paiements: [] });
   const [revenusComptabilises, setRevenusComptabilises] = useState({ total: 0, paiements: [] });
   const [loading, setLoading] = useState(true);
@@ -15,21 +25,27 @@ export default function MonthlyReport({ selectedMonth, selectedYear, onMonthChan
     return Array.from(values).map(value => ({ id: value, name: value }));
   }, [lines, students]);
   const promoOptions = useMemo(() => {
+    if (Array.isArray(promoOptionsProp) && promoOptionsProp.length) {
+      return [...promoOptionsProp].filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'));
+    }
     const values = new Set();
     (students || []).forEach(student => {
       const value = (student.promo || student.niveau || '').trim();
       if (value) values.add(value);
     });
     return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
-  }, [students]);
+  }, [promoOptionsProp, students]);
   const classOptions = useMemo(() => {
+    if (Array.isArray(classOptionsProp) && classOptionsProp.length) {
+      return [...classOptionsProp].filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'));
+    }
     const values = new Set();
     (students || []).forEach(student => {
       const value = (student.classe || student.classGroup || '').trim();
       if (value) values.add(value);
     });
     return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
-  }, [students]);
+  }, [classOptionsProp, students]);
 
   const filteredStudents = useMemo(() => {
     return (students || []).filter(student => {

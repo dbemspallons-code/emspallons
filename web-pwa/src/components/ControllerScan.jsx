@@ -339,11 +339,11 @@ export default function ControllerScan() {
     if (controllerInfo.assignedLineId) {
       const { fetchLines } = await import('../services/firestoreService');
       const lines = await fetchLines();
-      const controllerLine = lines.find(l => l.id === controllerInfo.assignedLineId);
+      const controllerLine = lines.find(l => l.id === controllerInfo.assignedLineId) || null;
       const studentLine = student.busLine;
 
       if (studentLine !== controllerInfo.assignedLineId) {
-        const studentLineName = lines.find(l => l.id === studentLine).name || studentLine;
+        const studentLineName = (lines.find(l => l.id === studentLine) || {}).name || studentLine;
         const controllerLineName = controllerLine.name || controllerInfo.assignedLineId;
 
         const resWrongLine = await logScanEntry(student.id, {
@@ -384,7 +384,7 @@ export default function ControllerScan() {
         student,
         message: 'Acces autorise',
         color: '#10B981',
-        validUntil: expiresAt.toISOString() || null,
+        validUntil: expiresAt ? expiresAt.toISOString() : null,
       };
       await setLastScan(student.id, { timestamp: now, status: paymentStatus });
     } else if (paymentStatusValue === PAYMENT_STATUS.LATE) {
@@ -413,7 +413,7 @@ export default function ControllerScan() {
         student,
         message: 'Paiement expire - acces refuse',
         color: '#EF4444',
-        expiredSince: expiresAt.toISOString() || null,
+        expiredSince: expiresAt ? expiresAt.toISOString() : null,
       };
     }
 

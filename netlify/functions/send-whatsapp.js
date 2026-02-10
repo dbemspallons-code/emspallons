@@ -9,6 +9,25 @@ export default async (req) => {
     'Access-Control-Allow-Headers': 'Content-Type, X-TEST, X-SCHEDULED-SECRET',
   };
 
+  async function readJson() {
+    try {
+      if (req?.json) {
+        return await req.json();
+      }
+    } catch (err) {
+      // fallthrough
+    }
+    const raw = req?.body ?? req?.rawBody;
+    if (!raw) return {};
+    if (typeof raw === 'string') {
+      try { return JSON.parse(raw); } catch { return {}; }
+    }
+    if (raw instanceof Uint8Array) {
+      try { return JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return {}; }
+    }
+    return raw || {};
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
   }
@@ -18,7 +37,7 @@ export default async (req) => {
   }
 
   try {
-    const payload = JSON.parse(req.body || '{}');
+    const payload = await readJson();
     const { phone, message } = payload;
     if (!phone || !message) {
       return new Response(JSON.stringify({ error: 'phone and message are required' }), { status: 400, headers });

@@ -35,10 +35,40 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+function getHeader(req, name) {
+  if (!req) return '';
+  if (req.headers?.get) {
+    return req.headers.get(name) || req.headers.get(name.toLowerCase()) || '';
+  }
+  if (req.headers) {
+    return req.headers[name] || req.headers[name.toLowerCase()] || '';
+  }
+  return '';
+}
+
 function getBearer(req) {
-  const auth = req.headers.get('authorization') || req.headers.get('Authorization') || '';
+  const auth = getHeader(req, 'authorization') || getHeader(req, 'Authorization') || '';
   if (!auth.startsWith('Bearer ')) return null;
   return auth.slice(7);
+}
+
+async function readJson(req) {
+  try {
+    if (req?.json) {
+      return await req.json();
+    }
+  } catch (err) {
+    // fallthrough
+  }
+  const raw = req?.body ?? req?.rawBody;
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return {}; }
+  }
+  if (raw instanceof Uint8Array) {
+    try { return JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return {}; }
+  }
+  return raw || {};
 }
 
 export default async (req, context) => {
@@ -83,7 +113,7 @@ export default async (req, context) => {
       return new Response(JSON.stringify({ error: 'Accès refusé' }), { status: 403, headers });
     }
 
-    const { subscriber_id } = JSON.parse(req.body || '{}');
+    const { subscriber_id } = await readJson(req);
 
     if (!subscriber_id) {
       return new Response(

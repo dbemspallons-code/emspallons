@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, X, Save, UserCheck, UserX } from 'lucide-react';
 
 export default function ControllerManager({ controllers = [], lines = [], onSave, onDelete, onClose }) {
@@ -169,7 +169,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                 className="form-input"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ex: Contrôleur Portail 1"
+                placeholder="Ex: contrôleur Portail 1"
                 autoFocus
               />
               {errors.name && <span className="form-error">{errors.name}</span>}
@@ -205,7 +205,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                   style={{ padding: '0.5rem' }}
                   title={showPassword ? 'Masquer' : 'Afficher'}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? 'Masquer' : 'Afficher'}
                 </button>
               </div>
               {errors.password && <span className="form-error">{errors.password}</span>}
@@ -218,7 +218,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                   borderRadius: '6px',
                   fontSize: '0.9rem'
                 }}>
-                  <strong>⚠️ IMPORTANT :</strong> Notez ce mot de passe et donnez-le au contrôleur : <strong style={{ fontSize: '1.1rem', color: '#0ea5e9' }}>{generatedPassword}</strong>
+                  <strong>IMPORTANT :</strong> Notez ce mot de passe et donnez-le au contrôleur : <strong style={{ fontSize: '1.1rem', color: '#0ea5e9' }}>{generatedPassword}</strong>
                 </div>
               )}
             </div>
@@ -251,7 +251,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                   checked={formData.active}
                   onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                 />
-                <span>Contrôleur actif</span>
+                <span>contrôleur actif</span>
               </label>
             </div>
 
@@ -271,7 +271,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {controllers.length === 0 (
+          {controllers.length === 0 ? (
             <div className="card" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
               <p>Aucun contrôleur enregistré.</p>
               <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>Ajoutez un contrôleur pour permettre le scan au portail.</p>
@@ -297,7 +297,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                   </p>
                   {controller.assignedLineId && lines.length > 0 && (
                     <p className="subtitle" style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
-                      Ligne: {lines.find(l => l.id === controller.assignedLineId).name || controller.assignedLineId}
+                      Ligne: {(lines.find(l => l.id === controller.assignedLineId) || {}).name || controller.assignedLineId}
                     </p>
                   )}
                   {controller.password && (
@@ -313,7 +313,7 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
                     onClick={() => handleToggleActive(controller)}
                     title={controller.active ? 'Désactiver' : 'Activer'}
                   >
-                    {controller.active <UserX size={16} /> : <UserCheck size={16} />}
+                    {controller.active ? <UserX size={16} /> : <UserCheck size={16} />}
                   </button>
                   <button
                     className="button button--subtle"
@@ -339,4 +339,8 @@ export default function ControllerManager({ controllers = [], lines = [], onSave
     </div>
   );
 }
+
+
+
+
 

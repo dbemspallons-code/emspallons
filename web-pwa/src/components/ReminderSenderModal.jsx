@@ -82,7 +82,7 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
       prenom: student.name.split(' ').slice(1).join(' ') || '',
       nom_complet: student.name || '',
       contact: student.contact || '',
-      ligne: lines.find(l => l.id === student.busLine).name || student.busLine || '',
+      ligne: (lines.find(l => l.id === student.busLine) || {}).name || student.busLine || '',
       date_expiration: expirationDate expirationDate.toLocaleDateString('fr-FR') : '',
       jours_restants: expirationDate Math.max(0, Math.ceil((expirationDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))) : 0,
       jours_retard: expirationDate Math.max(0, Math.ceil((now.getTime() - expirationDate.getTime()) / (24 * 60 * 60 * 1000))) : 0,
@@ -327,7 +327,7 @@ export default function ReminderSenderModal({ students = [], lines = [], onClose
                       <div style={{ flex: 1 }}>
                         <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>{student.name}</p>
                         <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                          {lines.find(l => l.id === student.busLine).name || 'N/A'} • {student.contact || 'Pas de contact'}
+                          {(lines.find(l => l.id === student.busLine) || {}).name || 'N/A'} • {student.contact || 'Pas de contact'}
                         </p>
                       </div>
                       <span className={`chip ${status.status === 'ACTIF' 'chip--success' : status.status === 'EXPIRÉ' ? 'chip--danger' : ''}`} style={{ fontSize: '0.75rem' }}>

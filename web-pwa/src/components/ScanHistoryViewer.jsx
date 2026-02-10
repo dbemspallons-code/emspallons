@@ -156,7 +156,7 @@ export default function ScanHistoryViewer({ onClose }) {
         return [
           date,
           scan.studentName || 'N/A',
-          lines.find(l => l.id === scan.busLine).name || scan.busLine || 'N/A',
+          (lines.find(l => l.id === scan.busLine) || {}).name || scan.busLine || 'N/A',
           scan.controllerName || 'N/A',
           SCAN_STATUS_LABELS[scan.status] || scan.status,
           scan.reason || '',
@@ -408,7 +408,7 @@ export default function ScanHistoryViewer({ onClose }) {
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{formatDate(scan.scannedAt)}</td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{scan.studentName || 'N/A'}</td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>
-                            {lines.find(l => l.id === scan.busLine).name || scan.busLine || 'N/A'}
+                            {(lines.find(l => l.id === scan.busLine) || {}).name || scan.busLine || 'N/A'}
                           </td>
                           <td style={{ padding: '0.75rem', fontSize: '0.85rem' }}>{scan.controllerName || scan.driverId || 'N/A'}</td>
                           <td style={{ padding: '0.75rem' }}>

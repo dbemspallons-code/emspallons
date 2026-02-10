@@ -33,6 +33,7 @@ import WhatsAppReminderModal from './WhatsAppReminderModal';
 import LineManager from './LineManager';
 import ClassPromoManager from './ClassPromoManager';
 import { fetchLines, saveLine, deleteLine } from '../services/firestoreService';
+import { fetchClasses, fetchPromos } from '../services/classService';
 
 export default function Dashboard({ user, onLogout }) {
   const [students, setStudents] = useState([]);
@@ -56,17 +57,19 @@ export default function Dashboard({ user, onLogout }) {
   const [showClassPromoManager, setShowClassPromoManager] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isAdminUser, setIsAdminUser] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [message, setMessage] = useState('');
   const [queuedCount, setQueuedCount] = useState(0);
   const [showQueuedToast, setShowQueuedToast] = useState(false);
   const [latestSubscriptions, setLatestSubscriptions] = useState([]);
   const [showWhatsAppReminders, setShowWhatsAppReminders] = useState(false);
   const [lines, setLines] = useState([]);
+  const [classesList, setClassesList] = useState([]);
+  const [promosList, setPromosList] = useState([]);
 
   useEffect(() => {
     loadData();
     loadLines();
+    loadClassesPromos();
     checkAdminStatus();
 
     (async () => {
@@ -138,6 +141,21 @@ export default function Dashboard({ user, onLogout }) {
     await loadLines();
   }
 
+  async function loadClassesPromos() {
+    try {
+      const [classesData, promosData] = await Promise.all([
+        fetchClasses(),
+        fetchPromos(),
+      ]);
+      setClassesList(Array.isArray(classesData) ? classesData : []);
+      setPromosList(Array.isArray(promosData) ? promosData : []);
+    } catch (error) {
+      console.warn('Impossible de charger classes/promos:', error);
+      setClassesList([]);
+      setPromosList([]);
+    }
+  }
+
   const normalizeWhatsAppPhone = (value) => normalizeWhatsAppNumber(value, '225');
 
   const copyToClipboard = async (text) => {
@@ -207,21 +225,27 @@ export default function Dashboard({ user, onLogout }) {
 
   const promoOptions = useMemo(() => {
     const values = new Set();
+    (promosList || []).forEach(promo => {
+      if (promo?.name) values.add(String(promo.name).trim());
+    });
     students.forEach(student => {
       const value = (student.promo || student.niveau || '').trim();
       if (value) values.add(value);
     });
-    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
-  }, [students]);
+    return Array.from(values).filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [promosList, students]);
 
   const classOptions = useMemo(() => {
     const values = new Set();
+    (classesList || []).forEach(cls => {
+      if (cls?.name) values.add(String(cls.name).trim());
+    });
     students.forEach(student => {
       const value = (student.classe || student.classGroup || '').trim();
       if (value) values.add(value);
     });
-    return Array.from(values).sort((a, b) => a.localeCompare(b, 'fr'));
-  }, [students]);
+    return Array.from(values).filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [classesList, students]);
 
   const remindersQueue = useMemo(() => {
     const now = new Date();
@@ -734,11 +758,6 @@ export default function Dashboard({ user, onLogout }) {
   }
 
   async function handleReset() {
-    if (!showResetConfirm) {
-      setShowResetConfirm(true);
-      return;
-    }
-
     // Double confirmation
     const confirmText = 'EFFACER TOUT';
     const userInput = window.prompt(
@@ -751,7 +770,6 @@ export default function Dashboard({ user, onLogout }) {
     );
 
     if (userInput !== confirmText) {
-      setShowResetConfirm(false);
       setMessage('Réinitialisation annulée');
       setTimeout(() => setMessage(''), 3000);
       return;
@@ -770,7 +788,6 @@ export default function Dashboard({ user, onLogout }) {
       setTimeout(() => setMessage(''), 5000);
     } finally {
       setLoading(false);
-      setShowResetConfirm(false);
     }
   }
 
@@ -899,25 +916,6 @@ export default function Dashboard({ user, onLogout }) {
                     />
                   </label>
                   <button
-                    onClick={handleAnnualArchive}
-                    className="nav-action text-sm font-medium"
-                    title="Archiver l'annee"
-                  >
-                    <Archive className="w-4 h-4 inline mr-2" />
-                    Archiver annee
-                  </button>
-                  <button
-                    onClick={handleReset}
-                    className={`nav-action text-sm font-medium ${
-                      showResetConfirm
-                        ? 'nav-action--danger-strong' : 'nav-action--danger'
-                    }`}
-                    title="Réinitialiser toutes les données"
-                  >
-                    <Trash2 className="w-4 h-4 inline mr-2" />
-                    {showResetConfirm ? 'Confirmer' : 'Réinitialiser'}
-                  </button>
-                  <button
                     onClick={() => setShowUserManagement(true)}
                     className="nav-action text-sm font-medium"
                   >
@@ -947,7 +945,7 @@ export default function Dashboard({ user, onLogout }) {
 
               {showQueuedToast && (
                 <div className="ui-toast fixed top-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-                  ðŸ” Synchronisation demandée
+                  Synchronisation demandée
                 </div>
               )}
             </div>
@@ -1071,6 +1069,8 @@ export default function Dashboard({ user, onLogout }) {
             students={students}
             payments={payments}
             lines={lines}
+            promoOptions={promoOptions}
+            classOptions={classOptions}
           />
         )}
         {activeTab === 'history' && isAdminUser && (
@@ -1112,6 +1112,8 @@ export default function Dashboard({ user, onLogout }) {
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}
           isAdmin={isAdminUser}
+          onArchive={handleAnnualArchive}
+          onReset={handleReset}
         />
       )}
 
@@ -1344,8 +1346,8 @@ function StudentsView({
     <div className="space-y-6">
       {/* Filtres */}
       <div className="ui-card p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex-1 min-w-[220px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -1360,7 +1362,7 @@ function StudentsView({
           <select
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Tous les statuts</option>
             <option value="ACTIF">Actifs</option>
@@ -1372,7 +1374,7 @@ function StudentsView({
           <select
             value={lineFilter}
             onChange={(e) => onLineFilterChange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les lignes</option>
             {resolvedLineOptions.map((line) => (
@@ -1384,7 +1386,7 @@ function StudentsView({
           <select
             value={promoFilter}
             onChange={(e) => onPromoFilterChange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les promos</option>
             {promoOptions.map((promo) => (
@@ -1396,7 +1398,7 @@ function StudentsView({
           <select
             value={classFilter}
             onChange={(e) => onClassFilterChange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les classes</option>
             {classOptions.map((classe) => (
@@ -1405,12 +1407,14 @@ function StudentsView({
               </option>
             ))}
           </select>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2 items-center">
           {onResetFilters && (
             <button
               onClick={onResetFilters}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
             >
-              Reinitialiser filtres
+              Réinitialiser filtres
             </button>
           )}
           <button
@@ -1423,7 +1427,7 @@ function StudentsView({
           {onExportStudents && (
             <button
               onClick={onExportStudents}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
               title="Exporter les étudiants en CSV"
             >
               <Download className="w-4 h-4 inline mr-2" />
@@ -1433,7 +1437,7 @@ function StudentsView({
           {onExportStudentsXLSX && (
             <button
               onClick={onExportStudentsXLSX}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
               title="Exporter les étudiants en Excel"
             >
               <Download className="w-4 h-4 inline mr-2" />
@@ -1443,7 +1447,7 @@ function StudentsView({
           {onExportPayments && (
             <button
               onClick={onExportPayments}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
               title="Exporter les paiements en CSV"
             >
               <Download className="w-4 h-4 inline mr-2" />
@@ -1453,7 +1457,7 @@ function StudentsView({
           {onExportPaymentsXLSX && (
             <button
               onClick={onExportPaymentsXLSX}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
               title="Exporter les paiements en Excel"
             >
               <Download className="w-4 h-4 inline mr-2" />
@@ -1501,7 +1505,7 @@ function StudentsView({
                   onDownloadQR={onDownloadQR}
                   onRegenerateQR={onRegenerateQR}
                   onSendQrWhatsApp={onSendQrWhatsApp}
-                  lineName={lineLookup[student.busLine].name || student.busLine}
+                  lineName={lineLookup[student.busLine]?.name || student.busLine}
                 />
               );
             })}

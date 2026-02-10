@@ -11,13 +11,32 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+async function readJson(req) {
+  try {
+    if (req?.json) {
+      return await req.json();
+    }
+  } catch (err) {
+    // fallthrough
+  }
+  const raw = req?.body ?? req?.rawBody;
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return {}; }
+  }
+  if (raw instanceof Uint8Array) {
+    try { return JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return {}; }
+  }
+  return raw || {};
+}
+
 export default async (req, context) => {
   const headers = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
   if (req.method === 'OPTIONS') return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   try {
-    const { token, line, controllerId, controllerCode } = JSON.parse(req.body || '{}');
+    const { token, line, controllerId, controllerCode } = await readJson(req);
     if (!token || !line) return new Response(JSON.stringify({ error: 'token and line required' }), { status: 400, headers });
     if (!controllerId || !controllerCode) return new Response(JSON.stringify({ error: 'controllerId et controllerCode requis' }), { status: 400, headers });
 
@@ -28,15 +47,15 @@ export default async (req, context) => {
       .maybeSingle();
     if (ctrlErr) throw ctrlErr;
     if (!controller || controller.active === false) {
-      return new Response(JSON.stringify({ error: 'Controleur inactif' }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: 'Contrôleur inactif' }), { status: 403, headers });
     }
     const expectedCode = (controller.code || '').toUpperCase();
     const providedCode = String(controllerCode || '').trim().toUpperCase();
     if (!expectedCode || providedCode !== expectedCode) {
-      return new Response(JSON.stringify({ error: 'Code controleur invalide' }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: 'Code contrôleur invalide' }), { status: 403, headers });
     }
     if (controller.assigned_line_id && controller.assigned_line_id !== line) {
-      return new Response(JSON.stringify({ allowed: false, reason: 'wrong_line', message: 'Ligne non autorisee' }), { status: 403, headers });
+      return new Response(JSON.stringify({ allowed: false, reason: 'wrong_line', message: 'Ligne non autorisée' }), { status: 403, headers });
     }
 
     // Check recent locks for this token on the same line within 30 minutes
@@ -52,7 +71,7 @@ export default async (req, context) => {
     if (lockErr) throw lockErr;
 
     if (locks && locks.length > 0) {
-      return new Response(JSON.stringify({ allowed: false, reason: 'recent_scan', message: 'QR code already scanned recently on this line' }), { status: 200, headers });
+      return new Response(JSON.stringify({ allowed: false, reason: 'recent_scan', message: 'QR code déjà scanné récemment sur cette ligne' }), { status: 200, headers });
     }
 
     // Insert lock

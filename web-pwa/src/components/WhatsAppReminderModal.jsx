@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { MessageCircle, X, Copy } from 'lucide-react';
 
 export default function WhatsAppReminderModal({
@@ -78,3 +78,4 @@ export default function WhatsAppReminderModal({
     </div>
   );
 }
+

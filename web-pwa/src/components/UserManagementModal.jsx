@@ -15,6 +15,9 @@ export default function UserManagementModal({ onClose }) {
   const [resetConfirm, setResetConfirm] = useState('');
   const [resetError, setResetError] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
   const hasAdmin = useMemo(() => users.some(user => user.role === 'admin'), [users]);
 
   useEffect(() => {
@@ -56,14 +59,11 @@ export default function UserManagementModal({ onClose }) {
       setSuccessMessage('Utilisateur cree avec succes. Mot de passe a changer a la premiere connexion.');
       setTimeout(() => setSuccessMessage(''), 4000);
     } catch (error) {
-
       const msg = error.message || 'Erreur lors de la creation';
       if (msg.toLowerCase().includes('failed to fetch')) {
-        alert('Impossible de contacter le serveur. Verifiez votre connexion et les fonctions Netlify.');
-      } else {
-        alert(msg);
+        throw new Error('Impossible de contacter le serveur. Vérifiez votre connexion et les fonctions Netlify.');
       }
-      throw error;
+      throw new Error(msg);
     }
   }
 
@@ -194,6 +194,11 @@ export default function UserManagementModal({ onClose }) {
     }
   }
 
+  function handleShowCreateForm() {
+    setEditingUser(null);
+    setShowForm(true);
+  }
+
   return (
     <div className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-enter">
@@ -211,10 +216,7 @@ export default function UserManagementModal({ onClose }) {
           {canCreate && (
             <div className="mb-4">
               <button
-                onClick={() => {
-                  setEditingUser(null);
-                  setShowForm(true);
-                }}
+                onClick={handleShowCreateForm}
                 className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-green-500 text-white rounded-lg hover:from-yellow-500 hover:to-green-600 transition"
               >
                 <Plus className="w-4 h-4 inline mr-2" />
@@ -334,7 +336,6 @@ export default function UserManagementModal({ onClose }) {
             setEditingUser(null);
           }}
           onSave={editingUser ? (updates) => handleUpdateUser(editingUser.id, updates) : handleCreateUser}
-          hasAdminAlready={hasAdmin}
         />
       )}
 
@@ -374,13 +375,20 @@ export default function UserManagementModal({ onClose }) {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type="password"
+                    type={showResetPassword ? 'text' : 'password'}
                     value={resetPassword}
                     onChange={(e) => setResetPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                    className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    {showResetPassword ? 'Masquer' : 'Afficher'}
+                  </button>
                 </div>
               </div>
 
@@ -391,13 +399,20 @@ export default function UserManagementModal({ onClose }) {
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type="password"
+                    type={showResetConfirmPassword ? 'text' : 'password'}
                     value={resetConfirm}
                     onChange={(e) => setResetConfirm(e.target.value)}
                     required
                     minLength={6}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                    className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirmPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    {showResetConfirmPassword ? 'Masquer' : 'Afficher'}
+                  </button>
                 </div>
               </div>
 
@@ -430,13 +445,14 @@ export default function UserManagementModal({ onClose }) {
   );
 }
 
-function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
+function UserFormModal({ user, onClose, onSave }) {
   const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('educateur');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -537,14 +553,21 @@ function UserFormModal({ user, onClose, onSave, hasAdminAlready }) {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required={!user}
                 minLength={6}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
                 placeholder={user ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? 'Masquer' : 'Afficher'}
+              </button>
             </div>
           </div>
 

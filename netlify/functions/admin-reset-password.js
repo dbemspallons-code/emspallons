@@ -14,10 +14,40 @@ function json(status, payload) {
   return new Response(JSON.stringify(payload), { status, headers });
 }
 
+function getHeader(req, name) {
+  if (!req) return '';
+  if (req.headers?.get) {
+    return req.headers.get(name) || req.headers.get(name.toLowerCase()) || '';
+  }
+  if (req.headers) {
+    return req.headers[name] || req.headers[name.toLowerCase()] || '';
+  }
+  return '';
+}
+
 function getBearer(req) {
-  const auth = req.headers.get('authorization') || req.headers.get('Authorization') || '';
+  const auth = getHeader(req, 'authorization') || getHeader(req, 'Authorization') || '';
   if (!auth.startsWith('Bearer ')) return null;
   return auth.slice(7);
+}
+
+async function readJson(req) {
+  try {
+    if (req?.json) {
+      return await req.json();
+    }
+  } catch (err) {
+    // fallthrough
+  }
+  const raw = req?.body ?? req?.rawBody;
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return {}; }
+  }
+  if (raw instanceof Uint8Array) {
+    try { return JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return {}; }
+  }
+  return raw || {};
 }
 
 export default async (req) => {
@@ -51,7 +81,7 @@ export default async (req) => {
       .maybeSingle();
     if (!profile || profile.role !== 'admin') return json(403, { error: 'Admin requis' });
 
-    const payload = JSON.parse(req.body || '{}');
+    const payload = await readJson(req);
     const userId = payload.userId;
     const newPassword = (payload.newPassword || '').trim();
 

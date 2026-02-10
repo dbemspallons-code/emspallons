@@ -29,7 +29,15 @@ export async function createPromo(promoData, options = {}) {
       active: promoData.active !== false,
       created_by: options.userId || null,
     };
-    const { data, error } = await supabase.from('promos').insert([row]).select().maybeSingle();
+    let { data, error } = await supabase.from('promos').insert([row]).select().maybeSingle();
+    if (error) {
+      const msg = String(error.message || '');
+      if (/created_by/i.test(msg) && /(does not exist|schema cache)/i.test(msg)) {
+        const fallback = { ...row };
+        delete fallback.created_by;
+        ({ data, error } = await supabase.from('promos').insert([fallback]).select().maybeSingle());
+      }
+    }
     if (error) throw error;
     return { id: data.id, name: data.name, order: data.order_num, active: data.active };
   } catch (error) {
@@ -50,7 +58,16 @@ export async function updatePromo(promoId, updates, options = {}) {
     updateData.updated_by = options.userId || null;
     updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase.from('promos').update(updateData).eq('id', promoId).select().maybeSingle();
+    let { data, error } = await supabase.from('promos').update(updateData).eq('id', promoId).select().maybeSingle();
+    if (error) {
+      const msg = String(error.message || '');
+      if (/updated_by|updated_at/i.test(msg) && /(does not exist|schema cache)/i.test(msg)) {
+        const fallback = { ...updateData };
+        delete fallback.updated_by;
+        delete fallback.updated_at;
+        ({ data, error } = await supabase.from('promos').update(fallback).eq('id', promoId).select().maybeSingle());
+      }
+    }
     if (error) throw error;
     return data;
   } catch (error) {
@@ -98,7 +115,15 @@ export async function createClass(classData, options = {}) {
       active: classData.active !== false,
       created_by: options.userId || null,
     };
-    const { data, error } = await supabase.from('classes').insert([row]).select().maybeSingle();
+    let { data, error } = await supabase.from('classes').insert([row]).select().maybeSingle();
+    if (error) {
+      const msg = String(error.message || '');
+      if (/created_by/i.test(msg) && /(does not exist|schema cache)/i.test(msg)) {
+        const fallback = { ...row };
+        delete fallback.created_by;
+        ({ data, error } = await supabase.from('classes').insert([fallback]).select().maybeSingle());
+      }
+    }
     if (error) throw error;
     return { id: data.id, name: data.name, promoId: data.promo_id, active: data.active };
   } catch (error) {
@@ -119,7 +144,16 @@ export async function updateClass(classId, updates, options = {}) {
     updateData.updated_by = options.userId || null;
     updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase.from('classes').update(updateData).eq('id', classId).select().maybeSingle();
+    let { data, error } = await supabase.from('classes').update(updateData).eq('id', classId).select().maybeSingle();
+    if (error) {
+      const msg = String(error.message || '');
+      if (/updated_by|updated_at/i.test(msg) && /(does not exist|schema cache)/i.test(msg)) {
+        const fallback = { ...updateData };
+        delete fallback.updated_by;
+        delete fallback.updated_at;
+        ({ data, error } = await supabase.from('classes').update(fallback).eq('id', classId).select().maybeSingle());
+      }
+    }
     if (error) throw error;
     return data;
   } catch (error) {

@@ -11,13 +11,32 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+async function readJson(req) {
+  try {
+    if (req?.json) {
+      return await req.json();
+    }
+  } catch (err) {
+    // fallthrough
+  }
+  const raw = req?.body ?? req?.rawBody;
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return {}; }
+  }
+  if (raw instanceof Uint8Array) {
+    try { return JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return {}; }
+  }
+  return raw || {};
+}
+
 export default async (req, context) => {
   const headers = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
   if (req.method === 'OPTIONS') return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   try {
-    const payload = JSON.parse(req.body || '{}');
+    const payload = await readJson(req);
     const { studentId, status, paymentStatus, controllerId, controllerName, controllerCode, reason } = payload;
     if (!controllerId || !controllerCode) {
       return new Response(JSON.stringify({ error: 'controllerId et controllerCode requis' }), { status: 400, headers });
@@ -31,15 +50,15 @@ export default async (req, context) => {
       .maybeSingle();
     if (ctrlErr) {
       console.error('Supabase select controller error', ctrlErr);
-      return new Response(JSON.stringify({ error: 'Controleur invalide' }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: 'Contrôleur invalide' }), { status: 403, headers });
     }
     if (!controller || controller.active === false) {
-      return new Response(JSON.stringify({ error: 'Controleur inactif' }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: 'Contrôleur inactif' }), { status: 403, headers });
     }
     const expectedCode = (controller.code || '').toUpperCase();
     const providedCode = String(controllerCode || '').trim().toUpperCase();
     if (!expectedCode || providedCode !== expectedCode) {
-      return new Response(JSON.stringify({ error: 'Code controleur invalide' }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: 'Code contrôleur invalide' }), { status: 403, headers });
     }
 
     // Optional line check if student exists
@@ -53,7 +72,7 @@ export default async (req, context) => {
         console.warn('Supabase select student error', studentErr);
       }
       if (student && controller.assigned_line_id && student.bus_line && student.bus_line !== controller.assigned_line_id) {
-        return new Response(JSON.stringify({ error: 'Ligne non autorisee' }), { status: 403, headers });
+        return new Response(JSON.stringify({ error: 'Ligne non autorisée' }), { status: 403, headers });
       }
     }
 

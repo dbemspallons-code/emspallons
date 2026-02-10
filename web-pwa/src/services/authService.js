@@ -1,7 +1,7 @@
-/**
+﻿/**
  * Service d'authentification multi-utilisateurs
  * Rôles: Admin et Éducateur
- * MIGRATION FIRESTORE - Utilise Firebase Auth + Firestore au lieu de localStorage
+ * Utilise Supabase Auth + table educators (pas de Firebase)
  */
 
 import { fetchWithQueue } from './offlineService';
@@ -592,4 +592,6 @@ export async function forceUpdatePassword(newPassword) {
   }
   return { success: true };
 }
+
+
 

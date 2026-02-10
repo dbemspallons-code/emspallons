@@ -30,6 +30,25 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+async function readJson(req) {
+  try {
+    if (req?.json) {
+      return await req.json();
+    }
+  } catch (err) {
+    // fallthrough
+  }
+  const raw = req?.body ?? req?.rawBody;
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch { return {}; }
+  }
+  if (raw instanceof Uint8Array) {
+    try { return JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return {}; }
+  }
+  return raw || {};
+}
+
 export default async (req, context) => {
   const headers = {
     'Content-Type': 'application/json',
@@ -49,7 +68,7 @@ export default async (req, context) => {
   }
 
   try {
-    const { token } = JSON.parse(req.body || '{}');
+    const { token } = await readJson(req);
 
     if (!token) {
       return new Response(
