@@ -63,6 +63,9 @@ export default function UserManagementModal({ onClose }) {
       if (msg.toLowerCase().includes('failed to fetch')) {
         throw new Error('Impossible de contacter le serveur. Vérifiez votre connexion et les fonctions Netlify.');
       }
+      if (msg.toLowerCase().includes('configuration supabase')) {
+        throw new Error('Configuration serveur manquante. Verifiez SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY dans Netlify.');
+      }
       throw new Error(msg);
     }
   }
@@ -246,10 +249,10 @@ export default function UserManagementModal({ onClose }) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map(user => (
+                      {users.map(user => (
                     <tr key={user.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {user.nom}
+                        {user.nom || user.name || user.email || 'Utilisateur'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {user.email}

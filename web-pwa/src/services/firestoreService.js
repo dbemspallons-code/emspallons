@@ -31,7 +31,7 @@ function loadLineOverrides() {
   try {
     const raw = localStorage.getItem(LINES_STORAGE_KEY);
     const parsed = JSON.parse(raw || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.filter(line => line && line.id) : [];
   } catch (error) {
     return [];
   }
@@ -42,21 +42,25 @@ function saveLineOverrides(lines) {
 }
 
 function mergeLines(baseLines, overrides) {
-  const map = new Map();
+  const overrideMap = new Map();
   (overrides || []).forEach((line) => {
-    if (line && line.id) map.set(line.id, line);
+    if (line && line.id) overrideMap.set(line.id, line);
   });
+  const baseIds = new Set((baseLines || []).map(line => line?.id).filter(Boolean));
 
   const merged = (baseLines || [])
     .map((line) => {
-      const override = map.get(line.id);
+      if (!line || !line.id) return null;
+      const override = overrideMap.get(line.id);
       if (override && override.deleted) return null;
       return { ...line, ...(override || {}) };
     })
     .filter(Boolean);
 
-  const extras = (overrides || []).filter(l => l && l.id && !map.has(l.id));
-  return [...merged, ...extras.filter(l => !l.deleted)];
+  const extras = (overrides || [])
+    .filter(l => l && l.id && !baseIds.has(l.id))
+    .filter(l => !l.deleted);
+  return [...merged, ...extras];
 }
 
 // GESTION DES UTILISATEURS

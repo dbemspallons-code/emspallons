@@ -210,7 +210,7 @@ export default function Dashboard({ user, onLogout }) {
 
   const lineOptions = useMemo(() => {
     if (lines && lines.length) {
-      return lines.map(line => ({ id: line.id, name: line.name }));
+      return lines.filter(line => line && line.id).map(line => ({ id: line.id, name: line.name || line.id }));
     }
     const seen = new Map();
     students.forEach(student => {
@@ -1341,13 +1341,14 @@ function StudentsView({
   }, [lines]);
 
   const resolvedLineOptions = lineOptions.length ? lineOptions : lines;
+  const safeLineOptions = (resolvedLineOptions || []).filter(line => line && line.id);
 
   return (
     <div className="space-y-6">
       {/* Filtres */}
-      <div className="ui-card p-6">
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex-1 min-w-[220px]">
+      <div className="ui-card p-4">
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex-1 min-w-[180px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -1355,14 +1356,14 @@ function StudentsView({
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
                 placeholder="Rechercher un etudiant (nom, promo, classe, ligne)"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               />
             </div>
           </div>
           <select
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[140px] px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Tous les statuts</option>
             <option value="ACTIF">Actifs</option>
@@ -1374,19 +1375,19 @@ function StudentsView({
           <select
             value={lineFilter}
             onChange={(e) => onLineFilterChange(e.target.value)}
-            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[140px] px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les lignes</option>
-            {resolvedLineOptions.map((line) => (
+            {safeLineOptions.map((line) => (
               <option key={line.id} value={line.id}>
-                {line.name}
+                {line.name || line.id}
               </option>
             ))}
           </select>
           <select
             value={promoFilter}
             onChange={(e) => onPromoFilterChange(e.target.value)}
-            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[140px] px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les promos</option>
             {promoOptions.map((promo) => (
@@ -1398,7 +1399,7 @@ function StudentsView({
           <select
             value={classFilter}
             onChange={(e) => onClassFilterChange(e.target.value)}
-            className="min-w-[160px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            className="min-w-[140px] px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           >
             <option value="all">Toutes les classes</option>
             {classOptions.map((classe) => (
@@ -1419,7 +1420,7 @@ function StudentsView({
           )}
           <button
             onClick={onAddStudent}
-            className="ui-btn ui-btn--primary px-4 py-2"
+            className="ui-btn ui-btn--primary px-3 py-2 text-sm"
           >
             <Plus className="w-4 h-4 inline mr-2" />
             Ajouter

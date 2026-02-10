@@ -174,6 +174,6 @@ export default async (req) => {
     return json(200, { ok: true, user: edu });
   } catch (err) {
     console.error('admin-create-user error', err);
-    return json(500, { error: 'Erreur interne' });
+    return json(500, { error: err?.message ? `Erreur interne: ${err.message}` : 'Erreur interne' });
   }
 };

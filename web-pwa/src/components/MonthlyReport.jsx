@@ -20,7 +20,7 @@ export default function MonthlyReport({
   const [filters, setFilters] = useState({ line: 'all', promo: 'all', classGroup: 'all' });
 
   const lineOptions = useMemo(() => {
-    if (Array.isArray(lines) && lines.length) return lines;
+    if (Array.isArray(lines) && lines.length) return lines.filter(line => line && line.id);
     const values = new Set((students || []).map(s => s.busLine).filter(Boolean));
     return Array.from(values).map(value => ({ id: value, name: value }));
   }, [lines, students]);

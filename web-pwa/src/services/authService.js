@@ -59,46 +59,34 @@ export async function getUserById(id) {
  * Crée un nouvel utilisateur (utilise Firestore)
  */
 export async function createUser({ nom, email, motDePasse, role, creePar }) {
-  const users = await getAllUsers();
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanName = (nom || '').trim();
+  const cleanRole = role === 'admin' ? 'admin' : 'educateur';
 
-  // Vérifier si l'email existe déjà
-  if (users.some(u => u.email === email)) {
-    throw new Error('Cet email est déjà utilisé');
+  if (!cleanEmail) {
+    throw new Error('Email requis');
+  }
+  if (!motDePasse || motDePasse.length < 6) {
+    throw new Error('Mot de passe invalide');
   }
 
-  // Vérifier le rôle
-  if (role !== 'admin' && role !== 'educateur') {
-    throw new Error('Rôle invalide');
-  }
-
-  // Créer l'utilisateur (client signUp + profile in educators table)
-  const currentUser = await getCurrentUser().catch(() => null);
-  const newUser = await createUserSupabase({
-    email,
-    password: motDePasse,
-    name: nom,
-    role,
-  });
-
-  // If role admin, call serverless to set admin claim
-  if (role === 'admin' && newUser && newUser.id) {
-    try {
-      const res = await fetchWithQueue('/.netlify/functions/setAdminClaim', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: newUser.id }),
-      });
-      if (res && res.offline) {
-        console.warn('Avertissement: La mise à jour des custom claims a été mise en file pour synchronisation (offline)');
-      } else if (res && res.ok === false) {
-        console.warn('Avertissement: Les custom claims n\'ont pas pu être définis pour le nouvel admin');
-      }
-    } catch (error) {
-      console.warn('Avertissement: Erreur lors de la mise à jour des claims:', error);
+  // Vérifier si l'email existe déjà (tolérant aux erreurs RLS)
+  try {
+    const users = await getAllUsers();
+    if (users.some(u => (u.email || '').toLowerCase() === cleanEmail)) {
+      throw new Error('Cet email est déjà utilisé');
     }
+  } catch (err) {
+    console.warn('createUser: vérification email ignorée (lecture users échouée):', err?.message || err);
   }
+
+  // Créer l'utilisateur via la fonction serverless
+  const newUser = await createUserSupabase({
+    email: cleanEmail,
+    password: motDePasse,
+    name: cleanName,
+    role: cleanRole,
+  });
 
   return newUser;
 }
@@ -268,24 +256,7 @@ export async function updateUser(userId, updates) {
       userId: currentUser.id || null,
     });
     
-    // ✅ NOUVEAU : Appeler la fonction serverless pour définir les custom claims
-    try {
-      const res = await fetchWithQueue('/.netlify/functions/setAdminClaim', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-      if (res && res.offline) {
-        console.warn('Avertissement: La mise à jour des custom claims a été mise en file pour synchronisation (offline)');
-      } else if (res && res.ok === false) {
-        console.warn('Avertissement: Les custom claims n\'ont pas pu être définis');
-      }
-    } catch (error) {
-      console.warn('Avertissement: Erreur lors de la mise à jour des claims:', error);
-      // Ne pas bloquer l'opération si les claims échouent
-    }
+    // Les custom claims ne sont plus utilisés (Supabase). Rien à faire ici.
   }
 
   // Mettre à jour dans Firestore

@@ -46,6 +46,9 @@ export async function createUser(userData, options = {}) {
     if (message.includes('Configuration Supabase manquante')) {
       throw new Error('Configuration serveur manquante. Verifiez les variables Netlify (SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY).');
     }
+    if (message.includes('Acces refuse')) {
+      throw new Error('Accès refusé. Vous devez être administrateur pour créer des comptes.');
+    }
     throw new Error(message);
   }
   return data.user;
